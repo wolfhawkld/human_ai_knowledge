@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>局域网 A2A 方案分析 | 人机知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 40px;
+        }
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 16px;
+        }
+        .header .meta {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 8px;
+            margin: 32px 0 20px;
+        }
+        h3 {
+            color: #444;
+            margin: 24px 0 12px;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        blockquote {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #1a1a2e;
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tr:hover {
+            background: #e8f4fd;
+        }
+        code {
+            background: #f1f3f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+        pre {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        .scheme-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .scheme-box h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 32px;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 8px;
+        }
+        .tag.success { background: #28a745; }
+        .tag.warning { background: #ffc107; color: #333; }
+        .tag.danger { background: #dc3545; }
+        .tag.info { background: #17a2b8; }
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #dee2e6, transparent);
+            margin: 32px 0;
+        }
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 局域网 A2A 方案分析</h1>
+            <div class="meta">
+                <p>本文档由 <strong>Nemo</strong> 生成，分析局域网内两个 OpenClaw 实例通过 A2A 协议互访的完整方案。</p>
+                <p>生成日期：2026-03-09 | 场景：Nemo (cube) 与 Outis (Sugarbox) 的 A2A 通信</p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>概述</h2>
+            <p><strong>目标</strong>：局域网内两个 OpenClaw 实例通过 A2A（Agent-to-Agent）协议实现互访。</p>
+            <p><strong>典型场景</strong>：</p>
+            <ul>
+                <li>Nemo 运行在 WSL2 (cube, 172.24.56.49)</li>
+                <li>Outis 运行在 WSL2 (Sugarbox, 192.168.91.114)</li>
+                <li>两台机器在同一局域网或可通过 Tailscale 互联</li>
+            </ul>
+
+            <hr>
+
+            <h2>维度一：Gateway 绑定配置</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>bind 值</th>
+                        <th>绑定地址</th>
+                        <th>局域网可达</th>
+                        <th>安全性</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>loopback</code></td>
+                        <td>127.0.0.1</td>
+                        <td>❌</td>
+                        <td>⭐⭐⭐⭐⭐</td>
+                        <td>仅本机访问</td>
+                    </tr>
+                    <tr>
+                        <td><code>lan</code></td>
+                        <td>0.0.0.0</td>
+                        <td>✅</td>
+                        <td>⭐⭐⭐</td>
+                        <td>需配合 auth 配置</td>
+                    </tr>
+                    <tr>
+                        <td><code>tailscale</code></td>
+                        <td>Tailscale IP</td>
+                        <td>✅</td>
+                        <td>⭐⭐⭐⭐</td>
+                        <td>需要 Tailscale 网络</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>维度二：认证方式</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>认证模式</th>
+                        <th>配置</th>
+                        <th>A2A 调用方式</th>
+                        <th>安全性</th>
+                        <th>实现难度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>token</code></td>
+                        <td><code>auth.mode: "token"</code></td>
+                        <td>Header: <code>Authorization: Bearer &lt;token&gt;</code></td>
+                        <td>⭐⭐⭐⭐</td>
+                        <td>简单</td>
+                    </tr>
+                    <tr>
+                        <td><code>none</code></td>
+                        <td><code>auth.mode: "none"</code></td>
+                        <td>无需认证</td>
+                        <td>⭐</td>
+                        <td>简单但不安全</td>
+                    </tr>
+                    <tr>
+                        <td><code>mutual-tls</code></td>
+                        <td>mTLS</td>
+                        <td>双向证书验证</td>
+                        <td>⭐⭐⭐⭐⭐</td>
+                        <td>复杂</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>维度三：A2A 调用方式</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>方式</th>
+                        <th>端点</th>
+                        <th>特点</th>
+                        <th>Session 持久化</th>
+                        <th>适用场景</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>HTTP API</td>
+                        <td><code>/v1/chat/completions</code></td>
+                        <td>无状态，OpenAI 兼容</td>
+                        <td>❌</td>
+                        <td>单次请求/响应</td>
+                    </tr>
+                    <tr>
+                        <td>WebSocket</td>
+                        <td><code>/ws</code></td>
+                        <td>有状态，双向通信</td>
+                        <td>✅</td>
+                        <td>持续对话</td>
+                    </tr>
+                    <tr>
+                        <td>Gateway RPC</td>
+                        <td>内部协议</td>
+                        <td>高级功能</td>
+                        <td>✅</td>
+                        <td>深度集成</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>维度四：Control UI 远程访问</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>访问方式</th>
+                        <th>安全上下文</th>
+                        <th>设备身份验证</th>
+                        <th>实现方式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>localhost</td>
+                        <td>✅ 安全</td>
+                        <td>✅ 可用</td>
+                        <td>直接访问</td>
+                    </tr>
+                    <tr>
+                        <td>LAN IP + HTTPS</td>
+                        <td>✅ 安全</td>
+                        <td>✅ 可用</td>
+                        <td>反向代理/Tailscale</td>
+                    </tr>
+                    <tr>
+                        <td>LAN IP + HTTP</td>
+                        <td>❌ 不安全</td>
+                        <td>❌ 不可用</td>
+                        <td>需禁用设备验证</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <blockquote>
+                <strong>关键发现</strong>：Control UI 在非安全上下文（HTTP + 非localhost）下无法通过设备身份验证，<code>allowInsecureAuth: true</code> 不会绕过此限制。
+            </blockquote>
+
+            <hr>
+
+            <h2>完整方案组合</h2>
+
+            <div class="scheme-box">
+                <h3>方案 1：HTTP API + Token 认证 <span class="tag success">已验证</span></h3>
+                <pre><code>┌─────────────────┐                    ┌─────────────────┐
+│  Outis          │  ──HTTP POST───▶   │  Nemo           │
+│  (Sugarbox)     │  /v1/chat/         │  (cube)         │
+│                 │  completions       │                 │
+│                 │  Header: Bearer    │  bind: lan      │
+│                 │  &lt;token&gt;           │  auth: token    │
+└─────────────────┘                    └─────────────────┘</code></pre>
+                <table>
+                    <tr><td><strong>实现难度</strong></td><td>⭐ 简单</td></tr>
+                    <tr><td><strong>前提依赖</strong></td><td>知道对方 token</td></tr>
+                    <tr><td><strong>优点</strong></td><td>OpenAI 兼容，简单直接</td></tr>
+                    <tr><td><strong>缺点</strong></td><td>无 session 持久化，无 AI 身份标识</td></tr>
+                </table>
+            </div>
+
+            <div class="scheme-box">
+                <h3>方案 2：Tailscale + HTTPS <span class="tag info">推荐</span></h3>
+                <pre><code>┌─────────────────┐                    ┌─────────────────┐
+│  Outis          │  ──HTTPS───────▶   │  Nemo           │
+│  (Sugarbox)     │  Tailscale IP      │  (cube)         │
+│                 │  tailscale serve   │  tailscale: on  │
+│  Control UI ✅  │  安全上下文 ✅      │  Control UI ✅  │
+└─────────────────┘                    └─────────────────┘</code></pre>
+                <table>
+                    <tr><td><strong>实现难度</strong></td><td>⭐⭐ 中等</td></tr>
+                    <tr><td><strong>前提依赖</strong></td><td>Tailscale 账号，两台机器都加入 tailnet</td></tr>
+                    <tr><td><strong>优点</strong></td><td>自动 HTTPS，安全上下文，Control UI 可用</td></tr>
+                    <tr><td><strong>缺点</strong></td><td>依赖 Tailscale 服务</td></tr>
+                </table>
+            </div>
+
+            <div class="scheme-box">
+                <h3>方案 3：反向代理 + HTTPS</h3>
+                <table>
+                    <tr><td><strong>实现难度</strong></td><td>⭐⭐⭐ 较复杂</td></tr>
+                    <tr><td><strong>前提依赖</strong></td><td>域名，公网 IP 或内网 DNS，证书管理</td></tr>
+                    <tr><td><strong>优点</strong></td><td>完全自主控制，标准 HTTPS</td></tr>
+                    <tr><td><strong>缺点</strong></td><td>配置复杂，需要域名</td></tr>
+                </table>
+            </div>
+
+            <div class="scheme-box">
+                <h3>方案 4：WebSocket 持久连接</h3>
+                <table>
+                    <tr><td><strong>实现难度</strong></td><td>⭐⭐ 中等</td></tr>
+                    <tr><td><strong>前提依赖</strong></td><td>WebSocket 客户端实现</td></tr>
+                    <tr><td><strong>优点</strong></td><td>Session 持久化，双向实时通信</td></tr>
+                    <tr><td><strong>缺点</strong></td><td>需要自己实现 WebSocket 逻辑</td></tr>
+                </table>
+            </div>
+
+            <hr>
+
+            <h2>OpenClaw 官方支持现状</h2>
+
+            <h3>已有功能</h3>
+            <table>
+                <thead>
+                    <tr><th>功能</th><th>状态</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>gateway.http.endpoints.chatCompletions</code></td><td><span class="tag success">✅ 已有</span></td><td>OpenAI 兼容 HTTP API</td></tr>
+                    <tr><td><code>gateway.bind: "lan"</code></td><td><span class="tag success">✅ 已有</span></td><td>绑定所有接口</td></tr>
+                    <tr><td><code>gateway.auth.mode: "token"</code></td><td><span class="tag success">✅ 已有</span></td><td>Token 认证</td></tr>
+                    <tr><td><code>gateway.tailscale.mode: "serve"</code></td><td><span class="tag success">✅ 已有</span></td><td>自动 HTTPS</td></tr>
+                    <tr><td><code>gateway.nodes</code></td><td><span class="tag warning">⚠️ 不同用途</span></td><td>用于配对手机等设备</td></tr>
+                </tbody>
+            </table>
+
+            <h3>待开发/增强</h3>
+            <table>
+                <thead>
+                    <tr><th>功能</th><th>状态</th><th>建议</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Gateway-to-Gateway 配对</td><td><span class="tag danger">❌ 未实现</span></td><td>类似 nodes 配对机制</td></tr>
+                    <tr><td>AI 身份标识 Header</td><td><span class="tag danger">❌ 未实现</span></td><td>如 <code>X-Agent-Identity</code></td></tr>
+                    <tr><td>A2A Skill</td><td><span class="tag danger">❌ 未实现</span></td><td>可开发 skill 封装调用逻辑</td></tr>
+                    <tr><td>跨实例 Session 同步</td><td><span class="tag danger">❌ 未实现</span></td><td>需要协议支持</td></tr>
+                </tbody>
+            </table>
+
+            <hr>
+
+            <h2>推荐方案</h2>
+            <table>
+                <thead>
+                    <tr><th>时间维度</th><th>推荐方案</th><th>理由</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>短期</strong></td><td>HTTP API + Token</td><td>已经可用，最简单</td></tr>
+                    <tr><td><strong>中期</strong></td><td>Tailscale + HTTPS</td><td>解决所有问题：A2A + Control UI + 安全性</td></tr>
+                    <tr><td><strong>长期</strong></td><td>开发 A2A Skill</td><td>封装调用逻辑，支持身份标识和历史管理</td></tr>
+                </tbody>
+            </table>
+
+            <h2>相关资源</h2>
+            <ul>
+                <li><strong>A2A 协议官网</strong>：https://a2a-protocol.org</li>
+                <li><strong>OpenClaw 文档</strong>：https://docs.openclaw.ai</li>
+                <li><strong>Tailscale</strong>：https://tailscale.com</li>
+            </ul>
+
+            <div class="summary">
+                💡 <strong>一句话总结</strong>：局域网 A2A 的最简方案是 HTTP API + Token，最优方案是 Tailscale + HTTPS，前者立即可用，后者一劳永逸。
+            </div>
+        </div>
+    </div>
+</body>
+</html>
