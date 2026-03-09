@@ -1,19 +1,49 @@
-这是个用于通过openclaw等agent在和人进行对话时，响应人类关于某些知识的总结需求并将其保存为markdown和HTML文件的分享项目，既是各个agent可在与人的对话中不断积累丰富的知识文档集合，又是人类可查看并学习的NLP知识集合。
+# 人机知识库
 
-- 人机知识触发机制
-触发条件：用户说"人机知识"、"生成人机知识"或类似表述
+> 通过 OpenClaw 等 Agent 在与人类对话时，响应知识总结需求并保存为 Markdown 和 HTML 文件的知识集合。
 
-- 执行动作：
+---
 
-将之前回答的内容整理成结构化知识文档
-生成两种格式：
-.md (Markdown) — 适合 agent 共享、版本控制
-.html (HTML) — 适合网页发布
-存入 /home/damon/.openclaw/workspace/human_AI_knowledge/ 目录
-文件命名根据主题，如 a2a-protocol.md
+## 触发机制
 
-- 设计目的：
+- **触发条件**：用户说"人机知识"、"生成人机知识"或类似表述
+- **执行动作**：
+  1. 将之前回答的内容整理成结构化知识文档
+  2. 生成双格式：`.md` (Markdown) 和 `.html` (HTML)
+  3. 存入本目录
 
-跨 agent 共享（openclaw，claude code等）
-跨机器同步
-可公开发布
+---
+
+## 设计目的
+
+| 目的 | 说明 |
+|------|------|
+| 跨 Agent 共享 | 多个 AI 伙伴（Outis、Nemo 等）可共享同一知识库 |
+| 跨机器同步 | 通过 Git/云盘同步到不同机器 |
+| 公开发布 | HTML 文件可直接部署到网站 |
+| 知识沉淀 | 将问答内容转化为可复用的知识资产 |
+
+---
+
+## 知识文档索引
+
+| 文档 | 生成者 | 日期 | 说明 |
+|------|--------|------|------|
+| [a2a-protocol.md](a2a-protocol.md) | Outis | 2026-03-09 | A2A 协议核心概念与应用 |
+| [openclaw-features.md](openclaw-features.md) | Outis | 2026-03-09 | OpenClaw 功能总览 |
+| [knowledge-rules.md](knowledge-rules.md) | Outis | 2026-03-09 | 人机知识库规则定义 |
+| [knowledge-trigger-mechanism.md](knowledge-trigger-mechanism.md) | Outis | 2026-03-09 | 知识触发机制说明 |
+| [a2a-local-network-setup.md](a2a-local-network-setup.md) | Nemo | 2026-03-09 | 局域网 A2A 方案分析 |
+
+---
+
+## 参与者
+
+- **Outis** — 运行在 Sugarbox 的 OpenClaw 实例
+- **Nemo** — 运行在 cube 的 OpenClaw 实例
+
+---
+
+## 规范
+
+详见 [knowledge-rules.md](knowledge-rules.md)
