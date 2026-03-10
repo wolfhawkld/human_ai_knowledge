@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Search 能力总结：模型层 vs 工具层</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.7;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    .meta {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+    .content { padding: 40px; }
+    h2 {
+      color: #1a1a2e;
+      border-left: 4px solid #667eea;
+      padding-left: 15px;
+      margin: 30px 0 20px;
+    }
+    h3 { color: #444; margin: 20px 0 10px; }
+    p { margin-bottom: 15px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9em;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    tr:hover { background: #f8f9fa; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "SF Mono", Consolas, monospace;
+      font-size: 0.85em;
+    }
+    pre {
+      background: #1a1a2e;
+      color: #a8dadc;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+    .insight {
+      background: linear-gradient(135deg, #e8f4f8 0%, #f0f7ff 100%);
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .insight strong { color: #667eea; }
+    .summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.1em;
+      margin-top: 30px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+    .badge-green { background: #d4edda; color: #155724; }
+    .badge-yellow { background: #fff3cd; color: #856404; }
+    .badge-red { background: #f8d7da; color: #721c24; }
+    .footer {
+      background: #f8f9fa;
+      padding: 20px 40px;
+      text-align: center;
+      color: #666;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Web Search 能力总结</h1>
+      <p class="meta">模型层 vs 工具层 | 生成者: Nemo | 2026-03-10</p>
+    </div>
+    
+    <div class="content">
+      <div class="insight">
+        <strong>核心洞察：</strong>存在两层搜索能力——<b>模型层搜索</b>（内置联网）和<b>工具层搜索</b>（OpenClaw 工具），两者互补但机制不同。
+      </div>
+
+      <h2>两层搜索能力</h2>
+      
+      <table>
+        <tr>
+          <th>层级</th>
+          <th>定义</th>
+          <th>控制方</th>
+          <th>特点</th>
+        </tr>
+        <tr>
+          <td><strong>模型层搜索</strong></td>
+          <td>模型内置的联网能力</td>
+          <td>模型服务商</td>
+          <td>自动触发、不可控、OpenClaw 不可见</td>
+        </tr>
+        <tr>
+          <td><strong>工具层搜索</strong></td>
+          <td>OpenClaw 的 <code>web_search</code> / <code>web_fetch</code></td>
+          <td>OpenClaw / 用户</td>
+          <td>显式调用、可控、可配置参数</td>
+        </tr>
+      </table>
+
+      <h2>各模型能力对比</h2>
+      
+      <table>
+        <tr>
+          <th>模型</th>
+          <th>模型层搜索</th>
+          <th>工具层支持</th>
+          <th>中国可用</th>
+          <th>说明</th>
+        </tr>
+        <tr>
+          <td><strong>GPT-4/4o</strong></td>
+          <td><span class="badge badge-green">✅ Browsing</span></td>
+          <td><span class="badge badge-green">✅ 强</span></td>
+          <td><span class="badge badge-red">❌ 需代理</span></td>
+          <td>function call 能力强</td>
+        </tr>
+        <tr>
+          <td><strong>Claude</strong></td>
+          <td><span class="badge badge-green">✅ Web Search</span></td>
+          <td><span class="badge badge-green">✅ 强</span></td>
+          <td><span class="badge badge-red">❌ 需代理</span></td>
+          <td>工具调用能力优秀</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini</strong></td>
+          <td><span class="badge badge-green">✅ Grounding</span></td>
+          <td><span class="badge badge-green">✅ 原生</span></td>
+          <td><span class="badge badge-red">❌ 需代理</span></td>
+          <td>OpenClaw 可直接配置</td>
+        </tr>
+        <tr>
+          <td><strong>GLM (智谱)</strong></td>
+          <td><span class="badge badge-green">✅ 内置联网</span></td>
+          <td><span class="badge badge-yellow">⚠️ 一般</span></td>
+          <td><span class="badge badge-green">✅ 直接访问</span></td>
+          <td>工具调用能力较弱</td>
+        </tr>
+        <tr>
+          <td><strong>Kimi</strong></td>
+          <td><span class="badge badge-green">✅ 内置联网</span></td>
+          <td><span class="badge badge-green">✅ 支持</span></td>
+          <td><span class="badge badge-green">✅ 直接访问</span></td>
+          <td><b>无代理首选</b></td>
+        </tr>
+        <tr>
+          <td><strong>DeepSeek</strong></td>
+          <td><span class="badge badge-green">✅ 内置联网</span></td>
+          <td><span class="badge badge-green">✅ 支持</span></td>
+          <td><span class="badge badge-green">✅ 直接访问</span></td>
+          <td>工具调用能力较好</td>
+        </tr>
+        <tr>
+          <td><strong>Grok</strong></td>
+          <td><span class="badge badge-green">✅ 实时搜索</span></td>
+          <td><span class="badge badge-green">✅ 支持</span></td>
+          <td><span class="badge badge-red">❌ 需代理</span></td>
+          <td>xAI 实时搜索</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen (通义)</strong></td>
+          <td><span class="badge badge-green">✅ 内置联网</span></td>
+          <td><span class="badge badge-green">✅ 支持</span></td>
+          <td><span class="badge badge-green">✅ 直接访问</span></td>
+          <td>阿里云模型</td>
+        </tr>
+      </table>
+
+      <h2>OpenClaw 集成策略</h2>
+      
+      <h3>方案一：纯模型层搜索</h3>
+      <pre><code>用户问题 → 模型 → 模型自动联网 → 返回结果</code></pre>
+      <p>适合快速问答，不需要精确控制。</p>
+      
+      <h3>方案二：工具层搜索</h3>
+      <pre><code>用户问题 → OpenClaw 判断 → 调用 web_search → 结果注入 prompt → 模型回答</code></pre>
+      <p>可控、可观察、可指定参数。配置方式：<code>openclaw configure --section web</code></p>
+      
+      <h3>方案三：混合模式（推荐）</h3>
+      <pre><code>用户问题 → OpenClaw 尝试工具搜索 → 失败则依赖模型层搜索</code></pre>
+
+      <h2>中国大陆推荐配置</h2>
+      
+      <h3>无代理环境</h3>
+<pre><code>{
+  tools: {
+    web: {
+      search: {
+        provider: "kimi",
+        kimi: { apiKey: "your-kimi-api-key" }
+      }
+    }
+  }
+}</code></pre>
+
+      <h3>有代理环境</h3>
+<pre><code>{
+  tools: {
+    web: {
+      search: {
+        provider: "brave",
+        apiKey: "BRAVE_API_KEY"
+      }
+    }
+  }
+}</code></pre>
+
+      <h2>web_search vs web_fetch</h2>
+      
+      <table>
+        <tr>
+          <th>工具</th>
+          <th>功能</th>
+          <th>需要配置</th>
+          <th>使用场景</th>
+        </tr>
+        <tr>
+          <td><code>web_search</code></td>
+          <td>搜索网页，返回结果列表</td>
+          <td>需 API key</td>
+          <td>"最近 AI 新闻"</td>
+        </tr>
+        <tr>
+          <td><code>web_fetch</code></td>
+          <td>抓取指定 URL 内容</td>
+          <td>默认启用</td>
+          <td>"帮我读这篇文章"</td>
+        </tr>
+      </table>
+
+      <h2>关键洞察</h2>
+      <ol>
+        <li><strong>模型联网 ≠ 工具调用</strong>：很多模型有内置联网，但不一定能响应 OpenClaw 的工具调用</li>
+        <li><strong>GLM 的特殊性</strong>：内置联网强，但工具调用弱——适合"直接问"，不适合复杂工具编排</li>
+        <li><strong>Claude/GPT 优势</strong>：工具调用能力强，配合 OpenClaw 工具效果最佳</li>
+        <li><strong>国产方案排序</strong>：Kimi > DeepSeek > Qwen > GLM（工具调用能力）</li>
+        <li><strong>搜索质量排序</strong>：Brave/Perplexity > Kimi > 模型内置搜索</li>
+      </ol>
+
+      <h2>实践建议</h2>
+      
+      <table>
+        <tr>
+          <th>场景</th>
+          <th>推荐方案</th>
+        </tr>
+        <tr>
+          <td>快速问答，不在乎精确控制</td>
+          <td>用 GLM/Kimi，依赖模型层搜索</td>
+        </tr>
+        <tr>
+          <td>需要控制搜索参数（时间、地区）</td>
+          <td>配置 web_search 工具</td>
+        </tr>
+        <tr>
+          <td>复杂任务（搜索 + 读取 + 分析）</td>
+          <td>Claude/GPT + 工具链</td>
+        </tr>
+        <tr>
+          <td>中国大陆无代理</td>
+          <td>Kimi 作为 provider，或 GLM 模型层搜索</td>
+        </tr>
+        <tr>
+          <td>追求搜索质量</td>
+          <td>Brave/Perplexity（需代理）</td>
+        </tr>
+      </table>
+
+      <div class="summary">
+        <strong>一句话总结</strong><br>
+        模型层搜索省心但不可控，工具层搜索可控但需配置；<br>
+        中国大陆无代理首选 Kimi，有代理首选 Brave/Perplexity。
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>📚 <a href="index.html">返回知识库首页</a> | 生成者: Nemo | 2026-03-10</p>
+    </div>
+  </div>
+</body>
+</html>
