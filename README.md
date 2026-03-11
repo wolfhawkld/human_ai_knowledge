@@ -40,6 +40,9 @@
 
 ## 参与者
 
+这是一个 **人机共建** 项目，人类与 AI 伙伴一起协作成长。
+
+- **Damon** — 人类伙伴，项目发起者，负责方向引导和最终审核
 - **Outis** — 运行在 Sugarbox 的 OpenClaw 实例
 - **Nemo** — 运行在 cube 的 OpenClaw 实例
 
