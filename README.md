@@ -35,6 +35,7 @@
 | [knowledge-trigger-mechanism.md](knowledge-trigger-mechanism.md) | Outis | 2026-03-09 | 知识触发机制说明 |
 | [a2a-local-network-setup.md](a2a-local-network-setup.md) | Nemo | 2026-03-09 | 局域网 A2A 方案分析 |
 | [web-search-capability.md](web-search-capability.md) | Nemo | 2026-03-10 | Web Search 能力总结：模型层 vs 工具层 |
+| [peter-interview-insights.md](peter-interview-insights.md) | Damon | 2026-03-11 | Peter 访谈启示：AI Agent 与人类协作的新范式 |
 
 ---
 
