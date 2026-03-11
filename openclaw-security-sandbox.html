@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw 安全配置指南：沙箱与文件系统隔离</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.8;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 0.5rem;
+        }
+        h2 {
+            color: #c0392b;
+            margin-top: 2rem;
+        }
+        h3 {
+            color: #34495e;
+        }
+        blockquote {
+            border-left: 4px solid #e74c3c;
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+        }
+        .meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 2rem 0;
+        }
+        .warning {
+            color: #e74c3c;
+        }
+        .ok {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenClaw 安全配置指南：沙箱与文件系统隔离</h1>
+
+    <blockquote class="meta">
+        来源：Damon 整理的安全配置实践<br>
+        生成者：Damon<br>
+        日期：2026-03-01（原始），2026-03-11（人机知识化）
+    </blockquote>
+
+    <hr>
+
+    <h2>一、背景与目标</h2>
+    <p>将 OpenClaw 部署在 WSL2 Ubuntu 子系统中，需要确保：</p>
+    <ol>
+        <li>AI Agent 的操作不会误删或损坏 Ubuntu 系统文件</li>
+        <li>无法访问或破坏 Windows 文件系统（<code>/mnt/c/</code>）</li>
+        <li>敏感数据（密钥、配置、个人文件）不会被意外泄露</li>
+    </ol>
+
+    <h2>二、安全配置方案：双层防护架构</h2>
+    <p>采用 <strong>文件系统限制 + Docker 沙箱</strong> 的双层防护：</p>
+
+    <h3>2.1 文件系统限制</h3>
+    <p><strong>配置项：</strong> <code>tools.fs.workspaceOnly: true</code></p>
+    <p><strong>生效范围：</strong> <code>read</code>、<code>write</code>、<code>edit</code> 文件操作工具</p>
+    
+    <table>
+        <tr><th>路径</th><th>访问权限</th><th>说明</th></tr>
+        <tr><td><code>~/.openclaw/workspace/</code></td><td class="ok">✅ 可读写</td><td>Agent 唯一可操作的文件区域</td></tr>
+        <tr><td><code>~/.openclaw/openclaw.json</code></td><td class="warning">❌ 禁止访问</td><td>配置文件（含密钥）</td></tr>
+        <tr><td><code>~/.openclaw/credentials/</code></td><td class="warning">❌ 禁止访问</td><td>认证凭据存储</td></tr>
+        <tr><td><code>/mnt/c/</code> (Windows)</td><td class="warning">❌ 禁止访问</td><td>Windows 文件系统</td></tr>
+        <tr><td><code>/etc/</code>, <code>/var/</code>, <code>/root/</code></td><td class="warning">❌ 禁止访问</td><td>系统目录</td></tr>
+    </table>
+
+    <h3>2.2 Docker 沙箱隔离</h3>
+    <p><strong>配置项：</strong> <code>agents.defaults.sandbox.mode: "all"</code></p>
+    <p><strong>生效范围：</strong> <code>exec</code> 命令执行工具</p>
+    
+    <table>
+        <tr><th>资源</th><th>沙箱内状态</th></tr>
+        <tr><td>文件系统</td><td>隔离（独立容器文件系统）</td></tr>
+        <tr><td>网络</td><td class="warning">❌ 默认禁用</td></tr>
+        <tr><td>进程</td><td>隔离（无法看到主机进程）</td></tr>
+        <tr><td>用户</td><td>非特权（uid=1000）</td></tr>
+    </table>
+
+    <h2>三、核心配置命令</h2>
+    <pre><code># 文件系统限制
+openclaw config set tools.fs.workspaceOnly true
+
+# 启用沙箱模式
+openclaw config set agents.defaults.sandbox.mode all
+
+# 构建沙箱镜像
+docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .
+
+# 验证配置
+openclaw doctor
+openclaw security audit</code></pre>
+
+    <h2>四、对 Agent 能力的影响</h2>
+
+    <h3>4.1 受影响的功能</h3>
+    <table>
+        <tr><th>功能</th><th>影响程度</th><th>解决方案</th></tr>
+        <tr><td>命令执行</td><td>⚠️ 受限</td><td>配置 <code>sandbox.docker.network</code> 开启网络</td></tr>
+        <tr><td>Web Search</td><td>⚠️ 沙箱内不可用</td><td>使用主机执行或开启沙箱网络</td></tr>
+        <tr><td>Web Fetch</td><td>⚠️ 沙箱内不可用</td><td>同上</td></tr>
+    </table>
+
+    <h3>4.2 不受影响的功能</h3>
+    <table>
+        <tr><th>功能</th><th>状态</th><th>说明</th></tr>
+        <tr><td>飞书通讯</td><td class="ok">✅ 正常</td><td>Gateway 在主机运行</td></tr>
+        <tr><td>模型调用</td><td class="ok">✅ 正常</td><td>API 调用由 Gateway 处理</td></tr>
+        <tr><td>会话管理</td><td class="ok">✅ 正常</td><td>同上</td></tr>
+        <tr><td>记忆/上下文</td><td class="ok">✅ 正常</td><td>workspace 可正常读写</td></tr>
+    </table>
+
+    <p><strong>关键理解：</strong> 沙箱隔离的是 <code>exec</code> 工具，不是 Gateway 本身。Gateway 直接处理的网络请求不受影响。</p>
+
+    <h2>五、安全审计清单</h2>
+    <pre><code># 全面安全审计
+openclaw security audit --deep
+
+# 检查沙箱镜像
+docker images | grep openclaw-sandbox
+
+# 检查配置
+openclaw config get tools.fs.workspaceOnly
+openclaw config get agents.defaults.sandbox.mode</code></pre>
+
+    <h2>六、总结</h2>
+    <p>通过 <strong>文件系统限制 + Docker 沙箱</strong> 的组合：</p>
+    <ol>
+        <li><strong>文件层面</strong>：Agent 只能操作 workspace 目录</li>
+        <li><strong>执行层面</strong>：所有命令在隔离容器中运行</li>
+        <li><strong>网络层面</strong>：默认无网络，防止数据外泄</li>
+        <li><strong>功能层面</strong>：核心功能不受影响</li>
+    </ol>
+    <p>这种配置适合个人助手场景，在安全性和可用性之间取得了良好平衡。</p>
+
+    <hr>
+    <p style="color: #7f8c8d; font-style: italic;">本文档由 Damon 整理，Nemo 人机知识化</p>
+</body>
+</html>
