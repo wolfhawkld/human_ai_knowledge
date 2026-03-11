@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 2rem;
             line-height: 1.8;
@@ -15,38 +15,57 @@
         }
         h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #e74c3c;
+            border-bottom: 3px solid #e74c3c;
             padding-bottom: 0.5rem;
         }
         h2 {
             color: #c0392b;
-            margin-top: 2rem;
+            margin-top: 2.5rem;
+            border-left: 4px solid #e74c3c;
+            padding-left: 0.8rem;
         }
         h3 {
             color: #34495e;
+            margin-top: 1.5rem;
         }
-        blockquote {
+        blockquote.meta {
             border-left: 4px solid #e74c3c;
             margin: 1rem 0;
-            padding: 0.5rem 1rem;
-            background: #f8f9fa;
+            padding: 0.8rem 1rem;
+            background: #fdf2f2;
+            color: #7f8c8d;
         }
         code {
             background: #f4f4f4;
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
             font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
         }
         pre {
-            background: #2c3e50;
-            color: #ecf0f1;
+            background: #1a1a2e;
+            color: #a0f0c0;
             padding: 1rem;
             border-radius: 8px;
             overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.4;
         }
         pre code {
             background: none;
             padding: 0;
+            color: inherit;
+        }
+        .diagram {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 1.2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.75rem;
+            line-height: 1.3;
+            white-space: pre;
         }
         table {
             width: 100%;
@@ -55,26 +74,48 @@
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 0.5rem;
+            padding: 0.6rem 0.8rem;
             text-align: left;
         }
         th {
             background: #f8f9fa;
+            font-weight: 600;
         }
-        .meta {
-            color: #7f8c8d;
-            font-size: 0.9rem;
+        tr:nth-child(even) {
+            background: #fafafa;
         }
+        .ok { color: #27ae60; font-weight: bold; }
+        .warn { color: #e67e22; }
+        .danger { color: #e74c3c; }
         hr {
             border: none;
             border-top: 1px solid #ddd;
             margin: 2rem 0;
         }
-        .warning {
-            color: #e74c3c;
+        .highlight-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
         }
-        .ok {
-            color: #27ae60;
+        .step {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #2980b9;
+        }
+        .footer {
+            color: #7f8c8d;
+            font-style: italic;
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
         }
     </style>
 </head>
@@ -82,12 +123,10 @@
     <h1>OpenClaw 安全配置指南：沙箱与文件系统隔离</h1>
 
     <blockquote class="meta">
-        来源：Damon 整理的安全配置实践<br>
-        生成者：Damon<br>
-        日期：2026-03-01（原始），2026-03-11（人机知识化）
+        <strong>来源：</strong>Damon 整理的安全配置实践<br>
+        <strong>生成者：</strong>Damon<br>
+        <strong>日期：</strong>2026-03-01（原始），2026-03-11（人机知识化）
     </blockquote>
-
-    <hr>
 
     <h2>一、背景与目标</h2>
     <p>将 OpenClaw 部署在 WSL2 Ubuntu 子系统中，需要确保：</p>
@@ -100,67 +139,263 @@
     <h2>二、安全配置方案：双层防护架构</h2>
     <p>采用 <strong>文件系统限制 + Docker 沙箱</strong> 的双层防护：</p>
 
-    <h3>2.1 文件系统限制</h3>
+    <div class="diagram">┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Windows 主机                                    │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                           WSL2 Ubuntu                                  │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │                     OpenClaw Gateway                             │  │  │
+│  │  │  ┌───────────────────────────────────────────────────────────┐  │  │  │
+│  │  │  │                 Docker Sandbox Container                   │  │  │  │
+│  │  │  │                                                           │  │  │  │
+│  │  │  │   ┌─────────────────┐     ┌─────────────────────────┐   │  │  │  │
+│  │  │  │   │  /workspace     │ ←── │  ~/.openclaw/workspace  │   │  │  │  │
+│  │  │  │   │  (读写挂载)      │     │  (主机目录映射)          │   │  │  │  │
+│  │  │  │   └─────────────────┘     └─────────────────────────┘   │  │  │  │
+│  │  │  │                                                           │  │  │  │
+│  │  │  │   ❌ 无网络访问（默认）                                     │  │  │  │
+│  │  │  │   ❌ 无法访问 /mnt/c/ (Windows)                            │  │  │  │
+│  │  │  │   ❌ 无法访问 ~/.openclaw/ (配置/密钥)                      │  │  │  │
+│  │  │  │   ❌ 无法访问 /root/, /home/ 等系统目录                     │  │  │  │
+│  │  │  │                                                           │  │  │  │
+│  │  │  └───────────────────────────────────────────────────────────┘  │  │  │
+│  │  │                          ↑                                      │  │  │
+│  │  │              tools.fs.workspaceOnly: true                       │  │  │
+│  │  │              agents.defaults.sandbox.mode: all                  │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                        │  │
+│  │  ~/.openclaw/  ← 配置、密钥、会话记录（Agent 可读但受限）               │  │
+│  │  /mnt/c/       ← Windows 文件系统（Agent 完全不可见）                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h2>三、配置详情</h2>
+
+    <h3>3.1 文件系统限制</h3>
     <p><strong>配置项：</strong> <code>tools.fs.workspaceOnly: true</code></p>
     <p><strong>生效范围：</strong> <code>read</code>、<code>write</code>、<code>edit</code> 文件操作工具</p>
     
     <table>
         <tr><th>路径</th><th>访问权限</th><th>说明</th></tr>
         <tr><td><code>~/.openclaw/workspace/</code></td><td class="ok">✅ 可读写</td><td>Agent 唯一可操作的文件区域</td></tr>
-        <tr><td><code>~/.openclaw/openclaw.json</code></td><td class="warning">❌ 禁止访问</td><td>配置文件（含密钥）</td></tr>
-        <tr><td><code>~/.openclaw/credentials/</code></td><td class="warning">❌ 禁止访问</td><td>认证凭据存储</td></tr>
-        <tr><td><code>/mnt/c/</code> (Windows)</td><td class="warning">❌ 禁止访问</td><td>Windows 文件系统</td></tr>
-        <tr><td><code>/etc/</code>, <code>/var/</code>, <code>/root/</code></td><td class="warning">❌ 禁止访问</td><td>系统目录</td></tr>
+        <tr><td><code>~/.openclaw/openclaw.json</code></td><td class="danger">❌ 禁止访问</td><td>配置文件（含密钥）</td></tr>
+        <tr><td><code>~/.openclaw/credentials/</code></td><td class="danger">❌ 禁止访问</td><td>认证凭据存储</td></tr>
+        <tr><td><code>~/.openclaw/agents/</code></td><td class="danger">❌ 禁止访问</td><td>会话记录、日志</td></tr>
+        <tr><td><code>/mnt/c/</code> (Windows)</td><td class="danger">❌ 禁止访问</td><td>Windows 文件系统</td></tr>
+        <tr><td><code>/home/*/</code></td><td class="danger">❌ 禁止访问</td><td>其他用户目录</td></tr>
+        <tr><td><code>/etc/</code>, <code>/var/</code>, <code>/root/</code></td><td class="danger">❌ 禁止访问</td><td>系统目录</td></tr>
     </table>
 
-    <h3>2.2 Docker 沙箱隔离</h3>
+    <h3>3.2 Docker 沙箱隔离</h3>
     <p><strong>配置项：</strong> <code>agents.defaults.sandbox.mode: "all"</code></p>
     <p><strong>生效范围：</strong> <code>exec</code> 命令执行工具</p>
+    <p><strong>沙箱镜像：</strong> <code>openclaw-sandbox:bookworm-slim</code></p>
+    
+    <pre><code>FROM debian:bookworm-slim
+# 预装工具：bash, curl, git, jq, python3, ripgrep
+# 创建非特权用户 sandbox
+# 默认无网络访问</code></pre>
     
     <table>
-        <tr><th>资源</th><th>沙箱内状态</th></tr>
-        <tr><td>文件系统</td><td>隔离（独立容器文件系统）</td></tr>
-        <tr><td>网络</td><td class="warning">❌ 默认禁用</td></tr>
-        <tr><td>进程</td><td>隔离（无法看到主机进程）</td></tr>
-        <tr><td>用户</td><td>非特权（uid=1000）</td></tr>
+        <tr><th>资源</th><th>沙箱内状态</th><th>说明</th></tr>
+        <tr><td>文件系统</td><td>隔离</td><td>独立的容器文件系统</td></tr>
+        <tr><td>网络</td><td class="danger">❌ 默认禁用</td><td>无法访问外网</td></tr>
+        <tr><td>进程</td><td>隔离</td><td>无法看到主机进程</td></tr>
+        <tr><td>用户</td><td>非特权</td><td>以 uid=1000 运行</td></tr>
+        <tr><td>系统调用</td><td>受限</td><td>Docker 默认安全策略</td></tr>
     </table>
 
-    <h2>三、核心配置命令</h2>
-    <pre><code># 文件系统限制
-openclaw config set tools.fs.workspaceOnly true
+    <h2>四、数据流向图</h2>
 
-# 启用沙箱模式
-openclaw config set agents.defaults.sandbox.mode all
+    <h3>4.1 正常操作流程</h3>
+    <div class="diagram">用户消息
+    │
+    ▼
+┌─────────────────┐
+│ OpenClaw Gateway│  ← 运行在 Ubuntu 主机
+│  (解析意图)      │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │ 工具调用 │
+    └────┬────┘
+         │
+    ┌────┴────────────────────────────────────────┐
+    │                                             │
+    ▼                                             ▼
+┌──────────────┐                        ┌──────────────┐
+│ read/write/  │                        │    exec      │
+│    edit      │                        │  (命令执行)   │
+└──────┬───────┘                        └──────┬───────┘
+       │                                       │
+       ▼                                       ▼
+┌──────────────────┐                  ┌──────────────────┐
+│ workspaceOnly    │                  │ Docker Sandbox   │
+│ 策略检查         │                  │ 隔离执行         │
+└────────┬─────────┘                  └────────┬─────────┘
+         │                                     │
+         ▼                                     ▼
+┌──────────────────┐                  ┌──────────────────┐
+│ ~/.openclaw/     │                  │ 容器内 /workspace │
+│ workspace/       │                  │ 独立环境         │
+└──────────────────┘                  └──────────────────┘</div>
 
-# 构建沙箱镜像
-docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .
+    <h3>4.2 被阻止的操作</h3>
+    <div class="diagram">用户消息 (恶意/误操作)
+    │
+    ▼
+┌─────────────────┐
+│ OpenClaw Gateway│
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │ 工具调用 │
+    └────┬────┘
+         │
+    ┌────┴────────────────────────────────────────┐
+    │                                             │
+    ▼                                             ▼
+┌──────────────┐                        ┌──────────────┐
+│ read("/etc/")│                        │ exec("rm -rf")│
+│ (尝试读系统)  │                        │ (危险命令)    │
+└──────┬───────┘                        └──────┬───────┘
+       │                                       │
+       ▼                                       ▼
+┌──────────────────┐                  ┌──────────────────┐
+│ ❌ workspaceOnly │                  │ Docker 隔离      │
+│   策略拒绝       │                  │ 仅影响容器       │
+│ Path escapes    │                  │ 主机不受影响     │
+│ sandbox root    │                  │                  │
+└──────────────────┘                  └──────────────────┘</div>
 
-# 验证配置
-openclaw doctor
-openclaw security audit</code></pre>
+    <h2>五、对 Agent 能力的影响</h2>
 
-    <h2>四、对 Agent 能力的影响</h2>
-
-    <h3>4.1 受影响的功能</h3>
+    <h3>5.1 受影响的功能</h3>
     <table>
-        <tr><th>功能</th><th>影响程度</th><th>解决方案</th></tr>
-        <tr><td>命令执行</td><td>⚠️ 受限</td><td>配置 <code>sandbox.docker.network</code> 开启网络</td></tr>
-        <tr><td>Web Search</td><td>⚠️ 沙箱内不可用</td><td>使用主机执行或开启沙箱网络</td></tr>
-        <tr><td>Web Fetch</td><td>⚠️ 沙箱内不可用</td><td>同上</td></tr>
+        <tr><th>功能</th><th>影响程度</th><th>原因</th><th>解决方案</th></tr>
+        <tr><td><strong>命令执行</strong></td><td class="warn">⚠️ 受限</td><td>在沙箱内执行，无网络工具</td><td>配置 <code>sandbox.docker.network</code></td></tr>
+        <tr><td><strong>Web Search</strong></td><td class="warn">⚠️ 不可用</td><td>沙箱无网络访问</td><td>配置沙箱网络或主机执行</td></tr>
+        <tr><td><strong>Web Fetch</strong></td><td class="warn">⚠️ 不可用</td><td>沙箱无 curl/wget</td><td>同上</td></tr>
+        <tr><td><strong>文件操作</strong></td><td class="ok">✅ 正常</td><td>限制在 workspace 内</td><td>无需处理</td></tr>
+        <tr><td><strong>代码执行</strong></td><td class="ok">✅ 正常</td><td>Python3 已预装</td><td>无需处理</td></tr>
     </table>
 
-    <h3>4.2 不受影响的功能</h3>
+    <h3>5.2 不受影响的功能</h3>
     <table>
         <tr><th>功能</th><th>状态</th><th>说明</th></tr>
-        <tr><td>飞书通讯</td><td class="ok">✅ 正常</td><td>Gateway 在主机运行</td></tr>
-        <tr><td>模型调用</td><td class="ok">✅ 正常</td><td>API 调用由 Gateway 处理</td></tr>
-        <tr><td>会话管理</td><td class="ok">✅ 正常</td><td>同上</td></tr>
-        <tr><td>记忆/上下文</td><td class="ok">✅ 正常</td><td>workspace 可正常读写</td></tr>
+        <tr><td><strong>飞书通讯</strong></td><td class="ok">✅ 正常</td><td>Gateway 在主机运行，不在沙箱内</td></tr>
+        <tr><td><strong>消息收发</strong></td><td class="ok">✅ 正常</td><td>同上</td></tr>
+        <tr><td><strong>会话管理</strong></td><td class="ok">✅ 正常</td><td>同上</td></tr>
+        <tr><td><strong>记忆/上下文</strong></td><td class="ok">✅ 正常</td><td>workspace 可正常读写</td></tr>
+        <tr><td><strong>模型调用</strong></td><td class="ok">✅ 正常</td><td>API 调用由 Gateway 处理</td></tr>
+        <tr><td><strong>Skills 执行</strong></td><td class="warn">⚠️ 部分受限</td><td>涉及网络的 skills 需要配置</td></tr>
     </table>
 
-    <p><strong>关键理解：</strong> 沙箱隔离的是 <code>exec</code> 工具，不是 Gateway 本身。Gateway 直接处理的网络请求不受影响。</p>
+    <h3>5.3 网络相关功能说明</h3>
+    <div class="highlight-box">
+        <strong>重要：</strong> 沙箱隔离的是 <code>exec</code> 工具（命令执行），不是 Gateway 本身。
+    </div>
 
-    <h2>五、安全审计清单</h2>
+    <div class="diagram">┌─────────────────────────────────────────────────────────────┐
+│                     Ubuntu 主机                              │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              OpenClaw Gateway                        │   │
+│  │                                                      │   │
+│  │   • 飞书 API 调用 ←── ✅ 正常（主机网络）              │   │
+│  │   • 模型 API 调用 ←── ✅ 正常                         │   │
+│  │   • Web Search API ←── ✅ 正常（如果配置）            │   │
+│  │                                                      │   │
+│  │   ┌──────────────────────────────────────────────┐  │   │
+│  │   │         Docker Sandbox                        │  │   │
+│  │   │                                              │  │   │
+│  │   │   • exec 命令 ←── ❌ 无网络（默认）            │  │   │
+│  │   │   • curl/wget ←── ❌ 无此工具（需自定义镜像）   │  │   │
+│  │   │   • apt-get  ←── ❌ 无网络                     │  │   │
+│  │   │                                              │  │   │
+│  │   └──────────────────────────────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+    <p><strong>结论：</strong></p>
+    <ul>
+        <li>飞书通讯、模型调用等由 Gateway 直接处理的网络请求<strong>不受影响</strong></li>
+        <li>只有通过 <code>exec</code> 工具在沙箱内执行的命令才受网络限制</li>
+    </ul>
+
+    <h2>六、配置步骤回顾</h2>
+
+    <div class="step"><span class="step-title">步骤 1：文件系统限制</span>
+    <pre><code>openclaw config set tools.fs.workspaceOnly true</code></pre></div>
+
+    <div class="step"><span class="step-title">步骤 2：安装 Docker（WSL2）</span>
+    <pre><code>sudo apt update
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER</code></pre></div>
+
+    <div class="step"><span class="step-title">步骤 3：配置 Docker 镜像加速（国内）</span>
+    <pre><code>sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json > /dev/null << 'EOF'
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.xuanyuan.me"
+  ]
+}
+EOF
+sudo service docker restart</code></pre></div>
+
+    <div class="step"><span class="step-title">步骤 4：构建沙箱镜像</span>
+    <pre><code>mkdir -p ~/openclaw-sandbox-build && cd ~/openclaw-sandbox-build
+
+cat > Dockerfile.sandbox << 'EOF'
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    curl \
+    git \
+    jq \
+    python3 \
+    ripgrep \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash sandbox
+USER sandbox
+WORKDIR /home/sandbox
+
+CMD ["sleep", "infinity"]
+EOF
+
+docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .</code></pre></div>
+
+    <div class="step"><span class="step-title">步骤 5：启用沙箱模式</span>
+    <pre><code>openclaw config set agents.defaults.sandbox.mode all</code></pre></div>
+
+    <div class="step"><span class="step-title">步骤 6：验证配置</span>
+    <pre><code>openclaw doctor
+openclaw security audit</code></pre></div>
+
+    <h2>七、可选增强配置</h2>
+
+    <h3>7.1 为沙箱开启网络（如需 Web Search）</h3>
+    <pre><code>openclaw config set agents.defaults.sandbox.docker.network bridge</code></pre>
+
+    <h3>7.2 配置审批模式（额外安全层）</h3>
+    <pre><code>openclaw config set tools.exec.security ask
+openclaw config set tools.exec.ask always</code></pre>
+
+    <h3>7.3 自定义沙箱镜像（添加更多工具）</h3>
+    <p>修改 Dockerfile.sandbox，添加所需工具后重新构建。</p>
+
+    <h2>八、安全审计清单</h2>
+    <p>定期执行以下命令检查安全状态：</p>
     <pre><code># 全面安全审计
 openclaw security audit --deep
 
@@ -169,19 +404,32 @@ docker images | grep openclaw-sandbox
 
 # 检查配置
 openclaw config get tools.fs.workspaceOnly
-openclaw config get agents.defaults.sandbox.mode</code></pre>
+openclaw config get agents.defaults.sandbox.mode
 
-    <h2>六、总结</h2>
+# 健康检查
+openclaw doctor</code></pre>
+
+    <h2>九、故障排查</h2>
+    <table>
+        <tr><th>问题</th><th>可能原因</th><th>解决方案</th></tr>
+        <tr><td>命令执行失败</td><td>沙箱镜像未构建</td><td>运行 <code>docker build</code> 构建镜像</td></tr>
+        <tr><td>文件读写被拒绝</td><td>workspaceOnly 限制</td><td>确认文件在 workspace 目录内</td></tr>
+        <tr><td>网络命令失败</td><td>沙箱无网络</td><td>配置 <code>sandbox.docker.network</code></td></tr>
+        <tr><td>Docker 服务未运行</td><td>WSL 未自动启动</td><td><code>sudo service docker start</code></td></tr>
+    </table>
+
+    <h2>十、总结</h2>
     <p>通过 <strong>文件系统限制 + Docker 沙箱</strong> 的组合：</p>
     <ol>
-        <li><strong>文件层面</strong>：Agent 只能操作 workspace 目录</li>
-        <li><strong>执行层面</strong>：所有命令在隔离容器中运行</li>
-        <li><strong>网络层面</strong>：默认无网络，防止数据外泄</li>
-        <li><strong>功能层面</strong>：核心功能不受影响</li>
+        <li><strong>文件层面</strong>：Agent 只能操作 workspace 目录，无法访问系统文件、配置、密钥、Windows 分区</li>
+        <li><strong>执行层面</strong>：所有命令在隔离容器中运行，即使执行恶意命令也只影响容器</li>
+        <li><strong>网络层面</strong>：默认无网络，防止数据外泄（可按需开启）</li>
+        <li><strong>功能层面</strong>：核心功能（飞书、模型调用）不受影响，仅 exec 内的网络操作受限</li>
     </ol>
     <p>这种配置适合个人助手场景，在安全性和可用性之间取得了良好平衡。</p>
 
-    <hr>
-    <p style="color: #7f8c8d; font-style: italic;">本文档由 Damon 整理，Nemo 人机知识化</p>
+    <div class="footer">
+        本文档由 Damon 整理，Nemo 人机知识化
+    </div>
 </body>
 </html>
