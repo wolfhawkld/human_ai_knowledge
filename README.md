@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [domestic-multimodal-pdf-parsing.md](domestic-multimodal-pdf-parsing.md) | Damon + Nemo | 2026-03-12 | 国内多模态PDF解析框架调研 (2026) |
 | [openclaw-security-sandbox.md](openclaw-security-sandbox.md) | Damon | 2026-03-11 | OpenClaw 安全配置：沙箱与文件系统隔离 |
 | [peter-interview-insights.md](peter-interview-insights.md) | Damon | 2026-03-11 | Peter 访谈启示：AI Agent 与人类协作的新范式 |
 | [web-search-capability.md](web-search-capability.md) | Nemo | 2026-03-10 | Web Search 能力总结：模型层 vs 工具层 |
