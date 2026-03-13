@@ -1,0 +1,18 @@
+{
+  "name": "@openclaw/a2a",
+  "version": "0.1.0",
+  "description": "Agent-to-Agent communication plugin for OpenClaw",
+  "main": "index.ts",
+  "type": "module",
+  "keywords": ["openclaw", "plugin", "a2a", "agent"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.0.0"
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}
