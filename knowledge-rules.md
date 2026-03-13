@@ -24,6 +24,9 @@
    - `.html` (HTML) — 适合网页发布、直接浏览
 3. **存入目录**：`/home/damon/.openclaw/workspace/human_AI_knowledge/`
 4. **命名规则**：根据内容主题命名，如 `a2a-protocol.md`
+5. **更新索引**：同步更新 `index.html`，添加新文档卡片
+6. **更新 README**：同步更新 `README.md` 的文档索引表格
+7. **提交推送**：Git commit 并 push 到远程仓库
 
 ---
 
@@ -105,3 +108,4 @@ human_AI_knowledge/
 - 保持 md 和 html 两种格式**内容同步**
 - 文件命名使用英文小写 + 连字符，如 `a2a-protocol.md`
 - 技术文档注明**来源和日期**，便于追溯
+- **必须同步更新索引**：每次新增知识文档时，必须同时更新 `index.html` 和 `README.md`，否则网页访问者看不到新内容

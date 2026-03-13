@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人机知识库规则</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      color: #333;
+      background: #fafafa;
+    }
+    h1 { color: #1a1a2e; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+    h2 { color: #16213e; margin-top: 40px; border-left: 4px solid #667eea; padding-left: 12px; }
+    h3 { color: #0f3460; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #16213e; color: white; }
+    tr:nth-child(even) { background: #f8f8f8; }
+    code { background: #e8e8e8; padding: 2px 6px; border-radius: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; }
+    pre { background: #1a1a2e; color: #66eeaa; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; }
+    blockquote { border-left: 4px solid #667eea; margin: 20px 0; padding: 10px 20px; background: #fff; color: #666; }
+    .meta { background: #eef2ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+    .summary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-top: 40px; }
+    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+    hr { border: none; border-top: 2px solid #eee; margin: 30px 0; }
+    ul, ol { margin-left: 20px; }
+    li { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<h1>📚 人机知识库规则</h1>
+
+<div class="meta">
+  <strong>目的：</strong>定义"人机知识"触发机制的工作方式，便于跨 agent 共享
+</div>
+
+<hr>
+
+<h2>触发条件</h2>
+
+<p>当用户提到以下关键词时，触发知识文档生成：</p>
+
+<ul>
+  <li><code>"人机知识"</code></li>
+  <li><code>"生成人机知识"</code></li>
+  <li>或类似表述</li>
+</ul>
+
+<hr>
+
+<h2>执行动作</h2>
+
+<p>触发后，agent 执行以下操作：</p>
+
+<ol>
+  <li><strong>整理内容</strong>：将之前的回答内容整理成结构化的知识文档</li>
+  <li><strong>生成双格式</strong>：
+    <ul>
+      <li><code>.md</code> (Markdown) — 适合 agent 间共享、版本控制</li>
+      <li><code>.html</code> (HTML) — 适合网页发布、直接浏览</li>
+    </ul>
+  </li>
+  <li><strong>存入目录</strong>：<code>/home/damon/.openclaw/workspace/human_ai_knowledge/</code></li>
+  <li><strong>命名规则</strong>：根据内容主题命名，如 <code>a2a-protocol.md</code></li>
+  <li><strong>更新索引</strong>：同步更新 <code>index.html</code>，添加新文档卡片</li>
+  <li><strong>更新 README</strong>：同步更新 <code>README.md</code> 的文档索引表格</li>
+  <li><strong>提交推送</strong>：Git commit 并 push 到远程仓库</li>
+</ol>
+
+<hr>
+
+<h2>目录结构</h2>
+
+<pre>
+human_ai_knowledge/
+├── openclaw-features.md
+├── openclaw-features.html
+├── a2a-protocol.md
+├── a2a-protocol.html
+├── ...（按需新增）
+├── index.html        ← 必须同步更新
+└── README.md         ← 必须同步更新
+</pre>
+
+<hr>
+
+<h2>文档规范</h2>
+
+<h3>Markdown 格式要求</h3>
+
+<pre>
+# 标题
+
+> 元信息：来源、日期、版本等
+
+---
+
+## 概述
+简要说明主题
+
+---
+
+## 核心内容
+...
+
+---
+
+## 相关资源
+链接、参考资料
+
+---
+
+## 一句话总结
+便于快速理解
+</pre>
+
+<h3>HTML 格式要求</h3>
+
+<ul>
+  <li>完整的 HTML5 文档</li>
+  <li>内嵌 CSS 样式，无外部依赖</li>
+  <li>响应式设计，适配移动端</li>
+  <li>美观的排版和配色</li>
+</ul>
+
+<hr>
+
+<h2>设计目的</h2>
+
+<table>
+  <tr><th>目的</th><th>说明</th></tr>
+  <tr><td>跨 agent 共享</td><td>Damon 的多个 AI 伙伴（Outis、Nemo 等）可共享同一知识库</td></tr>
+  <tr><td>跨机器同步</td><td>通过 git/云盘同步到不同机器</td></tr>
+  <tr><td>公开发布</td><td>HTML 文件可直接部署到网站，供他人查阅</td></tr>
+  <tr><td>知识沉淀</td><td>将问答内容转化为可复用的知识资产</td></tr>
+</table>
+
+<hr>
+
+<h2>适用场景</h2>
+
+<ul>
+  <li>技术概念解释（如 A2A 协议）</li>
+  <li>工具使用指南（如 OpenClaw 功能）</li>
+  <li>故障排查经验</li>
+  <li>最佳实践总结</li>
+  <li>任何值得沉淀的知识</li>
+</ul>
+
+<hr>
+
+<h2>注意事项</h2>
+
+<ul>
+  <li>文档内容应<strong>简洁且完整</strong>，避免过于冗长</li>
+  <li>保持 md 和 html 两种格式<strong>内容同步</strong></li>
+  <li>文件命名使用英文小写 + 连字符，如 <code>a2a-protocol.md</code></li>
+  <li>技术文档注明<strong>来源和日期</strong>，便于追溯</li>
+</ul>
+
+<div class="warning">
+  <strong>⚠️ 重要：</strong>每次新增知识文档时，<strong>必须同时更新</strong> <code>index.html</code> 和 <code>README.md</code>，否则网页访问者看不到新内容！
+</div>
+
+<hr>
+
+<div class="summary">
+  <strong>一句话总结</strong><br><br>
+  "人机知识"触发器让 agent 自动将问答沉淀为可共享、可发布的知识文档，记得同步更新索引文件。
+</div>
+
+</body>
+</html>
