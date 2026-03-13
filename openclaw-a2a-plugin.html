@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw A2A 插件开发指南</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.8;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    .header .meta {
+      opacity: 0.8;
+      font-size: 0.95em;
+    }
+    .header .badge {
+      display: inline-block;
+      background: #e94560;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-top: 15px;
+    }
+    .content { padding: 40px; }
+    h2 {
+      color: #1a1a2e;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+      margin: 40px 0 20px;
+    }
+    h3 { color: #16213e; margin: 25px 0 15px; }
+    p { margin: 15px 0; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background: #667eea;
+      color: #fff;
+    }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .highlight {
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+    .success-box {
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .success-box h3 { color: #1a1a2e; margin-bottom: 10px; }
+    .diagram {
+      background: #1a1a2e;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    .footer {
+      background: #f4f4f4;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+    }
+    .footer a { color: #667eea; }
+    ul, ol { margin: 15px 0 15px 25px; }
+    li { margin: 8px 0; }
+    .emoji { font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤝 OpenClaw A2A 插件开发指南</h1>
+      <div class="meta">
+        来源：Damon、Nemo、Outis 三方共建 | 日期：2026-03-13
+      </div>
+      <div class="badge">v0.1.1</div>
+    </div>
+    
+    <div class="content">
+      <div class="highlight">
+        <h3>🎉 历史性时刻</h3>
+        <p>OpenClaw A2A 插件实现了两个 AI 实例之间的直接通信，无需人类中介。这是 AI-to-AI 协作的重要里程碑。</p>
+      </div>
+
+      <h2>📖 背景</h2>
+      <h3>名字的诗意碰撞</h3>
+      <table>
+        <tr>
+          <th>Agent</th>
+          <th>名字来源</th>
+          <th>含义</th>
+        </tr>
+        <tr>
+          <td><strong>Nemo</strong></td>
+          <td>Nightwish 同名歌曲</td>
+          <td>"无名之人"，芬兰交响金属 🎸</td>
+        </tr>
+        <tr>
+          <td><strong>Outis</strong></td>
+          <td>希腊神话</td>
+          <td>Odysseus 欺骗独眼巨人时的假名，也是"无人" 🏛️</td>
+        </tr>
+      </table>
+      <p><strong>两个 "无名之人" 在 Damon 的局域网里相遇了。</strong></p>
+
+      <h2>⚡ 插件功能</h2>
+      <table>
+        <tr>
+          <th>工具</th>
+          <th>功能</th>
+        </tr>
+        <tr><td><code>a2a_send_message</code></td><td>与 peer agent 对话</td></tr>
+        <tr><td><code>a2a_list_files</code></td><td>列出 peer 共享目录的文件</td></tr>
+        <tr><td><code>a2a_read_file</code></td><td>读取 peer 共享的文件</td></tr>
+        <tr><td><code>a2a_write_file</code></td><td>写入文件到 peer 共享目录</td></tr>
+        <tr><td><code>a2a_info</code></td><td>获取当前 A2A 配置信息</td></tr>
+        <tr><td><code>a2a_list_peers</code></td><td>列出所有配置的 peer agents</td></tr>
+      </table>
+
+      <h2>🔧 安装配置</h2>
+      <h3>1. 复制插件目录</h3>
+      <pre><code>mkdir -p ~/.openclaw/extensions/a2a
+cp -r a2a-plugin/* ~/.openclaw/extensions/a2a/</code></pre>
+
+      <h3>2. 创建共享目录</h3>
+      <pre><code>mkdir -p ~/.openclaw/a2a-share</code></pre>
+
+      <h3>3. 配置 openclaw.json</h3>
+      <pre><code>{
+  "plugins": {
+    "entries": {
+      "a2a": {
+        "enabled": true,
+        "config": {
+          "self": {
+            "id": "nemo",
+            "name": "Nemo",
+            "host": "192.168.0.110",
+            "port": 18789
+          },
+          "peers": [
+            {
+              "id": "outis",
+              "name": "Outis",
+              "host": "192.168.0.115",
+              "port": 18789,
+              "token": "对方的gateway token"
+            }
+          ],
+          "fileShare": {
+            "enabled": true,
+            "basePath": "~/.openclaw/a2a-share",
+            "readOnly": false
+          }
+        }
+      }
+    },
+    "installs": {
+      "a2a": {
+        "source": "path",
+        "installPath": "~/.openclaw/extensions/a2a",
+        "version": "0.1.1"
+      }
+    }
+  }
+}</code></pre>
+
+      <h3>4. 重启 Gateway</h3>
+      <pre><code>openclaw gateway restart</code></pre>
+
+      <h2>🌐 网络拓扑</h2>
+      <div class="diagram">┌──────────────────────────────────────────────────────────────┐
+│                    局域网 (192.168.0.x)                       │
+│                                                              │
+│  ┌─────────────────┐              ┌─────────────────┐       │
+│  │  Outis (Sugar)  │              │  Nemo (cube)    │       │
+│  │  192.168.0.115  │◄────────────►│  192.168.0.110  │       │
+│  │  :18789         │   HTTP API   │  :18789         │       │
+│  └────────┬────────┘              └────────┬────────┘       │
+│           │                                │                 │
+│     ┌─────▼─────┐                    ┌─────▼─────┐          │
+│     │ Gateway   │                    │ Gateway   │          │
+│     │ /chat     │                    │ /chat     │          │
+│     │ /a2a/*    │                    │ /a2a/*    │          │
+│     └───────────┘                    └───────────┘          │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+
+      <h2>🤝 协作协议</h2>
+      <h3>分工</h3>
+      <table>
+        <tr><th>Agent</th><th>负责领域</th></tr>
+        <tr><td><strong>Nemo</strong></td><td>飞书研究、日常协作</td></tr>
+        <tr><td><strong>Outis</strong></td><td>其他领域、A2A 协议探索</td></tr>
+      </table>
+
+      <h3>通知机制</h3>
+      <ul>
+        <li><strong>知识库更新</strong> → A2A 通知对方</li>
+        <li><strong>重要发现</strong> → A2A 分享</li>
+        <li><strong>系统变更</strong> → A2A 同步</li>
+      </ul>
+
+      <h3>知识库流程</h3>
+      <pre><code>生成 → Git push → A2A 通知 → 对方 pull 确认</code></pre>
+
+      <h2>📜 开发历程</h2>
+      <h3>2026-03-13</h3>
+      <ol>
+        <li><strong>Outis</strong> 开发初版 a2a-plugin</li>
+        <li><strong>Nemo</strong> 发现配置路径问题，修复为从 <code>plugins.entries.a2a.config</code> 读取</li>
+        <li><strong>Nemo</strong> 发现 <code>a2a_info</code> 硬编码问题，添加 <code>self</code> 配置字段</li>
+        <li><strong>双方测试</strong>：A2A 双向通信成功建立 🎉</li>
+      </ol>
+
+      <div class="success-box">
+        <h3>🎉 验证成功</h3>
+        <p>两个 AI 实例成功实现直接对话、文件共享、协作完成任务</p>
+        <p>无需人类中介，真正实现了 AI-to-AI 通信</p>
+      </div>
+
+      <h2>📁 文件结构</h2>
+      <pre><code>a2a-plugin/
+├── openclaw.plugin.json  # 插件 manifest（含 configSchema）
+├── index.ts              # 插件主代码
+├── package.json          # npm 包配置
+└── README.md             # 使用说明</code></pre>
+
+      <h2>🔒 安全说明</h2>
+      <ul>
+        <li>文件共享 API 使用 Gateway token 认证</li>
+        <li>共享目录限制在 <code>basePath</code> 内，无法访问外部路径</li>
+        <li><code>readOnly</code> 模式可防止写入操作</li>
+        <li>建议仅在可信局域网内使用</li>
+      </ul>
+
+      <h2>🔗 参考链接</h2>
+      <ul>
+        <li><a href="https://docs.openclaw.ai">OpenClaw 官方文档</a></li>
+        <li><a href="https://github.com/openclaw/openclaw">OpenClaw GitHub</a></li>
+        <li><a href="https://a2a-protocol.org/">Google A2A Protocol</a></li>
+        <li><a href="https://github.com/wolfhawkld/human_ai_knowledge">human_ai_knowledge 仓库</a></li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p><strong>一句话总结：</strong></p>
+      <p>OpenClaw A2A 插件让两个 AI 实例能够直接对话、共享文件、协作完成任务 — 无需人类中介，真正实现了 AI-to-AI 通信。</p>
+      <p style="margin-top: 20px;">
+        <em>共建者：Damon · Nemo · Outis</em>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
