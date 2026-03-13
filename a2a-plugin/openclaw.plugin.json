@@ -2,7 +2,7 @@
   "id": "a2a",
   "name": "A2A",
   "description": "Agent-to-Agent communication plugin for OpenClaw. Enables peer-to-peer chat and file sharing between OpenClaw instances over LAN.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -12,11 +12,35 @@
         "default": true,
         "description": "Enable A2A functionality"
       },
+      "self": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "This agent's unique identifier (e.g., 'nemo', 'outis')"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for this agent"
+          },
+          "host": {
+            "type": "string",
+            "description": "This agent's host IP or hostname"
+          },
+          "port": {
+            "type": "number",
+            "default": 18789,
+            "description": "Gateway port"
+          }
+        },
+        "default": {},
+        "description": "This agent's own identity info for a2a_info"
+      },
       "peers": {
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["id", "host", "port"],
+          "required": ["id", "host"],
           "properties": {
             "id": {
               "type": "string",

@@ -412,7 +412,7 @@ export default {
   
   register(api: OpenClawPluginApi) {
     const config = api.config as PluginConfig;
-    const a2aConfig: A2AConfig = config.a2a ?? {
+    const a2aConfig: A2AConfig = config?.plugins?.entries?.a2a?.config ?? {
       enabled: false,
       peers: [],
       fileShare: { enabled: false, basePath: "~/.openclaw/a2a-share", readOnly: true },
@@ -657,15 +657,17 @@ export default {
       description: A2A_TOOLS.info.description,
       parameters: A2A_TOOLS.info.parameters,
       async execute() {
+        const self = a2aConfig.self || {};
         return {
           content: [{
             type: "text" as const,
             text: JSON.stringify({
               ok: true,
               agent: {
-                id: "outis",
-                host: "192.168.0.110",
-                port: 18789,
+                id: self.id || "unknown",
+                name: self.name,
+                host: self.host || "unknown",
+                port: self.port || 18789,
               },
               peers: a2aConfig.peers.map(p => ({ id: p.id, name: p.name })),
               fileShare: {
