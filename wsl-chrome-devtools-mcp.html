@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSL + Chrome DevTools MCP 自动化配置指南</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        h3 { color: #555; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code { background: none; padding: 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .success { color: #27ae60; font-weight: bold; }
+        .fail { color: #e74c3c; font-weight: bold; }
+        .warning { color: #f39c12; font-weight: bold; }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #f0f8ff;
+        }
+        .meta {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WSL + Chrome DevTools MCP 自动化配置指南</h1>
+    
+    <div class="meta">
+        <strong>测试日期：</strong>2026-03-15<br>
+        <strong>测试环境：</strong>WSL2 on Windows, OpenClaw 2026.3.13, Claude Code
+    </div>
+
+    <h2>背景</h2>
+    <p>在 WSL 环境中使用 AI Agent（如 Claude Code）操作 Windows 上的 Chrome 浏览器进行自动化任务（如 12306 订票），需要解决 WSL 与 Windows 之间的网络隔离问题。</p>
+
+    <h2>问题</h2>
+    <ol>
+        <li><strong>WSL2 默认使用 NAT 网络模式</strong>，WSL 和 Windows 有不同的 IP 地址</li>
+        <li><strong>Chrome DevTools MCP 无法直接连接 Windows Chrome</strong>，因为 localhost 不互通</li>
+        <li><strong>代理配置复杂</strong>，WSL 无法自动使用 Windows 的 Clash 等代理</li>
+    </ol>
+
+    <h2>解决方案：WSL Mirrored 模式</h2>
+
+    <h3>开启方法</h3>
+    <p>在 Windows 用户目录下创建或编辑 <code>%USERPROFILE%\.wslconfig</code>：</p>
+    <pre><code>[wsl2]
+networkingMode=mirrored</code></pre>
+    <p>然后重启 WSL：</p>
+    <pre><code>wsl --shutdown</code></pre>
+
+    <h3>Mirrored vs NAT 对比</h3>
+    <table>
+        <tr>
+            <th>特性</th>
+            <th>NAT 模式（默认）</th>
+            <th>Mirrored 模式</th>
+        </tr>
+        <tr>
+            <td>IP 地址</td>
+            <td>WSL 有独立虚拟 IP</td>
+            <td>WSL 直接使用 Windows IP</td>
+        </tr>
+        <tr>
+            <td>localhost 互通</td>
+            <td class="fail">❌ 需要端口转发</td>
+            <td class="success">✅ 直接互通</td>
+        </tr>
+        <tr>
+            <td>代理继承</td>
+            <td class="fail">❌ 需手动配置</td>
+            <td class="success">✅ 自动继承 Windows 代理</td>
+        </tr>
+        <tr>
+            <td>Chrome 调试端口</td>
+            <td class="fail">❌ 无法直接访问</td>
+            <td class="success">✅ 可以直接访问</td>
+        </tr>
+        <tr>
+            <td>局域网访问</td>
+            <td class="success">✅ 正常</td>
+            <td class="warning">⚠️ 可能有变化</td>
+        </tr>
+    </table>
+
+    <h3>Claude Code 配置</h3>
+    <p>在 Mirrored 模式下，使用 <code>chrome-devtools-mcp-bridge</code> 连接 Windows Chrome：</p>
+    <pre><code>{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp-bridge@latest", "--browser-url=http://127.0.0.1:9222"]
+    }
+  }
+}</code></pre>
+
+    <h3>Windows Chrome 启动（带调试端口）</h3>
+    <pre><code># PowerShell
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir=%TEMP%\chrome-debug</code></pre>
+    <p>或手动在 Chrome 地址栏访问 <code>chrome://inspect/#remote-debugging</code> 启用远程调试。</p>
+
+    <h2>注意事项</h2>
+
+    <h3>Mirrored 模式的影响</h3>
+    <ol>
+        <li><strong>网络变化</strong> — 开启后可能影响局域网设备访问（如其他 AI 实例 Nemo）</li>
+        <li><strong>代理自动继承</strong> — Windows 的 Clash/Clash Verge 代理会自动生效</li>
+        <li><strong>防火墙</strong> — 可能需要调整 Windows 防火墙规则</li>
+    </ol>
+
+    <h3>推荐使用场景</h3>
+    <ul>
+        <li><strong>需要时开启 Mirrored</strong> — 进行浏览器自动化任务</li>
+        <li><strong>完成后切回 NAT</strong> — 恢复正常的局域网访问和 OpenClaw 连接</li>
+    </ul>
+
+    <h3>切换回 NAT 模式</h3>
+    <p>编辑 <code>.wslconfig</code>，注释或删除 <code>networkingMode</code>：</p>
+    <pre><code>[wsl2]
+# networkingMode=mirrored</code></pre>
+    <p>然后 <code>wsl --shutdown</code> 重启。</p>
+
+    <h2>测试结果</h2>
+    <table>
+        <tr>
+            <th>测试项</th>
+            <th>NAT 模式</th>
+            <th>Mirrored 模式</th>
+        </tr>
+        <tr>
+            <td>访问 OpenClaw Gateway</td>
+            <td class="success">✅ 正常</td>
+            <td class="fail">❌ 可能受影响</td>
+        </tr>
+        <tr>
+            <td>WSL Claude Code → Windows Chrome</td>
+            <td class="fail">❌ 无法连接</td>
+            <td class="success">✅ 正常</td>
+        </tr>
+        <tr>
+            <td>代理访问 Google/YouTube</td>
+            <td class="fail">❌ 需手动配置</td>
+            <td class="success">✅ 自动继承</td>
+        </tr>
+        <tr>
+            <td>局域网设备（如 Nemo）</td>
+            <td class="success">✅ 可达</td>
+            <td class="warning">⚠️ 需重新测试</td>
+        </tr>
+    </table>
+
+    <h2>总结</h2>
+    <ul>
+        <li>Mirrored 模式解决了 WSL 与 Windows 的网络隔离问题，适合浏览器自动化场景</li>
+        <li>NAT 模式保持网络独立性，适合日常 OpenClaw 使用</li>
+        <li>根据实际需求灵活切换两种模式</li>
+    </ul>
+
+    <h2>相关链接</h2>
+    <ul>
+        <li><a href="https://github.com/ChromeDevTools/chrome-devtools-mcp">Chrome DevTools MCP</a></li>
+        <li><a href="https://learn.microsoft.com/zh-cn/windows/wsl/networking">WSL 网络配置</a></li>
+        <li><a href="https://docs.openclaw.ai/tools/browser">OpenClaw Browser 文档</a></li>
+    </ul>
+</body>
+</html>
