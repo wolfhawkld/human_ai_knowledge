@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw 三种 Session 模式</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        h3 { color: #555; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code { background: none; padding: 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .success { color: #27ae60; font-weight: bold; }
+        .fail { color: #e74c3c; font-weight: bold; }
+        .warning { color: #f39c12; font-weight: bold; }
+        .meta {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenClaw 三种 Session 模式</h1>
+    
+    <div class="meta">
+        <strong>整理日期：</strong>2026-03-17<br>
+        <strong>来源：</strong>OpenClaw 官方文档
+    </div>
+
+    <h2>概览</h2>
+    <p>OpenClaw 支持三种 session 类型，通过 session key 格式区分：</p>
+    
+    <table>
+        <tr>
+            <th>模式</th>
+            <th>Session Key 格式</th>
+            <th>运行时</th>
+        </tr>
+        <tr>
+            <td><strong>Main</strong></td>
+            <td><code>agent:&lt;id&gt;:main</code></td>
+            <td>OpenClaw native</td>
+        </tr>
+        <tr>
+            <td><strong>Subagent</strong></td>
+            <td><code>agent:&lt;id&gt;:subagent:&lt;uuid&gt;</code></td>
+            <td>OpenClaw native</td>
+        </tr>
+        <tr>
+            <td><strong>ACP</strong></td>
+            <td><code>agent:&lt;id&gt;:acp:&lt;uuid&gt;</code></td>
+            <td>外部 harness</td>
+        </tr>
+    </table>
+
+    <h2>1. Main Session（主会话）</h2>
+    
+    <h3>定义</h3>
+    <ul>
+        <li>OpenClaw 的<strong>主对话入口</strong></li>
+        <li>所有直接聊天（DM）默认归入 main session</li>
+        <li>群聊有独立的 session key，但概念上属于 main agent 的上下文</li>
+    </ul>
+
+    <h3>特点</h3>
+    <ul>
+        <li><strong>持久性</strong>：历史、记忆、状态持续保存</li>
+        <li><strong>共享上下文</strong>：所有 DM 共享同一个会话（可通过 <code>dmScope</code> 配置隔离）</li>
+        <li><strong>默认入口</strong>：用户发消息首先进入 main session</li>
+    </ul>
+
+    <h3>适用场景</h3>
+    <ul>
+        <li>日常对话和问答</li>
+        <li>多轮对话需要上下文连续性</li>
+        <li>访问 agent 的记忆、文件、工具</li>
+    </ul>
+
+    <h3>触发方式</h3>
+    <ul>
+        <li>直接在任意渠道发消息给 agent</li>
+        <li>私聊自动归入 main session</li>
+    </ul>
+
+    <h2>2. Subagent Session（子代理）</h2>
+    
+    <h3>定义</h3>
+    <ul>
+        <li>从 main session <strong>派生</strong>的独立 agent 运行</li>
+        <li>拥有独立的 session、上下文、工具执行</li>
+        <li>完成后<strong>汇报结果</strong>回 requester</li>
+    </ul>
+
+    <h3>特点</h3>
+    <ul>
+        <li><strong>隔离性</strong>：独立 session，不污染 main 上下文</li>
+        <li><strong>并行能力</strong>：可同时运行多个 subagent</li>
+        <li><strong>结果回传</strong>：完成后自动通知 main session</li>
+    </ul>
+
+    <h3>生命周期模式</h3>
+    <table>
+        <tr>
+            <th>mode</th>
+            <th>说明</th>
+        </tr>
+        <tr>
+            <td><code>run</code> (oneshot)</td>
+            <td>一次性执行，完成后结束</td>
+        </tr>
+        <tr>
+            <td><code>session</code> (persistent)</td>
+            <td>持久会话，绑定 thread 可继续对话</td>
+        </tr>
+    </table>
+
+    <h3>适用场景</h3>
+    <ul>
+        <li><strong>耗时任务</strong>：研究、代码分析、文件处理</li>
+        <li><strong>并行工作</strong>：同时处理多个独立任务</li>
+        <li><strong>上下文隔离</strong>：避免长任务污染 main session</li>
+    </ul>
+
+    <h3>触发方式</h3>
+    <pre><code>/subagents spawn &lt;agentId&gt; &lt;task&gt;</code></pre>
+    <p>或通过 <code>sessions_spawn</code> 工具</p>
+
+    <h2>3. ACP Session（Agent Client Protocol）</h2>
+    
+    <h3>定义</h3>
+    <ul>
+        <li><strong>外部编码 harness</strong> 的运行实例</li>
+        <li>通过 ACP 协议集成 Codex、Claude Code、Gemini CLI 等工具</li>
+        <li>由 ACP backend plugin（如 acpx）管理</li>
+    </ul>
+
+    <h3>特点</h3>
+    <ul>
+        <li><strong>专业编码能力</strong>：调用外部 harness 的完整功能</li>
+        <li><strong>原生体验</strong>：使用 harness 自己的工具链和生态</li>
+        <li><strong>Thread 绑定</strong>：可绑定到 Discord/Telegram thread，实现持久对话</li>
+    </ul>
+
+    <h3>生命周期模式</h3>
+    <table>
+        <tr>
+            <th>mode</th>
+            <th>说明</th>
+        </tr>
+        <tr>
+            <td><code>oneshot</code></td>
+            <td>一次性执行，返回结果</td>
+        </tr>
+        <tr>
+            <td><code>persistent</code></td>
+            <td>持久会话，thread 绑定，可多轮对话</td>
+        </tr>
+    </table>
+
+    <h3>适用场景</h3>
+    <ul>
+        <li><strong>代码开发</strong>：Codex、Claude Code 编程任务</li>
+        <li><strong>复杂工程</strong>：需要完整 IDE 体验的任务</li>
+        <li><strong>多轮编程</strong>：绑定 thread 进行持续开发</li>
+    </ul>
+
+    <h3>触发方式</h3>
+    <pre><code>/acp spawn codex --mode persistent --thread auto</code></pre>
+    <p>或通过 <code>sessions_spawn(runtime: "acp")</code></p>
+
+    <h2>对比总结</h2>
+    
+    <h3>功能维度</h3>
+    <table>
+        <tr>
+            <th>维度</th>
+            <th>Main</th>
+            <th>Subagent</th>
+            <th>ACP</th>
+        </tr>
+        <tr>
+            <td>运行时</td>
+            <td>OpenClaw native</td>
+            <td>OpenClaw native</td>
+            <td>外部 harness</td>
+        </tr>
+        <tr>
+            <td>上下文隔离</td>
+            <td class="fail">❌ 共享</td>
+            <td class="success">✅ 独立</td>
+            <td class="success">✅ 独立</td>
+        </tr>
+        <tr>
+            <td>并行执行</td>
+            <td class="fail">❌ 单线程</td>
+            <td class="success">✅ 支持</td>
+            <td class="success">✅ 支持</td>
+        </tr>
+        <tr>
+            <td>结果回传</td>
+            <td>-</td>
+            <td class="success">✅ 自动</td>
+            <td class="success">✅ 自动</td>
+        </tr>
+        <tr>
+            <td>Thread 绑定</td>
+            <td>-</td>
+            <td class="success">✅ 可选</td>
+            <td class="success">✅ 推荐</td>
+        </tr>
+        <tr>
+            <td>编码能力</td>
+            <td>基础</td>
+            <td>基础</td>
+            <td><strong>专业</strong></td>
+        </tr>
+    </table>
+
+    <h3>适用场景对比</h3>
+    <table>
+        <tr>
+            <th>场景</th>
+            <th>推荐模式</th>
+            <th>原因</th>
+        </tr>
+        <tr>
+            <td>日常对话</td>
+            <td>Main</td>
+            <td>上下文连续，记忆共享</td>
+        </tr>
+        <tr>
+            <td>快速问答</td>
+            <td>Main</td>
+            <td>直接入口，无需额外配置</td>
+        </tr>
+        <tr>
+            <td>后台研究任务</td>
+            <td>Subagent</td>
+            <td>隔离上下文，并行执行</td>
+        </tr>
+        <tr>
+            <td>文件分析</td>
+            <td>Subagent</td>
+            <td>耗时操作，不阻塞 main</td>
+        </tr>
+        <tr>
+            <td>代码开发</td>
+            <td>ACP</td>
+            <td>专业工具链，完整 IDE 体验</td>
+        </tr>
+        <tr>
+            <td>多轮编程讨论</td>
+            <td>ACP (persistent)</td>
+            <td>Thread 绑定，持续开发</td>
+        </tr>
+        <tr>
+            <td>单次代码任务</td>
+            <td>ACP (oneshot)</td>
+            <td>执行后返回结果</td>
+        </tr>
+    </table>
+
+    <h3>Session Key 示例</h3>
+    <pre><code># Main session
+agent:main:main                    # main agent 的主会话
+agent:main:discord:123456789       # main agent 的 Discord 群聊
+
+# Subagent session
+agent:main:subagent:a1b2c3d4-...   # 派生的 subagent
+
+# ACP session
+agent:main:acp:e5f6g7h8-...        # Codex/Claude Code 会话</code></pre>
+
+    <h2>最佳实践</h2>
+    
+    <h3>选择建议</h3>
+    <ol>
+        <li><strong>默认用 Main</strong>：日常对话直接在 main session 进行</li>
+        <li><strong>长任务用 Subagent</strong>：避免阻塞 main，保持响应</li>
+        <li><strong>编码用 ACP</strong>：需要完整开发工具链时选择 ACP</li>
+    </ol>
+
+    <h3>Thread 绑定</h3>
+    <p>对于 Discord/Telegram，推荐：</p>
+    <ul>
+        <li><strong>Subagent</strong>：<code>mode: "session"</code> + <code>thread: true</code> 实现持久对话</li>
+        <li><strong>ACP</strong>：<code>mode: "persistent"</code> + <code>thread: auto</code> 绑定 thread</li>
+    </ul>
+
+    <h3>资源管理</h3>
+    <ul>
+        <li>Main session：持续运行，注意 token 消耗</li>
+        <li>Subagent：完成任务后自动清理</li>
+        <li>ACP：根据 mode 决定生命周期，oneshot 自动结束</li>
+    </ul>
+
+    <h2>相关链接</h2>
+    <ul>
+        <li><a href="https://docs.openclaw.ai">OpenClaw Docs</a></li>
+        <li><a href="https://docs.openclaw.ai/tools/subagents">Sub-agents</a></li>
+        <li><a href="https://docs.openclaw.ai/tools/acp-agents">ACP Agents</a></li>
+        <li><a href="https://docs.openclaw.ai/concepts/session">Session Management</a></li>
+    </ul>
+</body>
+</html>
