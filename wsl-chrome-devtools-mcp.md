@@ -97,6 +97,33 @@ wsl --shutdown
 | 代理访问 Google/YouTube | ❌ 需手动配置 | ✅ 自动继承 |
 | 局域网设备（如 Nemo） | ✅ 可达 | ⚠️ 需重新测试 |
 
+### 实际测试案例：12306 自动购票（2026-03-15）
+
+**测试环境**：WSL2 + Claude Code + chrome-devtools-mcp-bridge → Windows Chrome
+
+**结果**：✅ 成功完成自动购票流程，基本一次流程就走完了
+
+**副作用**：⚠️ Mirrored 模式开启后，**无法访问局域网其他 AI 实例（如 Outis）**
+
+> 这是 Mirrored 模式网络架构的固有限制：WSL 不再有独立 IP，局域网设备无法直接访问 WSL 内的服务。
+
+## 替代方案：Windows 原生方式
+
+考虑到 Mirrored 模式对 A2A 通信的影响，推荐使用 **Windows 原生方式** 进行浏览器自动化：
+
+### 方案对比
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| WSL + MCP Bridge | Agent 环境统一在 WSL | 需切换网络模式，阻断 A2A |
+| Windows 原生 (VSCode + Claude Code) | 无网络隔离问题 | Agent 环境分散 |
+
+### Windows 原生配置
+
+直接在 Windows 上安装 VSCode + Claude Code 插件，原生连接 Chrome DevTools，无需 WSL 网络配置。
+
+**推荐场景**：需要频繁进行浏览器自动化时，优先使用 Windows 原生方式，保持 WSL 在 NAT 模式下的正常 A2A 通信。
+
 ## 总结
 
 - Mirrored 模式解决了 WSL 与 Windows 的网络隔离问题，适合浏览器自动化场景

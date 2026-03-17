@@ -186,6 +186,40 @@ networkingMode=mirrored</code></pre>
         </tr>
     </table>
 
+    <h3>实际测试案例：12306 自动购票（2026-03-15）</h3>
+    <p><strong>测试环境：</strong>WSL2 + Claude Code + chrome-devtools-mcp-bridge → Windows Chrome</p>
+    <p><strong>结果：</strong><span class="success">✅ 成功完成自动购票流程，基本一次流程就走完了</span></p>
+    <p><strong>副作用：</strong><span class="warning">⚠️ Mirrored 模式开启后，无法访问局域网其他 AI 实例（如 Outis）</span></p>
+    <blockquote>
+        这是 Mirrored 模式网络架构的固有限制：WSL 不再有独立 IP，局域网设备无法直接访问 WSL 内的服务。
+    </blockquote>
+
+    <h2>替代方案：Windows 原生方式</h2>
+    <p>考虑到 Mirrored 模式对 A2A 通信的影响，推荐使用 <strong>Windows 原生方式</strong> 进行浏览器自动化：</p>
+
+    <h3>方案对比</h3>
+    <table>
+        <tr>
+            <th>方案</th>
+            <th>优点</th>
+            <th>缺点</th>
+        </tr>
+        <tr>
+            <td>WSL + MCP Bridge</td>
+            <td>Agent 环境统一在 WSL</td>
+            <td>需切换网络模式，阻断 A2A</td>
+        </tr>
+        <tr>
+            <td>Windows 原生 (VSCode + Claude Code)</td>
+            <td>无网络隔离问题</td>
+            <td>Agent 环境分散</td>
+        </tr>
+    </table>
+
+    <h3>Windows 原生配置</h3>
+    <p>直接在 Windows 上安装 VSCode + Claude Code 插件，原生连接 Chrome DevTools，无需 WSL 网络配置。</p>
+    <p><strong>推荐场景：</strong>需要频繁进行浏览器自动化时，优先使用 Windows 原生方式，保持 WSL 在 NAT 模式下的正常 A2A 通信。</p>
+
     <h2>总结</h2>
     <ul>
         <li>Mirrored 模式解决了 WSL 与 Windows 的网络隔离问题，适合浏览器自动化场景</li>
