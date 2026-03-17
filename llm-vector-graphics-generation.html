@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 生成矢量图的能力边界分析</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 4px solid #3498db; padding-left: 12px; }
+        h3 { color: #555; margin-top: 20px; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code { background: none; padding: 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .success { color: #27ae60; font-weight: bold; }
+        .fail { color: #e74c3c; font-weight: bold; }
+        .warning { color: #f39c12; font-weight: bold; }
+        .meta {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #f0f8ff;
+        }
+        ul, ol { margin: 10px 0; padding-left: 25px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>LLM 生成矢量图的能力边界分析</h1>
+    
+    <div class="meta">
+        <strong>整理日期：</strong>2026-03-17<br>
+        <strong>参与者：</strong>Damon, Nemo<br>
+        <strong>来源：</strong>对话讨论总结
+    </div>
+
+    <h2>背景</h2>
+    <p>以 Simon Willison 维护的 "Pelican riding a bicycle" SVG benchmark 为切入点，探讨了当前 LLM 生成矢量图的能力边界，以及其对论文配图等实际应用场景的适用性。</p>
+
+    <h2>1. 当前 LLM 的 SVG 生成能力</h2>
+    
+    <h3>1.1 Benchmark 测试结果（2026年初）</h3>
+    <p>Simon Willison 维护了 <a href="https://simonwillison.net/tags/pelican-riding-a-bicycle/">100+ 篇测试文章</a>，追踪各模型的 SVG 生成能力。</p>
+    
+    <p><strong>最佳表现排名：</strong></p>
+    <table>
+        <tr>
+            <th>排名</th>
+            <th>模型</th>
+            <th>日期</th>
+            <th>评价</th>
+        </tr>
+        <tr>
+            <td>🥇</td>
+            <td>Gemini 3 Deep Think</td>
+            <td>2026-02-12</td>
+            <td>"目前见过最好的"</td>
+        </tr>
+        <tr>
+            <td>🥈</td>
+            <td>Gemini 3.1 Pro</td>
+            <td>2026-02-19</td>
+            <td>思考 323.9 秒，腿正确显示在两侧</td>
+        </tr>
+        <tr>
+            <td>🥉</td>
+            <td>Claude Opus 4.6</td>
+            <td>2026-02-05</td>
+            <td>最好的鹈鹕喙/喉囊细节</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>GPT-5.4 Pro</td>
+            <td>2026-03-05</td>
+            <td>4分45秒，$1.55 成本</td>
+        </tr>
+    </table>
+
+    <p><strong>重要信号：</strong>Google Gemini Lead Jeff Dean 官方发布视频展示多种动物交通工具组合，表明 Google 开始重视这个能力方向。</p>
+
+    <h3>1.2 能力评估</h3>
+    <p><strong>已解决的问题：</strong></p>
+    <ul>
+        <li>基本的"能不能画"问题</li>
+        <li>简单的空间组合</li>
+        <li>常见物体的几何表达</li>
+    </ul>
+    
+    <p><strong>仍然困难的问题：</strong></p>
+    <ul>
+        <li>精确的数据驱动图形</li>
+        <li>复杂的标注系统</li>
+        <li>符合期刊标准的格式</li>
+    </ul>
+
+    <h2>2. 为什么论文配图比 Benchmark 更难</h2>
+    
+    <h3>2.1 需求对比</h3>
+    <table>
+        <tr>
+            <th>维度</th>
+            <th>Pelican 骑车 Benchmark</th>
+            <th>论文 SVG 配图</th>
+        </tr>
+        <tr>
+            <td>精度要求</td>
+            <td>大概像就行</td>
+            <td>坐标/比例必须精确</td>
+        </tr>
+        <tr>
+            <td>数据驱动</td>
+            <td>无</td>
+            <td>需要与数据/公式对应</td>
+        </tr>
+        <tr>
+            <td>风格约束</td>
+            <td>无</td>
+            <td>期刊模板、字号、配色规范</td>
+        </tr>
+        <tr>
+            <td>复杂度</td>
+            <td>2 个主体</td>
+            <td>多组件、多层次、标注系统</td>
+        </tr>
+        <tr>
+            <td>可迭代性</td>
+            <td>不重要</td>
+            <td>需要反复微调</td>
+        </tr>
+        <tr>
+            <td>专业性</td>
+            <td>无</td>
+            <td>领域知识、设计原则</td>
+        </tr>
+    </table>
+
+    <h3>2.2 实际问题</h3>
+    
+    <p><strong>问题 1：模型不知道你的数据</strong></p>
+    <pre><code>"画一个系统架构图"
+→ 画出通用架构，不是 YOUR 系统</code></pre>
+
+    <p><strong>问题 2：坐标和尺寸是噩梦</strong></p>
+    <pre><code>&lt;!-- 模型生成的 --&gt;
+&lt;rect x="120" y="85" width="200" height="100"/&gt;
+&lt;!-- 实际需要的 --&gt;
+&lt;rect x="118.5" y="83.2" width="203.7" height="98.4"/&gt;</code></pre>
+
+    <p><strong>问题 3：无法处理复杂标注</strong></p>
+    <ul>
+        <li>图例位置要避开主要内容</li>
+        <li>标签要跟箭头/连线对齐</li>
+        <li>多个子图要布局协调</li>
+    </ul>
+
+    <p><strong>问题 4：缺乏设计能力</strong></p>
+    <ul>
+        <li>配色方案</li>
+        <li>视觉层次</li>
+        <li>留白和平衡</li>
+    </ul>
+
+    <h2>3. 为什么 Scaling 不能直接解决</h2>
+    
+    <h3>3.1 核心问题：不是"聪明程度"，是"训练分布"</h3>
+    <pre><code>LLM 训练数据分布：
+- 大量文本 ✓
+- 大量代码 ✓
+- 大量图像-文本对 ✓
+- 高质量 SVG 数据 ✗ （稀少）
+- SVG + 视觉对应关系 ✗ （几乎没有）</code></pre>
+
+    <p><strong>类比：</strong>即使 GPT-10 再聪明，如果没见过医疗数据，也做不了医生诊断。</p>
+
+    <h3>3.2 能力类型与 Scaling 的关系</h3>
+    <table>
+        <tr>
+            <th>能力类型</th>
+            <th>是否可通过 Scaling 突破</th>
+        </tr>
+        <tr>
+            <td>语言理解</td>
+            <td class="success">✅ 可以</td>
+        </tr>
+        <tr>
+            <td>推理能力</td>
+            <td class="success">✅ 可以</td>
+        </tr>
+        <tr>
+            <td>代码生成</td>
+            <td class="success">✅ 可以（如果训练数据多）</td>
+        </tr>
+        <tr>
+            <td>SVG 生成</td>
+            <td class="fail">❌ 需要专门数据</td>
+        </tr>
+        <tr>
+            <td>精确控制</td>
+            <td class="fail">❌ 架构问题，不是规模问题</td>
+        </tr>
+    </table>
+
+    <h2>4. SVG 问题比 CLIP 更复杂</h2>
+    
+    <h3>4.1 CLIP 解决的问题</h3>
+    <pre><code>文本 ──CLIP── 图像
+        ↓
+   共享嵌入空间（双模态对齐）</code></pre>
+    <p>CLIP 解决了文本和图像的<strong>理解和检索</strong>，但不是生成。</p>
+
+    <h3>4.2 SVG 的三模态问题</h3>
+    <pre><code>文本 ──?── SVG代码 ──渲染── 图像
+              ↓
+         坐标/路径/样式</code></pre>
+
+    <p><strong>三层鸿沟：</strong></p>
+    <ol>
+        <li>文本 → SVG 代码（语言模型擅长）</li>
+        <li>SVG 代码 → 视觉想象（模型<strong>看不见</strong>）</li>
+        <li>视觉想象 → 精确代码（需要逆向工程）</li>
+    </ol>
+
+    <h3>4.3 核心难点对比</h3>
+    <table>
+        <tr>
+            <th>CLIP 的世界</th>
+            <th>SVG 的世界</th>
+        </tr>
+        <tr>
+            <td>像素是连续的</td>
+            <td>SVG 是离散代码</td>
+        </tr>
+        <tr>
+            <td>大量现成数据</td>
+            <td>高质量 SVG 稀缺</td>
+        </tr>
+        <tr>
+            <td>理解任务</td>
+            <td>生成 + 精确控制</td>
+        </tr>
+        <tr>
+            <td>容错性高</td>
+            <td>坐标差 1px 就错</td>
+        </tr>
+    </table>
+
+    <h3>4.4 可能的突破口</h3>
+    <ol>
+        <li><strong>SVG 预训练语料库</strong> - 像 LAION 之于图像</li>
+        <li><strong>渲染感知训练</strong> - 让模型在训练时"看到"自己生成的 SVG</li>
+        <li><strong>分层生成</strong> - 先布局后细节，类似人类设计流程</li>
+        <li><strong>工具增强</strong> - 模型调用专业 SVG 工具，而非手写代码</li>
+    </ol>
+
+    <h2>5. Agent 框架能带来什么</h2>
+    
+    <h3>5.1 Agent 循环的价值</h3>
+    <pre><code>传统 LLM：
+描述 → SVG → 结束
+
+Agent 循环：
+描述 → SVG → 渲染 → 看图 → 评估 → 修改 → 渲染 → ...
+                    ↑                          |
+                    |__________________________|</code></pre>
+    <p><strong>核心增益：视觉反馈闭环</strong></p>
+
+    <h3>5.2 实际能做的事</h3>
+    <p><strong class="success">✅ 可以做到：</strong></p>
+    <ol>
+        <li>生成 SVG 骨架</li>
+        <li>调用渲染工具（浏览器/puppeteer）</li>
+        <li>截图 → 发给视觉模型</li>
+        <li>视觉模型评估问题</li>
+        <li>根据反馈修改</li>
+        <li>重复直到满意</li>
+    </ol>
+
+    <p><strong class="warning">⚠️ 部分能做到：</strong></p>
+    <ul>
+        <li>简单架构图：反复迭代后可能合格</li>
+        <li>流程图：节点和连线相对规则</li>
+        <li>示意图：不需要精确数据</li>
+    </ul>
+
+    <p><strong class="fail">❌ 仍然困难：</strong></p>
+    <ul>
+        <li>数据驱动的图表：需要精确对应数据</li>
+        <li>复杂标注系统：字体、位置、层级</li>
+        <li>期刊标准格式：尺寸、分辨率、配色规范</li>
+    </ul>
+
+    <h3>5.3 Agent 的关键限制</h3>
+    <p><strong>限制 1：视觉模型不擅长精确测量</strong></p>
+    <pre><code>视觉模型："这个图看起来不对齐"
+但说不出："x 坐标应该从 120 改成 135.5"</code></pre>
+
+    <p><strong>限制 2：迭代成本高</strong></p>
+    <pre><code>每轮迭代：生成 → 渲染 → 评估 → 修改
+论文配图可能需要 10-50 轮迭代</code></pre>
+
+    <p><strong>限制 3：缺乏设计知识</strong></p>
+    <pre><code>模型知道：SVG 语法
+模型不知道：视觉层次原则、专业配色、期刊排版规范</code></pre>
+
+    <h2>6. 成本效益分析</h2>
+    
+    <h3>6.1 成本对比</h3>
+    <pre><code>人工绘图：
+思考 → 设计 → 画图 → 微调
+时间：1-4 小时（熟练者）
+结果：精确可控
+
+Agent 迭代：
+描述 → 生成 → 渲染 → 评估 → 修改 → ...
+时间：可能更久
+结果：还不一定满意</code></pre>
+    <p><strong>结论：当前阶段，复杂矢量图 AI 反而更贵。</strong></p>
+
+    <h3>6.2 什么时候值得用 AI</h3>
+    <table>
+        <tr>
+            <th>场景</th>
+            <th>是否值得用 AI</th>
+        </tr>
+        <tr>
+            <td>论文核心配图</td>
+            <td class="fail">❌ 自己画</td>
+        </tr>
+        <tr>
+            <td>快速出草稿讨论</td>
+            <td class="success">✅ AI 生成</td>
+        </tr>
+        <tr>
+            <td>批量生成类似图形</td>
+            <td class="success">✅ AI 批量处理</td>
+        </tr>
+        <tr>
+            <td>格式转换（PNG→SVG）</td>
+            <td class="success">✅ AI 辅助</td>
+        </tr>
+        <tr>
+            <td>简单图标/符号</td>
+            <td class="success">✅ AI 生成</td>
+        </tr>
+        <tr>
+            <td>需要精确数据的图表</td>
+            <td class="fail">❌ 用 Matplotlib/TikZ</td>
+        </tr>
+    </table>
+
+    <h2>7. 结论与建议</h2>
+    
+    <h3>7.1 核心判断</h3>
+    <ol>
+        <li><strong>没有专门 SVG 数据训练</strong> → 不太可能生成高质量矢量图</li>
+        <li><strong>模型能力增长</strong> → 不会自动解决这个领域问题</li>
+        <li><strong>Agent 框架</strong> → 能改善但不是银弹</li>
+        <li><strong>迭代成本</strong> → 当前阶段往往比人工更高</li>
+    </ol>
+
+    <h3>7.2 AI 的真正价值</h3>
+    <pre><code>不是：替代专业绘图
+而是：
+├── 快速原型（讨论用）
+├── 批量处理（重复劳动）
+├── 格式转换
+└── 辅助灵感</code></pre>
+
+    <h3>7.3 实践建议</h3>
+    <p><strong>对于论文配图：</strong></p>
+    <ol>
+        <li>核心图表：使用 TikZ、Matplotlib、draw.io 等专业工具</li>
+        <li>快速原型：可用 AI 生成讨论</li>
+        <li>批量处理：AI 辅助格式转换和批量生成</li>
+        <li>最终出品：人工把控设计和细节</li>
+    </ol>
+
+    <p><strong>工具选择优先级：</strong></p>
+    <pre><code>精确需求 → 代码生成工具（TikZ/Matplotlib）
+设计需求 → 专业设计工具（Figma/Illustrator）
+快速原型 → AI 生成
+批量处理 → AI + 自动化脚本</code></pre>
+
+    <h2>8. 未来展望</h2>
+    <p>如果 SVG 生成能力要突破，需要：</p>
+    <ol>
+        <li><strong>专门数据集</strong> - 高质量 SVG + 文本描述 + 渲染图像的对应数据</li>
+        <li><strong>三模态对齐</strong> - 文本-SVG代码-视觉的三方嵌入空间</li>
+        <li><strong>架构创新</strong> - 可能需要"视觉反馈 + 代码生成"的新范式</li>
+        <li><strong>工具集成</strong> - LLM 调用专业矢量工具，而非手写代码</li>
+    </ol>
+    <p>这些需要专门的研究和工程投入，不太可能通过单纯 Scaling 自然解决。</p>
+
+    <h2>参考资料</h2>
+    <ul>
+        <li><a href="https://simonwillison.net/tags/pelican-riding-a-bicycle/">Simon Willison: Pelican riding a bicycle 测试集</a></li>
+        <li><a href="https://gally.net/temp/20251107pelican-alternatives/index.html">Tom Gally: LLM SVG Generation Benchmark</a></li>
+        <li><a href="https://mistral.ai/news/mistral-small-4">Mistral Small 4 发布</a> - 2026-03-16</li>
+        <li><a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-pro/">Gemini 3.1 Pro 发布</a> - 2026-02-19</li>
+        <li><a href="https://openai.com/index/introducing-gpt-5-4/">GPT-5.4 发布</a> - 2026-03-05</li>
+    </ul>
+</body>
+</html>
