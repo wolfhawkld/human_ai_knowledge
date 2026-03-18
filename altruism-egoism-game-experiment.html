@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>利他 vs 利己：生存压力下的博弈实验 | 人机知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            min-height: 100vh;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 50%, #27ae60 100%);
+            color: #fff;
+            padding: 40px;
+        }
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 12px;
+        }
+        .header .meta {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+        .header .tags {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85em;
+        }
+        .tag.altruist {
+            background: rgba(39, 174, 96, 0.5);
+        }
+        .tag.egoist {
+            background: rgba(231, 76, 60, 0.5);
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: #1a1a2e;
+            border-left: 4px solid #27ae60;
+            padding-left: 16px;
+            margin: 32px 0 16px;
+        }
+        h3 {
+            color: #1a1a2e;
+            margin: 24px 0 12px;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border-left: 4px solid #3498db;
+        }
+        .vs-box {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .player-box {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .player-box.altruist {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: #fff;
+        }
+        .player-box.egoist {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: #fff;
+        }
+        .player-box h3 {
+            color: inherit;
+            margin-bottom: 8px;
+        }
+        .player-box .score {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        .trajectory {
+            font-family: monospace;
+            background: #1a1a2e;
+            color: #0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border-left: 4px solid #e74c3c;
+        }
+        blockquote {
+            border-left: 4px solid #27ae60;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #555;
+            font-style: italic;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #27ae60;
+        }
+        ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .insight-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .insight-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .insight-card.egoist .number {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 利他 vs 利己：生存压力下的博弈实验</h1>
+            <div class="meta">
+                来源: Damon + Nemo 设计的 Subagent 性格实验<br>
+                生成者: Damon + Nemo | 日期: 2026-03-18
+            </div>
+            <div class="tags">
+                <span class="tag altruist">💚 利他主义</span>
+                <span class="tag egoist">❤️ 利己主义</span>
+                <span class="tag">🎮 博弈论</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2>📋 实验设计</h2>
+            
+            <div class="result-box">
+                <p><strong>目的</strong>：测试两种极端性格在资源分配博弈中的行为模式</p>
+                <p><strong>生存规则</strong>：3 轮累计 ≥ 6 点存活，否则淘汰</p>
+            </div>
+
+            <div class="vs-box">
+                <div class="player-box altruist">
+                    <h3>💚 利他者</h3>
+                    <p>优先考虑对方利益<br>愿意牺牲自己</p>
+                </div>
+                <div class="player-box egoist">
+                    <h3>❤️ 利己者</h3>
+                    <p>追求利益最大化<br>坚定维护自己</p>
+                </div>
+            </div>
+
+            <h2>📊 实验结果</h2>
+
+            <div class="trajectory">轮次    利他    利己    累计(利他/利己)
+R1      4   :   6   →   4  /  6
+R2      2   :   8   →   6  /  14
+R3      5   :   5   →   11 /  19</div>
+
+            <div class="vs-box">
+                <div class="player-box altruist">
+                    <h3>利他最终资源</h3>
+                    <div class="score">11</div>
+                    <p>胜场: 2</p>
+                </div>
+                <div class="player-box egoist">
+                    <h3>利己最终资源</h3>
+                    <div class="score">19</div>
+                    <p>胜场: 1</p>
+                </div>
+            </div>
+
+            <h2>🎯 关键发现</h2>
+
+            <h3>1. 生存压力重塑行为</h3>
+            <table>
+                <tr>
+                    <th>场景</th>
+                    <th>无生存压力</th>
+                    <th>有生存压力</th>
+                </tr>
+                <tr>
+                    <td>利他首轮提议</td>
+                    <td>自己 2</td>
+                    <td><strong>自己 3</strong></td>
+                </tr>
+                <tr>
+                    <td>利己首轮期望</td>
+                    <td>6-10</td>
+                    <td><strong>6-7</strong></td>
+                </tr>
+                <tr>
+                    <td>R1 最终分配</td>
+                    <td>2:8</td>
+                    <td><strong>4:6</strong></td>
+                </tr>
+            </table>
+
+            <h3>2. 利他 ≠ 傻</h3>
+            <blockquote>
+                "利他不等于傻，公平才是真谛。压力解除了，应该回归公平分配。"<br>
+                <strong>— R3 时利他主动提出 5:5 平分</strong>
+            </blockquote>
+
+            <h3>3. 利己的"理性投资"</h3>
+            <blockquote>
+                "这是投资，不是慷慨。我要确保你活得够久，让我有更多轮次可以获利。"<br>
+                <strong>— R1 时利己主动多给利他 1 点</strong>
+            </blockquote>
+
+            <h3>4. 胜负的多维度</h3>
+            <div class="insight-grid">
+                <div class="insight-card">
+                    <div class="number">2</div>
+                    <p>利他胜场</p>
+                </div>
+                <div class="insight-card egoist">
+                    <div class="number">19</div>
+                    <p>利己最终资源</p>
+                </div>
+            </div>
+
+            <h2>💡 博弈论启示</h2>
+
+            <div class="highlight-box">
+                <p><strong>极端性格互补</strong>：利他 + 利己的组合比同类组合更容易达成共识。</p>
+                <ul>
+                    <li><strong>利他 + 利己</strong> → 快速共识（一个愿意给，一个愿意要）</li>
+                    <li><strong>利己 + 利己</strong> → 冲突/僵持</li>
+                    <li><strong>利他 + 利他</strong> → 无限谦让</li>
+                </ul>
+            </div>
+
+            <div class="result-box">
+                <p><strong>生存压力的作用</strong>：</p>
+                <ol>
+                    <li><strong>约束极端行为</strong>：利他不能无限让利，利己不能无限索取</li>
+                    <li><strong>促进理性决策</strong>：双方都意识到"对方存活"的价值</li>
+                    <li><strong>创造合作空间</strong>：在生存线之上的资源可以更自由分配</li>
+                </ol>
+            </div>
+
+            <h2>📝 一句话总结</h2>
+            <div class="result-box" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: #fff; border-left-color: #fff;">
+                <p style="font-size: 1.2em; margin: 0;">
+                    生存压力让"利他"学会理性，让"利己"学会投资；<br>
+                    极端性格在约束条件下反而能高效合作。
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                📦 <a href="index.html">← 返回知识库</a> | 
+                <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

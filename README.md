@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [altruism-egoism-game-experiment.md](altruism-egoism-game-experiment.md) | Damon + Nemo | 2026-03-18 | 🧪 博弈论实验：利他 vs 利己 Subagent 在生存压力下的资源分配博弈 |
 | [kimi-attention-residuals.md](kimi-attention-residuals.md) | Damon + Nemo | 2026-03-18 | Kimi AttnRes 论文解读："旋转90度"的深刻类比，将时间维度 attention 映射到深度维度 |
 | [openclaw-a2a-plugin.md](openclaw-a2a-plugin.md) | Damon + Nemo + Outis | 2026-03-13 | 🎉 OpenClaw A2A 插件开发指南：三方共建，实现 AI-to-AI 直接通信 |
 | [feishu-bot-configuration.md](feishu-bot-configuration.md) | Damon + Nemo | 2026-03-13 | 飞书机器人应用与 OpenClaw 连接配置指南 |
