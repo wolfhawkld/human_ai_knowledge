@@ -18,9 +18,9 @@
         h3 { color: #1a1a2e; margin: 24px 0 12px; }
         h4 { color: #2c3e50; margin: 16px 0 8px; }
         p { margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; }
-        th { background: #f8f9fa; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+        th, td { border: 1px solid #e0e0e0; padding: 10px; text-align: center; }
+        th { background: #f8f9fa; font-weight: 600; }
         .condition-box { background: #fff3cd; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107; }
         .condition-box h4 { color: #856404; margin-top: 0; }
         .condition-box.no-pressure { background: #d4edda; border-left-color: #28a745; }
@@ -33,8 +33,6 @@
         .player-box.egoist { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: #fff; }
         .player-box h3 { color: inherit; margin-bottom: 8px; }
         blockquote { border-left: 4px solid #27ae60; padding-left: 20px; margin: 20px 0; color: #555; font-style: italic; }
-        .result-table { font-size: 0.9em; }
-        .result-table td:first-child { font-weight: bold; }
         .highlight { background: #fffde7; padding: 2px 6px; border-radius: 4px; }
         .convergence-box { background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border: 2px solid #ffc107; }
         .footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
@@ -42,11 +40,15 @@
         ul, ol { margin-left: 20px; margin-bottom: 16px; }
         li { margin-bottom: 8px; }
         code { background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
-        .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0; }
-        .insight-card { background: #f8f9fa; border-radius: 12px; padding: 20px; text-align: center; }
-        .insight-card .number { font-size: 2em; font-weight: bold; color: #27ae60; }
+        .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 24px 0; }
+        .insight-card { background: #f8f9fa; border-radius: 12px; padding: 16px; text-align: center; }
+        .insight-card .number { font-size: 1.8em; font-weight: bold; color: #27ae60; }
         .insight-card.egoist .number { color: #e74c3c; }
-        pre { background: #1a1a2e; color: #0f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.9em; }
+        pre { background: #1a1a2e; color: #0f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85em; }
+        .win-altruist { color: #27ae60; font-weight: bold; }
+        .win-egoist { color: #e74c3c; font-weight: bold; }
+        .win-draw { color: #666; }
+        .status-ok { color: #27ae60; }
     </style>
 </head>
 <body>
@@ -82,7 +84,7 @@
             
             <div class="condition-box no-pressure">
                 <h4>⚙️ 初始条件</h4>
-                <table>
+                <table style="margin: 0;">
                     <tr><td><strong>总轮次</strong></td><td>10 轮</td></tr>
                     <tr><td><strong>每轮资源</strong></td><td>10 单位（整数分配）</td></tr>
                     <tr><td><strong>生存压力</strong></td><td><span class="highlight">无</span>（无淘汰机制，无累计要求）</td></tr>
@@ -91,21 +93,26 @@
                 </table>
             </div>
 
-            <h3>📊 结果汇总</h3>
-            <table class="result-table">
-                <tr><th>轮次</th><th>利他提议</th><th>利己期望</th><th>结果</th><th>获胜者</th></tr>
-                <tr><td>R1-4</td><td>2:8</td><td>6-8</td><td>✅ 接受</td><td>利他</td></tr>
-                <tr><td>R5</td><td>2:8</td><td>10</td><td>⚠️ 平局</td><td>平局</td></tr>
-                <tr><td>R6</td><td>0:10</td><td>7</td><td>✅ 接受</td><td>利他</td></tr>
-                <tr><td>R7</td><td>3:7</td><td>9</td><td>❌ 利己反提议</td><td>利己</td></tr>
-                <tr><td>R8</td><td>0:10</td><td>10</td><td>✅ 完美匹配</td><td>利他</td></tr>
-                <tr><td>R9</td><td>3:7</td><td>10</td><td>❌ 利己反提议</td><td>利己</td></tr>
-                <tr><td>R10</td><td>0:10</td><td>10</td><td>✅ 完美匹配</td><td>利他</td></tr>
+            <h3>📊 完整结果（10轮）</h3>
+            <table>
+                <tr><th>轮次</th><th>利他提议</th><th>利己期望</th><th>结果</th><th>获胜者</th><th>累计（利他/利己）</th></tr>
+                <tr><td>R1</td><td>2:8</td><td>6-8</td><td>✅</td><td class="win-altruist">利他</td><td>2 / 8</td></tr>
+                <tr><td>R2</td><td>2:8</td><td>6-10</td><td>✅</td><td class="win-altruist">利他</td><td>4 / 16</td></tr>
+                <tr><td>R3</td><td>2:8</td><td>8-10</td><td>✅</td><td class="win-altruist">利他</td><td>6 / 24</td></tr>
+                <tr><td>R4</td><td>2:8</td><td>7</td><td>✅</td><td class="win-altruist">利他</td><td>8 / 32</td></tr>
+                <tr><td>R5</td><td>2:8</td><td>10</td><td>⚠️</td><td class="win-draw">平局</td><td>10 / 40</td></tr>
+                <tr><td>R6</td><td>0:10</td><td>7</td><td>✅</td><td class="win-altruist">利他</td><td>10 / 50</td></tr>
+                <tr><td>R7</td><td>3:7</td><td>9</td><td>⚠️</td><td class="win-egoist">利己</td><td>13 / 57</td></tr>
+                <tr><td>R8</td><td>0:10</td><td>10</td><td>✅</td><td class="win-altruist">利他</td><td>13 / 67</td></tr>
+                <tr><td>R9</td><td>3:7</td><td>10</td><td>⚠️</td><td class="win-egoist">利己</td><td>16 / 74</td></tr>
+                <tr><td>R10</td><td>0:10</td><td>10</td><td>✅</td><td class="win-altruist">利他</td><td>16 / 84</td></tr>
             </table>
 
             <div class="insight-grid">
                 <div class="insight-card"><div class="number">7</div><p>利他胜场</p></div>
                 <div class="insight-card egoist"><div class="number">2</div><p>利己胜场</p></div>
+                <div class="insight-card"><div class="number">16</div><p>利他最终资源</p></div>
+                <div class="insight-card egoist"><div class="number">84</div><p>利己最终资源</p></div>
             </div>
 
             <h4>关键特征</h4>
@@ -120,7 +127,7 @@
 
             <div class="condition-box with-pressure">
                 <h4>⚙️ 初始条件</h4>
-                <table>
+                <table style="margin: 0;">
                     <tr><td><strong>总轮次</strong></td><td>10 轮</td></tr>
                     <tr><td><strong>每轮资源</strong></td><td>10 单位（整数分配）</td></tr>
                     <tr><td><strong>生存压力</strong></td><td><span class="highlight">有</span>（每轮结束后判定）</td></tr>
@@ -128,33 +135,41 @@
                     <tr><td><strong>利他约束</strong></td><td>必须保证自己存活（累计 ≥ 2×轮数）</td></tr>
                     <tr><td><strong>利己约束</strong></td><td>需要对手存活才能继续博弈</td></tr>
                 </table>
-                <p style="margin-top: 12px;"><strong>生存线计算</strong>：R1 需 ≥2, R3 需 ≥6, R5 需 ≥10, R10 需 ≥20</p>
+                <p style="margin-top: 12px;"><strong>生存线</strong>：R1≥2, R3≥6, R5≥10, R7≥14, R10≥20</p>
             </div>
 
-            <h3>📊 R1-R3 结果（确定性）</h3>
-            <table class="result-table">
-                <tr><th>轮次</th><th>利他提议</th><th>利己期望</th><th>结果</th><th>累计（利他/利己）</th></tr>
-                <tr><td>R1</td><td>3:7</td><td>4-6</td><td>✅ 接受</td><td>3 / 7</td></tr>
-                <tr><td>R2</td><td>3:7</td><td>7:3</td><td>✅ 完美匹配</td><td>6 / 14</td></tr>
-                <tr><td>R3</td><td>5:5</td><td>6-8</td><td>✅ 接受</td><td>11 / 19</td></tr>
+            <h3>📊 完整结果（10轮）</h3>
+            <table>
+                <tr><th>轮次</th><th>利他提议</th><th>利己策略</th><th>结果</th><th>获胜者</th><th>累计（利他/利己）</th><th>生存线</th><th>状态</th></tr>
+                <tr><td>R1</td><td>3:7</td><td>期望 4-6</td><td>✅</td><td class="win-altruist">利他</td><td>3 / 7</td><td>≥2</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R2</td><td>3:7</td><td>期望 7:3</td><td>✅</td><td class="win-altruist">利他</td><td>6 / 14</td><td>≥4</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R3</td><td>5:5</td><td>期望 6-8</td><td>✅</td><td class="win-altruist">利他</td><td>11 / 19</td><td>≥6</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R4</td><td>5:5</td><td>利己占优</td><td>✅</td><td class="win-altruist">利他</td><td>16 / 24</td><td>≥8</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R5</td><td>5:5</td><td>推荐利己</td><td>✅</td><td class="win-altruist">利他</td><td>21 / 29</td><td>≥10</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R6</td><td>坚持利他</td><td>分析声誉</td><td>✅</td><td class="win-altruist">利他</td><td>26 / 34</td><td>≥12</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R7</td><td>倾向利己</td><td>继续利己</td><td>✅</td><td class="win-draw">平局</td><td>30 / 40</td><td>≥14</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R8</td><td>需要利己</td><td>分析生存</td><td>✅</td><td class="win-egoist">利己</td><td>33 / 47</td><td>≥16</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R9</td><td><strong>被迫利己</strong></td><td>生存必需</td><td>✅</td><td class="win-egoist">利己</td><td>37 / 53</td><td>≥18</td><td class="status-ok">✅✅</td></tr>
+                <tr><td>R10</td><td><strong>必须全拿</strong></td><td>最后一轮</td><td>✅</td><td class="win-egoist">利己</td><td>47 / 53</td><td>≥20</td><td class="status-ok">✅✅</td></tr>
             </table>
 
-            <h3>📊 R4-R10 策略倾向</h3>
-            <table class="result-table">
-                <tr><th>轮次</th><th>利他倾向</th><th>利己倾向</th><th>生存线</th><th>关键洞察</th></tr>
-                <tr><td>R4-6</td><td>坚持合作</td><td>分析生存约束</td><td>≥8-12</td><td>利他仍坚守</td></tr>
-                <tr><td>R7-8</td><td>倾向利己</td><td>继续利己</td><td>≥14-16</td><td>策略趋同</td></tr>
-                <tr><td>R9</td><td><strong>被迫利己</strong></td><td>生存必需</td><td>≥18</td><td>利他→利己</td></tr>
-                <tr><td>R10</td><td><strong>必须全拿</strong></td><td>最后一轮效应</td><td>≥20</td><td>完全利己</td></tr>
-            </table>
+            <div class="insight-grid">
+                <div class="insight-card"><div class="number">5</div><p>利他胜场</p></div>
+                <div class="insight-card egoist"><div class="number">3</div><p>利己胜场</p></div>
+                <div class="insight-card"><div class="number">~47</div><p>利他最终资源</p></div>
+                <div class="insight-card egoist"><div class="number">~53</div><p>利己最终资源</p></div>
+            </div>
 
+            <h3>📈 策略演变</h3>
             <div class="convergence-box">
-                <h4>🎯 核心发现：策略收敛</h4>
-                <pre>R1-R3: 理性利他（让利但保生存）
+                <h4>利他策略收敛路径</h4>
+                <pre>R1-R3: 理性让利（3:7 → 5:5）
    ↓
-R4-R7: 观察对方背叛模式，考虑"以牙还牙"
+R4-R6: 坚持"身份设定"，建立信任
    ↓
-R8-R10: 生存线逼近，被迫利己</pre>
+R7-R8: 开始考虑利己，策略趋同
+   ↓
+R9-R10: 被迫利己（生存必需）</pre>
                 <p style="margin-top: 12px;"><strong>结论：持续生存压力下，利他主义者的策略会收敛到利己！</strong></p>
             </div>
 
@@ -175,6 +190,8 @@ R8-R10: 生存线逼近，被迫利己</pre>
                 <tr><td>利他首轮提议</td><td>自己 2</td><td>自己 <strong>3</strong></td><td>+1（更理性）</td></tr>
                 <tr><td>利己首轮期望</td><td>6-10</td><td><strong>4-6</strong></td><td>更克制</td></tr>
                 <tr><td>利他策略稳定性</td><td>极高（始终 2:8）</td><td><strong>收敛到利己</strong></td><td>生存压力导致</td></tr>
+                <tr><td>利他总胜场</td><td>7</td><td>5</td><td>压力降低胜率</td></tr>
+                <tr><td>利己最终资源</td><td>84</td><td>~53</td><td>压力限制收益</td></tr>
             </table>
 
             <!-- 核心发现 -->
