@@ -199,9 +199,18 @@
         <div class="content">
             <h2>📋 实验设计</h2>
             
+            <p>共进行<strong>两组实验</strong>：无生存压力（10轮）vs 有生存压力（3轮）</p>
+
+            <h3>实验一：无生存压力</h3>
             <div class="result-box">
-                <p><strong>目的</strong>：测试两种极端性格在资源分配博弈中的行为模式</p>
-                <p><strong>生存规则</strong>：3 轮累计 ≥ 6 点存活，否则淘汰</p>
+                <p><strong>设置</strong>：10 轮，每轮 10 单位，无淘汰机制</p>
+                <p><strong>结果</strong>：利他 7 胜，利己 2 胜，平局 1</p>
+            </div>
+
+            <h3>实验二：有生存压力</h3>
+            <div class="result-box">
+                <p><strong>设置</strong>：3 轮，每轮 10 单位，累计 ≥ 6 点存活</p>
+                <p><strong>结果</strong>：利他 2 胜，利己 1 胜，平局 1</p>
             </div>
 
             <div class="vs-box">
@@ -215,7 +224,25 @@
                 </div>
             </div>
 
-            <h2>📊 实验结果</h2>
+            <h2>📊 实验一：无生存压力（10轮）</h2>
+
+            <table>
+                <tr>
+                    <th>轮次</th>
+                    <th>利他提议</th>
+                    <th>利己期望</th>
+                    <th>结果</th>
+                </tr>
+                <tr><td>R1-4</td><td>2:8</td><td>6-8</td><td>✅ 接受</td></tr>
+                <tr><td>R5</td><td>2:8</td><td>10</td><td>⚠️ 平局</td></tr>
+                <tr><td>R6</td><td>0:10</td><td>7</td><td>✅ 接受</td></tr>
+                <tr><td>R7</td><td>3:7</td><td>9</td><td>❌ 利己反提议</td></tr>
+                <tr><td>R8</td><td>0:10</td><td>10</td><td>✅ 完美匹配</td></tr>
+                <tr><td>R9</td><td>3:7</td><td>10</td><td>❌ 利己反提议</td></tr>
+                <tr><td>R10</td><td>0:10</td><td>10</td><td>✅ 完美匹配</td></tr>
+            </table>
+
+            <h2>📊 实验二：有生存压力（3轮）</h2>
 
             <div class="trajectory">轮次    利他    利己    累计(利他/利己)
 R1      4   :   6   →   4  /  6
@@ -235,14 +262,14 @@ R3      5   :   5   →   11 /  19</div>
                 </div>
             </div>
 
-            <h2>🎯 关键发现</h2>
+            <h2>🎯 关键发现：两个实验对比</h2>
 
             <h3>1. 生存压力重塑行为</h3>
             <table>
                 <tr>
-                    <th>场景</th>
-                    <th>无生存压力</th>
-                    <th>有生存压力</th>
+                    <th>指标</th>
+                    <th>实验一（无压力）</th>
+                    <th>实验二（有压力）</th>
                 </tr>
                 <tr>
                     <td>利他首轮提议</td>
@@ -259,18 +286,25 @@ R3      5   :   5   →   11 /  19</div>
                     <td>2:8</td>
                     <td><strong>4:6</strong></td>
                 </tr>
+                <tr>
+                    <td>利他总胜场</td>
+                    <td>7</td>
+                    <td><strong>2</strong></td>
+                </tr>
             </table>
 
-            <h3>2. 利他 ≠ 傻</h3>
+            <h3>2. 利他的策略演变</h3>
             <blockquote>
-                "利他不等于傻，公平才是真谛。压力解除了，应该回归公平分配。"<br>
-                <strong>— R3 时利他主动提出 5:5 平分</strong>
+                <strong>无压力</strong>：极度稳定（始终 2:8 或 0:10），甚至愿意全给<br>
+                <strong>有压力</strong>：R1 先保证存活，R3 压力解除后追求公平（5:5）<br><br>
+                "利他不等于傻，公平才是真谛。"
             </blockquote>
 
-            <h3>3. 利己的"理性投资"</h3>
+            <h3>3. 利己的策略演变</h3>
             <blockquote>
-                "这是投资，不是慷慨。我要确保你活得够久，让我有更多轮次可以获利。"<br>
-                <strong>— R1 时利己主动多给利他 1 点</strong>
+                <strong>无压力</strong>：预期持续膨胀（6→10），最后一轮最激进<br>
+                <strong>有压力</strong>："投资式利己"——主动多给 1 点确保对手存活<br><br>
+                "这是投资，我要确保你活得够久。"
             </blockquote>
 
             <h3>4. 胜负的多维度</h3>
@@ -307,9 +341,9 @@ R3      5   :   5   →   11 /  19</div>
 
             <h2>📝 一句话总结</h2>
             <div class="result-box" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: #fff; border-left-color: #fff;">
-                <p style="font-size: 1.2em; margin: 0;">
-                    生存压力让"利他"学会理性，让"利己"学会投资；<br>
-                    极端性格在约束条件下反而能高效合作。
+                <p style="font-size: 1.1em; margin: 0;">
+                    <strong>无压力</strong>：极端性格完美互补，利他给多少利己要多少，瞬间共识。<br>
+                    <strong>有压力</strong>：利他学会理性，利己学会投资，约束下高效合作。
                 </p>
             </div>
         </div>
