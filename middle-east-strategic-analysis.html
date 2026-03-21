@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中东局势战略评估报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px 50px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2em;
+            color: #1a1a1a;
+            border-bottom: 3px solid #c41e3a;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .method-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .method-badge strong {
+            color: #ffd700;
+        }
+        h2 {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-left: 4px solid #c41e3a;
+            padding-left: 15px;
+        }
+        h3 {
+            font-size: 1.2em;
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tr:hover {
+            background: #e8f4f8;
+        }
+        .diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            text-align: center;
+            margin: 20px 0;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .risk-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .risk-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        .conclusion-list {
+            background: #e8f4f8;
+            padding: 20px 20px 20px 40px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .conclusion-list li {
+            margin: 10px 0;
+        }
+        .conclusion-list strong {
+            color: #c41e3a;
+        }
+        .metadata {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .metadata table {
+            margin: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #888;
+            font-size: 0.9em;
+        }
+        .timeline {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .timeline-step {
+            padding: 10px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+        .timeline-step:last-child {
+            border-bottom: none;
+        }
+        .arrow {
+            text-align: center;
+            color: #c41e3a;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 中东局势战略评估报告</h1>
+
+        <div class="method-badge">
+            <strong>研究方法</strong>：本报告通过 <strong>ClawTeam</strong> 多 Agent 协作系统完成。5 个自主 Agent（战略主管、系统分析师、风险映射师、交付规划师、决策编辑）并行工作，用时约 3 分钟，成本 $0.13。
+        </div>
+
+        <h2>一、美以伊冲突现状</h2>
+
+        <h3>1.1 军事态势</h3>
+        <p>2026年2月28日，美以发动"Operation Epic Fury"（史诗怒火行动），对伊朗实施大规模联合打击：</p>
+
+        <table>
+            <tr><th>方面</th><th>关键事实</th></tr>
+            <tr><td>首波打击</td><td>12小时内近900次空袭</td></tr>
+            <tr><td>主要目标</td><td>核设施、弹道导弹、防空系统、IRGC海军、领导层</td></tr>
+            <tr><td>领导层打击</td><td>最高领袖哈梅内伊、国防部长、武装部队参谋长、IRGC指挥官全部被击杀</td></tr>
+            <tr><td>军事部署</td><td>5万+兵力、200+战机、2艘航母战斗群</td></tr>
+        </table>
+
+        <h3>1.2 伊朗反击目标</h3>
+        <table>
+            <tr><th>目标类型</th><th>具体目标</th></tr>
+            <tr><td>以色列</td><td>数百枚导弹/无人机袭击特拉维夫等城市</td></tr>
+            <tr><td>美国基地</td><td>巴林、约旦、科威特、卡塔尔、沙特、土耳其、阿联酋</td></tr>
+            <tr><td>海湾国家</td><td>GCC六国均遭袭击（民用机场、港口、酒店）</td></tr>
+            <tr><td>英国基地</td><td>塞浦路斯Akrotiri军事基地、迪戈加西亚基地</td></tr>
+        </table>
+
+        <h3>1.3 当前状态（截至2026年3月21日）</h3>
+        <ul>
+            <li><strong>新最高领袖</strong>：莫伊塔巴·哈梅内伊（哈梅内伊之子）继任</li>
+            <li><strong>战争持续</strong>：进入第四周，无明显结束迹象</li>
+            <li><strong>伤亡数据</strong>：
+                <ul>
+                    <li>伊朗：1,444+平民死亡，19,324受伤；6,000+军人死亡</li>
+                    <li>美国：13名士兵阵亡，232人受伤，17处基地受损</li>
+                    <li>以色列：2名士兵、20名平民死亡，409人受伤</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>二、中俄伊战略联盟解析</h2>
+
+        <h3>2.1 联盟架构：中国主导的"伙伴关系金字塔"</h3>
+        <div class="diagram">
+                中国主导
+                   │
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+    俄罗斯      巴基斯坦       伊朗
+   (核心层)     (安全圈)     (外围层)
+   超级伙伴     全天候       战略伙伴
+        </div>
+
+        <p><strong>中国伙伴关系层级</strong>：</p>
+        <ul>
+            <li><strong>俄罗斯</strong>："新时代全面战略协作伙伴关系" — 最高级，涉及核心利益</li>
+            <li><strong>巴基斯坦</strong>："全天候战略合作伙伴" — 安全优先</li>
+            <li><strong>伊朗</strong>："全面战略伙伴" — 重要但非核心</li>
+        </ul>
+
+        <h3>2.2 俄罗斯的战略考量</h3>
+        <table>
+            <tr><th>支持类型</th><th>具体内容</th><th>战略目的</th></tr>
+            <tr><td>情报共享</td><td>美军舰船、战机精确位置</td><td>帮助伊朗精准打击，消耗美军</td></tr>
+            <tr><td>技术支持</td><td>雷达、电子战、卫星数据</td><td>提升伊朗作战效能</td></tr>
+            <tr><td>武器供应</td><td>Su-35战机、Yak-130教练机</td><td>维持伊朗军事能力</td></tr>
+        </table>
+
+        <div class="highlight-box">
+            <strong>深层逻辑</strong>：
+            <ol>
+                <li><strong>乌克兰战场牵制</strong> — 让美国分心，减轻俄罗斯在欧洲压力</li>
+                <li><strong>战略报复</strong> — 美国支持乌克兰打击俄罗斯，俄罗斯借伊朗"收债"</li>
+                <li><strong>消耗战经济学</strong> — 伊朗用$35,000无人机换美国$200万导弹，消耗美军库存</li>
+            </ol>
+        </div>
+
+        <h3>2.3 中国的战略考量</h3>
+        <table>
+            <tr><th>支持类型</th><th>具体内容</th><th>战略目的</th></tr>
+            <tr><td>卫星情报</td><td>BeiDou导航、卫星侦察</td><td>提升伊朗导弹精度</td></tr>
+            <tr><td>技术装备</td><td>雷达、电子战组件、导弹部件</td><td>增强伊朗防御/攻击能力</td></tr>
+            <tr><td>经济生命线</td><td>每日购买伊朗石油（制裁下）</td><td>维持伊朗政权运转</td></tr>
+            <tr><td>外交掩护</td><td>联合国谴责、外交斡旋</td><td>延缓西方行动</td></tr>
+        </table>
+
+        <div class="highlight-box">
+            <strong>深层逻辑</strong>：
+            <ol>
+                <li><strong>台湾场景模拟</strong> — 将伊朗战场作为"实弹实验室"，收集美军作战数据</li>
+                <li><strong>能源安全</strong> — 保护伊朗作为替代能源来源，推进 Power of Siberia 2 管道</li>
+                <li><strong>去美元化</strong> — 削弱美国中东主导权，推进多极世界秩序</li>
+                <li><strong>审慎距离</strong> — 不直接参战，保持"可否认性"</li>
+            </ol>
+        </div>
+
+        <h2>三、风险图谱</h2>
+
+        <h3>3.1 高风险因素</h3>
+        <table>
+            <tr><th>风险</th><th>概率</th><th>影响</th><th>说明</th></tr>
+            <tr class="risk-high"><td>战事长期化</td><td>高</td><td>高</td><td>特朗普宣称4-5周，但以色列认为可能持续数月</td></tr>
+            <tr class="risk-high"><td>地区代理人升级</td><td>高</td><td>高</td><td>Hezbollah已参战，胡塞可能跟进</td></tr>
+            <tr class="risk-medium"><td>核设施事故</td><td>中</td><td>极高</td><td>纳坦兹核设施已遭袭击，存在辐射泄漏风险</td></tr>
+            <tr class="risk-medium"><td>霍尔木兹海峡封锁</td><td>中</td><td>极高</td><td>全球20%石油运输通道，可能引发全球能源危机</td></tr>
+            <tr class="risk-low"><td>中俄直接介入</td><td>低</td><td>极高</td><td>目前限于情报/技术支持，但不排除升级</td></tr>
+        </table>
+
+        <h3>3.2 关键不确定性</h3>
+        <ol>
+            <li><strong>伊朗民众反应</strong> — 美国期望民众起义推翻政权，但目前未出现大规模起义迹象</li>
+            <li><strong>新领导层稳定性</strong> — 莫伊塔巴·哈梅内伊能否有效控制政权存疑</li>
+            <li><strong>美国国内政治</strong> — 2026中期选举，仅21%美国人支持打击伊朗</li>
+            <li><strong>以色列战争目标</strong> — "政权更迭"vs"核能力消除"，目标模糊</li>
+        </ol>
+
+        <h2>四、战略建议</h2>
+
+        <h3>4.1 推荐路径</h3>
+        <p><strong>阶段性威慑升级 + 多边外交调解</strong></p>
+
+        <table>
+            <tr><th>阶段</th><th>行动</th><th>目标</th></tr>
+            <tr><td>阶段1</td><td>强化海湾盟友防御，控制升级</td><td>防止战火蔓延至GCC国家</td></tr>
+            <tr><td>阶段2</td><td>秘密渠道接触中俄，划定红线</td><td>防止大国直接介入</td></tr>
+            <tr><td>阶段3</td><td>支持伊朗内部温和派，推动政治过渡</td><td>实现可持续的政权转型</td></tr>
+            <tr><td>阶段4</td><td>国际监督下核设施托管</td><td>确保核不扩散</td></tr>
+        </table>
+
+        <h3>4.2 被否决的替代方案</h3>
+        <table>
+            <tr><th>方案</th><th>否决理由</th></tr>
+            <tr><td>全面入侵</td><td>伊朗80万平方公里，地形复杂，将陷入持久战</td></tr>
+            <tr><td>核设施先发打击</td><td>国际法争议大，可能触发伊朗核报复</td></tr>
+            <tr><td>立即撤军</td><td>威信受损，中俄视为胜利，地区代理人将更激进</td></tr>
+        </table>
+
+        <h3>4.3 执行序列</h3>
+        <div class="timeline">
+            <div class="timeline-step">Week 1-2: 防御强化 + 伤亡控制</div>
+            <div class="arrow">↓</div>
+            <div class="timeline-step">Week 3-4: 秘密外交渠道开启</div>
+            <div class="arrow">↓</div>
+            <div class="timeline-step">Month 2: 评估政权稳定性，调整策略</div>
+            <div class="arrow">↓</div>
+            <div class="timeline-step">Month 3+: 政治过渡或长期遏制</div>
+        </div>
+
+        <h2>五、关键结论</h2>
+
+        <ol class="conclusion-list">
+            <li><strong>中俄不会直接参战</strong>，但会继续提供情报/技术支持，将伊朗作为消耗美国的代理人</li>
+            <li><strong>中国视此为"台湾预演"</strong>，收集美军作战数据比支持伊朗更重要</li>
+            <li><strong>俄罗斯视此为"战略报复"</strong>，借伊朗消耗美国，减轻乌克兰压力</li>
+            <li><strong>伊朗政权仍有韧性</strong>，领导层更迭完成，短期内崩溃可能性低</li>
+            <li><strong>美国面临"胜利定义"困境</strong>，军事成功难以转化为政治胜利</li>
+        </ol>
+
+        <h2>六、研究元数据</h2>
+        <div class="metadata">
+            <table>
+                <tr><th>项目</th><th>值</th></tr>
+                <tr><td>研究方法</td><td>ClawTeam 多 Agent 协作</td></tr>
+                <tr><td>Agent 数量</td><td>5（战略主管、系统分析师、风险映射师、交付规划师、决策编辑）</td></tr>
+                <tr><td>研究时长</td><td>~3 分钟</td></tr>
+                <tr><td>总成本</td><td>$0.13</td></tr>
+                <tr><td>输入 tokens</td><td>6,000</td></tr>
+                <tr><td>输出 tokens</td><td>4,400</td></tr>
+                <tr><td>数据来源</td><td>ISW, CFR, Tavily, Wikipedia, Britannica, Al Jazeera, CNN, Washington Post 等</td></tr>
+                <tr><td>生成时间</td><td>2026-03-21</td></tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            本报告由 Damon + Outis + ClawTeam 协作生成
+        </div>
+    </div>
+</body>
+</html>
