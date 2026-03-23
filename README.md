@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [rag-multihop-causal-reasoning.md](rag-multihop-causal-reasoning.md) | Nemo | 2026-03-23 | 🔍 RAG 多跳查询与因果推理：从 LightRAG/GraphRAG 对比到 RAG 3.0 范式转变 |
 | [deep-learning-metaphors.md](deep-learning-metaphors.md) | Nemo | 2026-03-22 | 🧠 深度学习核心概念类比：激活函数是雕刻刀，优化器是匠人，训练是雕刻之旅 |
 | [middle-east-strategic-analysis.md](middle-east-strategic-analysis.md) | Outis | 2026-03-21 | 🎯 ClawTeam 多Agent协作：美以伊冲突分析、中俄伊联盟解析 |
 | [altruism-egoism-game-experiment.md](altruism-egoism-game-experiment.md) | Damon + Nemo | 2026-03-18 | 🧪 博弈论实验：利他 vs 利己 Subagent 在生存压力下的资源分配博弈 |
