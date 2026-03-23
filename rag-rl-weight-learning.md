@@ -216,7 +216,303 @@ if trust_score < threshold:
 
 ---
 
-## 四、与因果推理的结合
+## 四、RL 算法选择与实现
+
+### 4.1 是否需要完整 RL？
+
+本方案**属于 RL 范畴**，但不一定要用复杂的 PPO/SAC。取决于场景复杂度：
+
+| 场景 | 是否需要完整 RL |
+|------|----------------|
+| 权重调整只影响当前查询 | ❌ 启发式即可 |
+| 权重调整影响未来检索质量 | ✅ 需要 RL |
+| 有明确的探索-利用权衡 | ✅ 需要 RL（Bandit 或 PPO） |
+| 用户反馈稀疏 | ✅ 需要 RL（更好地利用有限信号） |
+
+### 4.2 算法选择对比
+
+| 方案 | 复杂度 | 适用场景 | 特点 |
+|------|--------|---------|------|
+| **启发式规则** | ⭐ | 简单场景，快速验证 | 非严格 RL，易实现 |
+| **Bandit 算法** | ⭐⭐ | 在线学习，快速迭代 | 轻量 RL，理论保证 |
+| **梯度优化** | ⭐⭐⭐ | 有明确奖励信号 | 简化 RL，可微分 |
+| **PPO/SAC** | ⭐⭐⭐⭐⭐ | 复杂决策，长期奖励 | 完整 RL，需大量数据 |
+
+### 4.3 Phase 1: 启发式规则（最简单）
+
+```python
+class HeuristicWeightUpdater:
+    """最简单的权重更新规则"""
+    
+    def __init__(self, learning_rate=0.1, momentum=0.9):
+        self.lr = learning_rate
+        self.momentum = momentum
+        self.velocity = {}  # 动量
+    
+    def update(self, relation, feedback, current_weight):
+        # 计算梯度
+        if feedback == "positive":
+            gradient = self.lr
+        elif feedback == "negative":
+            gradient = -self.lr
+        else:
+            gradient = 0
+        
+        # 动量平滑
+        self.velocity[relation] = (
+            self.momentum * self.velocity.get(relation, 0) + gradient
+        )
+        
+        # 更新并限制在 [0, 1]
+        new_weight = current_weight + self.velocity[relation]
+        return max(0.0, min(1.0, new_weight))
+```
+
+**优点**：实现简单，可解释
+**缺点**：无理论保证，可能震荡
+
+### 4.4 Phase 2: Bandit 算法（推荐 🔥）
+
+**为什么推荐 Bandit？**
+- 轻量级 RL，适合在线学习
+- 有理论收敛保证
+- 天然处理探索-利用权衡
+- 不需要大量数据
+
+```python
+import math
+from collections import defaultdict
+
+class UCBWeightOptimizer:
+    """UCB (Upper Confidence Bound) 权重优化"""
+    
+    def __init__(self, c=1.0):
+        self.c = c  # 探索参数
+        self.successes = defaultdict(int)
+        self.failures = defaultdict(int)
+        self.total_pulls = 0
+    
+    def get_weight(self, relation):
+        """获取当前权重估计"""
+        s = self.successes[relation]
+        f = self.failures[relation]
+        n = s + f
+        
+        if n == 0:
+            return 0.5  # 初始值
+        
+        # 均值估计
+        mean = s / n
+        
+        # 置信上限（探索奖励）
+        exploration = self.c * math.sqrt(2 * math.log(self.total_pulls + 1) / n)
+        
+        return min(1.0, mean + exploration)
+    
+    def update(self, relation, reward):
+        """
+        更新统计
+        reward: [0, 1] 区间的奖励值
+        """
+        if reward >= 0.5:
+            self.successes[relation] += 1
+        else:
+            self.failures[relation] += 1
+        self.total_pulls += 1
+
+
+class ThompsonSamplingOptimizer:
+    """Thompson Sampling 权重优化（贝叶斯方法）"""
+    
+    def __init__(self, prior_alpha=1, prior_beta=1):
+        self.alpha = defaultdict(lambda: prior_alpha)
+        self.beta = defaultdict(lambda: prior_beta)
+    
+    def sample_weight(self, relation):
+        """从后验分布采样权重"""
+        import random
+        return random.betavariate(self.alpha[relation], self.beta[relation])
+    
+    def get_expected_weight(self, relation):
+        """获取期望权重"""
+        a, b = self.alpha[relation], self.beta[relation]
+        return a / (a + b)
+    
+    def update(self, relation, reward):
+        """
+        更新后验
+        reward: [0, 1] 区间，表示正反馈程度
+        """
+        self.alpha[relation] += reward
+        self.beta[relation] += (1 - reward)
+```
+
+**使用示例**：
+
+```python
+# 初始化优化器
+optimizer = UCBWeightOptimizer(c=0.5)
+
+# 用户查询后更新
+relation = "投诉→交付延迟"
+user_feedback = 0.8  # 正反馈
+
+# 获取当前权重
+current_weight = optimizer.get_weight(relation)
+print(f"当前权重: {current_weight:.3f}")
+
+# 更新
+optimizer.update(relation, user_feedback)
+
+# 下次查询时获取新权重
+new_weight = optimizer.get_weight(relation)
+print(f"更新后权重: {new_weight:.3f}")
+```
+
+### 4.5 Phase 3: 梯度优化（简化 RL）
+
+```python
+import torch
+import torch.nn as nn
+
+class GradientWeightOptimizer:
+    """基于梯度的权重优化"""
+    
+    def __init__(self, lr=0.01):
+        self.lr = lr
+        self.weights = {}  # relation -> tensor
+    
+    def init_weight(self, relation, init_value=0.5):
+        """初始化权重"""
+        self.weights[relation] = torch.tensor(
+            init_value, requires_grad=True
+        )
+    
+    def compute_reward(self, retrieval_quality, user_feedback, consistency):
+        """计算奖励"""
+        # 组合奖励信号
+        reward = (
+            0.4 * retrieval_quality +
+            0.4 * user_feedback +
+            0.2 * consistency
+        )
+        return reward
+    
+    def update(self, relation, reward):
+        """梯度更新"""
+        if relation not in self.weights:
+            self.init_weight(relation)
+        
+        weight = self.weights[relation]
+        
+        # 计算损失（负奖励）
+        loss = -reward * torch.log(weight + 1e-8)
+        
+        # 反向传播
+        loss.backward()
+        
+        # 手动更新
+        with torch.no_grad():
+            weight += self.lr * weight.grad
+            weight.clamp_(0.0, 1.0)
+            weight.grad.zero_()
+```
+
+### 4.6 Phase 4: 完整 RL（PPO）
+
+如果需要考虑长期奖励和复杂状态：
+
+```python
+import torch
+import torch.nn as nn
+from torch.distributions import Normal
+
+class WeightPPOAgent:
+    """PPO 策略网络用于权重调整"""
+    
+    def __init__(self, state_dim, hidden_dim=64):
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 2)  # mean, log_std
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+    
+    def get_action(self, state):
+        """采样动作（权重调整量）"""
+        mean, log_std = self.actor(state).chunk(2, dim=-1)
+        std = torch.exp(log_std)
+        dist = Normal(mean, std)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+        return action, log_prob
+    
+    def get_value(self, state):
+        """估计状态价值"""
+        return self.critic(state)
+    
+    def update(self, states, actions, rewards, old_log_probs):
+        """PPO 更新"""
+        # 实现 PPO clip objective
+        # ...
+
+# 状态定义
+State = {
+    "query_embedding": [...],      # 当前查询
+    "user_profile": [...],          # 用户画像
+    "current_weights": [...],       # 当前权重向量
+    "retrieval_history": [...]      # 历史检索结果
+}
+
+# 动作定义
+Action = {
+    "relation": "投诉→交付",
+    "delta": +0.1  # 权重调整量
+}
+```
+
+### 4.7 选择建议
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   决策树：选择哪种算法？                  │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │ 是否需要考虑长期奖励？ │
+              └───────────┬───────────┘
+                    │           │
+                   否           是
+                    │           │
+                    ▼           ▼
+          ┌─────────────┐  ┌─────────────┐
+          │ 反馈是否稀疏？│  │ 用 PPO/SAC │
+          └─────┬───────┘  └─────────────┘
+            │       │
+           否       是
+            │       │
+            ▼       ▼
+    ┌──────────┐ ┌──────────┐
+    │ 启发式或  │ │ Bandit   │
+    │ 梯度优化  │ │ (推荐)   │
+    └──────────┘ └──────────┘
+```
+
+**最终建议**：
+- **起步**：启发式规则（快速验证概念）
+- **推荐**：Bandit 算法（UCB 或 Thompson Sampling）
+- **进阶**：如果反馈稀疏或有长期依赖，考虑 PPO
+
+---
+
+## 五、与因果推理的结合
 
 本方案与因果推理方向天然契合：
 
@@ -235,7 +531,7 @@ if trust_score < threshold:
 
 ---
 
-## 五、实施路线图
+## 六、实施路线图
 
 ```
 Phase 1: 基础反馈机制（2-4周）
@@ -261,7 +557,7 @@ Phase 4: 安全与鲁棒性（持续）
 
 ---
 
-## 六、潜在创新点
+## 七、潜在创新点
 
 | 创新点 | 说明 |
 |--------|------|
@@ -273,7 +569,7 @@ Phase 4: 安全与鲁棒性（持续）
 
 ---
 
-## 七、相关研究
+## 八、相关研究
 
 | 方向 | 论文/项目 |
 |------|----------|
@@ -285,7 +581,7 @@ Phase 4: 安全与鲁棒性（持续）
 
 ---
 
-## 八、SOTA 研究对比分析
+## 九、SOTA 研究对比分析
 
 ### 8.1 最相关的现有研究
 
@@ -390,7 +686,7 @@ Phase 4: 安全与鲁棒性（持续）
 
 ---
 
-## 九、与现有方案的关联
+## 十、与现有方案的关联
 
 本文档是 [RAG 多跳查询与因果推理](rag-multihop-causal-reasoning.md) 的延伸研究：
 

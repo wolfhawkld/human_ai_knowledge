@@ -279,7 +279,136 @@ L_fact: 事实损失（与通用知识冲突惩罚）</pre>
 # 查询时融合
 effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
 
-            <h2>四、与因果推理的结合</h2>
+            <h2>四、RL 算法选择与实现</h2>
+            
+            <h3>是否需要完整 RL？</h3>
+            <p>本方案<strong>属于 RL 范畴</strong>，但不一定要用复杂的 PPO/SAC：</p>
+            <table>
+                <tr><th>场景</th><th>是否需要完整 RL</th></tr>
+                <tr><td>权重调整只影响当前查询</td><td>❌ 启发式即可</td></tr>
+                <tr><td>权重调整影响未来检索质量</td><td>✅ 需要 RL</td></tr>
+                <tr><td>有明确的探索-利用权衡</td><td>✅ 需要 RL（Bandit 或 PPO）</td></tr>
+                <tr><td>用户反馈稀疏</td><td>✅ 需要 RL</td></tr>
+            </table>
+
+            <h3>算法选择对比</h3>
+            <table>
+                <tr><th>方案</th><th>复杂度</th><th>适用场景</th><th>特点</th></tr>
+                <tr><td>启发式规则</td><td>⭐</td><td>简单场景</td><td>非严格 RL，易实现</td></tr>
+                <tr><td><strong>Bandit 算法</strong></td><td>⭐⭐</td><td>在线学习</td><td>轻量 RL，推荐 🔥</td></tr>
+                <tr><td>梯度优化</td><td>⭐⭐⭐</td><td>明确奖励信号</td><td>简化 RL，可微分</td></tr>
+                <tr><td>PPO/SAC</td><td>⭐⭐⭐⭐⭐</td><td>长期奖励</td><td>完整 RL，需大量数据</td></tr>
+            </table>
+
+            <h3>Phase 1: 启发式规则（最简单）</h3>
+            <pre>class HeuristicWeightUpdater:
+    def __init__(self, learning_rate=0.1, momentum=0.9):
+        self.lr = learning_rate
+        self.momentum = momentum
+        self.velocity = {}
+    
+    def update(self, relation, feedback, current_weight):
+        # 正反馈 +0.1，负反馈 -0.1
+        gradient = self.lr if feedback == "positive" else -self.lr
+        # 动量平滑
+        self.velocity[relation] = self.momentum * self.velocity.get(relation, 0) + gradient
+        # 限制在 [0, 1]
+        return max(0.0, min(1.0, current_weight + self.velocity[relation]))</pre>
+
+            <h3>Phase 2: Bandit 算法（推荐 🔥）</h3>
+            <div class="insight-box">
+                <strong>为什么推荐 Bandit？</strong><br>
+                轻量级 RL，有理论收敛保证，天然处理探索-利用权衡，不需要大量数据。
+            </div>
+            <pre># UCB (Upper Confidence Bound)
+class UCBWeightOptimizer:
+    def __init__(self, c=1.0):
+        self.c = c  # 探索参数
+        self.successes = defaultdict(int)
+        self.failures = defaultdict(int)
+    
+    def get_weight(self, relation):
+        s, f = self.successes[relation], self.failures[relation]
+        n = s + f
+        if n == 0:
+            return 0.5
+        mean = s / n
+        exploration = self.c * sqrt(2 * log(total + 1) / n)
+        return min(1.0, mean + exploration)
+    
+    def update(self, relation, reward):
+        if reward >= 0.5:
+            self.successes[relation] += 1
+        else:
+            self.failures[relation] += 1
+
+# Thompson Sampling（贝叶斯方法）
+class ThompsonSamplingOptimizer:
+    def sample_weight(self, relation):
+        # 从 Beta 后验分布采样
+        return random.betavariate(self.alpha[relation], self.beta[relation])
+    
+    def update(self, relation, reward):
+        self.alpha[relation] += reward
+        self.beta[relation] += (1 - reward)</pre>
+
+            <h3>Phase 3: 梯度优化（简化 RL）</h3>
+            <pre>class GradientWeightOptimizer:
+    def compute_reward(self, retrieval_quality, user_feedback, consistency):
+        return 0.4 * retrieval_quality + 0.4 * user_feedback + 0.2 * consistency
+    
+    def update(self, relation, reward):
+        weight = self.weights[relation]
+        loss = -reward * torch.log(weight + 1e-8)
+        loss.backward()
+        with torch.no_grad():
+            weight += self.lr * weight.grad
+            weight.clamp_(0.0, 1.0)</pre>
+
+            <h3>Phase 4: 完整 RL（PPO）</h3>
+            <pre>State = {
+    "query_embedding": [...],      # 当前查询
+    "user_profile": [...],          # 用户画像
+    "current_weights": [...],       # 当前权重
+    "retrieval_history": [...]      # 历史检索
+}
+
+Action = {
+    "relation": "投诉→交付",
+    "delta": +0.1  # 权重调整量
+}
+
+# PPO 策略网络
+class WeightPPOAgent:
+    def get_action(self, state):
+        mean, log_std = self.actor(state).chunk(2, dim=-1)
+        dist = Normal(mean, torch.exp(log_std))
+        return dist.sample()</pre>
+
+            <h3>选择建议</h3>
+            <pre>决策树：
+              是否需要考虑长期奖励？
+                    │
+          ┌────────┴────────┐
+          否                是
+          │                 │
+          ▼                 ▼
+    反馈是否稀疏？      用 PPO/SAC
+       │      │
+      否      是
+       │      │
+       ▼      ▼
+   启发式或   Bandit
+   梯度优化   (推荐)</pre>
+
+            <div class="insight-box">
+                <strong>最终建议：</strong><br>
+                - 起步：启发式规则（快速验证概念）<br>
+                - 推荐：Bandit 算法（UCB 或 Thompson Sampling）<br>
+                - 进阶：如果反馈稀疏或有长期依赖，考虑 PPO
+            </div>
+
+            <h2>五、与因果推理的结合</h2>
             
             <p>本方案与因果推理方向天然契合：</p>
             <pre>因果推理: 问题 → 假设 → 验证 → 结论
@@ -293,7 +422,7 @@ effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
 4. 系统更新：投诉←交付延迟 权重提升
 5. 下次其他用户问类似问题，优先考虑交付延迟</pre>
 
-            <h2>五、实施路线图</h2>
+            <h2>六、实施路线图</h2>
             
             <div class="phase">
                 <div class="phase-title">Phase 1: 基础反馈机制（2-4周）</div>
@@ -315,7 +444,7 @@ effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
                 用户信任度评估、通用事实约束、异常检测与回滚
             </div>
 
-            <h2>六、潜在创新点</h2>
+            <h2>七、潜在创新点</h2>
             <table>
                 <tr><th>创新点</th><th>说明</th></tr>
                 <tr><td>知识演化</td><td>RAG 不再静态，而是随使用"生长"</td></tr>
@@ -325,7 +454,7 @@ effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
                 <tr><td>安全机制</td><td>防止恶意反馈和低质量更新</td></tr>
             </table>
 
-            <h2>七、相关研究</h2>
+            <h2>八、相关研究</h2>
             <ul>
                 <li><a href="https://arxiv.org/abs/2205.10340">Learning to Rank with RL</a> - 信息检索中的强化学习</li>
                 <li><a href="https://arxiv.org/abs/2203.02155">RLHF</a> - 人类反馈强化学习</li>
@@ -333,7 +462,7 @@ effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
                 <li><a href="https://arxiv.org/abs/2404.13977">P-RAG</a> - 个性化检索增强</li>
             </ul>
 
-            <h2>八、SOTA 研究对比分析</h2>
+            <h2>九、SOTA 研究对比分析</h2>
             
             <h3>最相关的现有研究</h3>
             
@@ -377,7 +506,7 @@ effective_weight = α × w_personal + β × w_role + γ × w_global</pre>
                 <strong>结论：</strong>有相关研究，但本方案有独特创新。可作为独立的 research contribution，在 PrLM/EMG-RAG 基础上强调"知识演化"和"安全机制"。
             </div>
 
-            <h2>九、与现有方案的关联</h2>
+            <h2>十、与现有方案的关联</h2>
             <p>本文档是 <a href="rag-multihop-causal-reasoning.html" style="color:#11998e">RAG 多跳查询与因果推理</a> 的延伸研究。因果推理解决"如何理解问题逻辑"，本方案解决"如何让系统学习用户的逻辑"。两者结合可实现"推理增强 + 知识演化"的完整闭环。</p>
 
             <div class="summary-box">
