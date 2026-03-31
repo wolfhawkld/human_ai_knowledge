@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [rag-intent-bidirectional-alignment.md](rag-intent-bidirectional-alignment.md) | Damon + Nemo | 2026-03-31 | 💡 RAG意图对齐双向融合：Query端vs Content端，一个被忽视的研究方向 |
 | [rag-intent-alignment.md](rag-intent-alignment.md) | Damon + Nemo | 2026-03-31 | 🔮 RAG意图对齐前沿研究：超越语义向量的五大方向，从"为人类检索"到"为AI检索" |
 | [rag-rl-weight-learning.md](rag-rl-weight-learning.md) | Nemo | 2026-03-23 | 🔄 用户反馈驱动的 RAG 权重学习：RL 奖励函数 + 知识演化 + 个性化检索 |
 | [rag-multihop-causal-reasoning.md](rag-multihop-causal-reasoning.md) | Nemo | 2026-03-23 | 🔍 RAG 多跳查询与因果推理：从 LightRAG/GraphRAG 对比到 RAG 3.0 范式转变 |
