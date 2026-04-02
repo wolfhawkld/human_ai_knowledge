@@ -29,7 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
-| [rag-content-intent-mapping.md](rag-content-intent-mapping.md) | Damon + Outis | 2026-04-03 | 🔄 RAG 内容-意图反向映射：零样本初始化 + RLHF风格持续迭代 + Chunk级粒度 |
+| [rag-content-intent-mapping.md](rag-content-intent-mapping.md) | Damon + Outis | 2026-04-03 | 🔄 RAG 内容-意图反向映射：零样本初始化 + RLHF风格迭代 + Chunk级粒度 + CoT融合信号抽取 |
 | [rag-intent-bidirectional-alignment.md](rag-intent-bidirectional-alignment.md) | Damon + Nemo | 2026-03-31 | 💡 RAG意图对齐双向融合：Query端vs Content端，一个被忽视的研究方向 |
 | [rag-intent-alignment.md](rag-intent-alignment.md) | Damon + Nemo | 2026-03-31 | 🔮 RAG意图对齐前沿研究：超越语义向量的五大方向，从"为人类检索"到"为AI检索" |
 | [rag-rl-weight-learning.md](rag-rl-weight-learning.md) | Nemo | 2026-03-23 | 🔄 用户反馈驱动的 RAG 权重学习：RL 奖励函数 + 知识演化 + 个性化检索 |

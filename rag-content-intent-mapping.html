@@ -85,14 +85,58 @@
     </ul>
 
     <h3>1.2 研究动机</h3>
+    <p><strong>关键洞察：</strong></p>
+    <ol>
+        <li>内容本身蕴含"可用于解决什么问题"的信息</li>
+        <li>用户对话中的行为蕴含隐性意图倾向</li>
+        <li>少量反馈信号足以校准映射关系</li>
+    </ol>
+    <p><strong>目标：</strong>构建一个 <strong>内容→意图</strong> 的反向映射层，与正向检索形成闭环优化。</p>
+
+    <h3>1.3 更深层洞察：对话中的 CoT 融合</h3>
     <div class="highlight">
-        <strong>关键洞察：</strong>
-        <ol>
-            <li>内容本身蕴含"可用于解决什么问题"的信息</li>
-            <li>用户对话中的行为蕴含隐性意图倾向</li>
-            <li>少量反馈信号足以校准映射关系</li>
-        </ol>
-        <p><strong>目标：</strong>构建一个 <strong>内容→意图</strong> 的反向映射层，与正向检索形成闭环优化。</p>
+        <p><strong>来源：</strong>Damon 作为专业架构师与 AI 协作的实践观察</p>
+        <p><strong>核心发现：</strong>Human-AI 协作对话本身就是"人类经验 + 专业意图"的载体。</p>
+    </div>
+
+    <h4>协作模式分析</h4>
+    <pre>
+传统视角:
+  Human: 下达任务 → AI: 执行 → Human: 评估结果
+
+CoT 融合视角:
+  Human CoT (经验、判断、纠偏)
+       ↓
+  对话 Context = 融合载体
+       ↓
+  AI CoT (推理、执行、反思)
+       ↓
+  最终正确结果
+    </pre>
+
+    <p><strong>关键观察：</strong>在协作过程中，人类的"纠偏、补充、打断"等行为，本质上是在把自己的专业经验注入到 AI 的推理链中。这个过程就是 <strong>Human CoT 与 AI CoT 的融合</strong>。</p>
+
+    <h4>CoT 融合信号类型</h4>
+    <table>
+        <tr><th>信号类型</th><th>行为表现</th><th>可抽取的专业意图</th></tr>
+        <tr><td><strong>纠偏</strong></td><td>"不对，应该是..."</td><td>边界条件、错误路径识别</td></tr>
+        <tr><td><strong>补充</strong></td><td>"还需要考虑..."</td><td>隐性需求、上下文依赖</td></tr>
+        <tr><td><strong>打断</strong></td><td>"停下，重新来"</td><td>任务分解粒度、失败模式</td></tr>
+        <tr><td><strong>确认</strong></td><td>"对，就是这样"</td><td>正确路径、成功模式</td></tr>
+        <tr><td><strong>追问</strong></td><td>"为什么这样做？"</td><td>推理链验证、决策依据</td></tr>
+        <tr><td><strong>类比</strong></td><td>"类似之前那个..."</td><td>知识迁移、模式复用</td></tr>
+    </table>
+
+    <div class="info-box">
+        <p><strong>普适性推论：</strong>如果架构师、业务专家、系统用户都愿意把他们的思维通过对话表达出来：</p>
+        <pre>
+任何领域专家 × 对话式协作 = 专业意图资产化
+
+架构师 → 系统设计意图
+业务专家 → 业务流程意图  
+系统用户 → 使用场景意图
+        </pre>
+        <p><strong>结论：</strong>对话 Context 中蕴含的 CoT 融合信号，是比显式反馈更深层的意图来源。抽取这些信号，可以实现"从人类经验到系统资产"的转化。</p>
     </div>
 
     <h2>二、核心概念：内容-意图映射</h2>
