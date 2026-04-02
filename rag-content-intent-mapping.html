@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 内容-意图反向映射：一种基于用户反馈的持续对齐方法</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            background: #fafafa;
+        }
+        h1 { color: #1a1a1a; border-bottom: 3px solid #4a90d9; padding-bottom: 15px; }
+        h2 { color: #2c5282; margin-top: 40px; border-left: 4px solid #4a90d9; padding-left: 15px; }
+        h3 { color: #2d3748; }
+        code { 
+            background: #edf2f7; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: #edf2f7; font-weight: 600; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight { background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; }
+        .info-box { background: #e0f2fe; padding: 15px; border-radius: 8px; border-left: 4px solid #0284c7; }
+        .metadata {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .metadata span { margin-right: 20px; }
+    </style>
+</head>
+<body>
+    <div class="metadata">
+        <strong>Created:</strong> <span>2026-04-03</span>
+        <strong>Type:</strong> <span>Research Direction</span>
+        <strong>Status:</strong> <span>Concept Proposal</span>
+    </div>
+
+    <h1>RAG 内容-意图反向映射：一种基于用户反馈的持续对齐方法</h1>
+
+    <h2>摘要</h2>
+    <p>本文提出一种<strong>从内容反向推导意图</strong>的 RAG 对齐方法。与传统"意图→内容检索"流程相反，我们构建并持续维护一份 <strong>内容-意图映射表</strong>，利用对话上下文中的隐性意图倾向和用户反馈信号，以 RLHF 风格渐进迭代。该方法支持零样本 LLM 初始化，仅需少量用户交互即可启动，为企业 RAG 系统提供一种低成本、可持续优化的意图对齐方案。</p>
+
+    <h2>一、问题背景</h2>
+    
+    <h3>1.1 传统 RAG 的单向流程</h3>
+    <pre>
+传统流程（意图→内容）:
+
+用户意图 → 意图识别 → 向量检索 → 内容返回
+    ↓
+问题: 意图识别错误 → 检索方向错误 → 返回无关内容
+    </pre>
+
+    <p><strong>核心局限：</strong></p>
+    <ul>
+        <li>意图识别依赖用户查询的显式表达</li>
+        <li>无法利用内容的"潜在意图"信息</li>
+        <li>用户反馈难以反向传导优化检索</li>
+    </ul>
+
+    <h3>1.2 研究动机</h3>
+    <div class="highlight">
+        <strong>关键洞察：</strong>
+        <ol>
+            <li>内容本身蕴含"可用于解决什么问题"的信息</li>
+            <li>用户对话中的行为蕴含隐性意图倾向</li>
+            <li>少量反馈信号足以校准映射关系</li>
+        </ol>
+        <p><strong>目标：</strong>构建一个 <strong>内容→意图</strong> 的反向映射层，与正向检索形成闭环优化。</p>
+    </div>
+
+    <h2>二、核心概念：内容-意图映射</h2>
+    
+    <h3>2.1 定义</h3>
+    <p><strong>内容-意图映射</strong> 是一个从 RAG 数据块到潜在用户意图的多对多关系映射：</p>
+    <pre>
+Mapping: Chunk → {Intent_1: Confidence_1, Intent_2: Confidence_2, ...}
+
+示例:
+chunk_123 (产品规格说明) → {
+  "产品比较": 0.85,
+  "功能查询": 0.72,
+  "决策支持": 0.45,
+  "技术细节": 0.20
+}
+    </pre>
+
+    <h3>2.2 映射特性</h3>
+    <table>
+        <tr><th>特性</th><th>说明</th></tr>
+        <tr><td><strong>一对多</strong></td><td>一个 Chunk 可对应多个意图，置信度不同</td></tr>
+        <tr><td><strong>动态演化</strong></td><td>置信度随用户反馈持续调整</td></tr>
+        <tr><td><strong>粒度可控</strong></td><td>支持 文档级 / 段落级 / Chunk级</td></tr>
+    </table>
+
+    <h2>三、系统架构</h2>
+    
+    <h3>3.1 三层架构设计</h3>
+    <pre>
+┌────────────────────────────────────────────────────────────┐
+│  Layer 1: 内容-意图映射表 (静态层)                          │
+│  存储: 向量数据库 / 图数据库                                │
+│  结构: chunk_id → {intent: confidence, ...}               │
+├────────────────────────────────────────────────────────────┤
+│  Layer 2: 用户意图倾向追踪 (动态层)                         │
+│  功能: 追踪对话中的隐性意图演变                             │
+├────────────────────────────────────────────────────────────┤
+│  Layer 3: 反馈信号聚合 (奖励层)                             │
+│  信号: 显式(点赞/踩) + 隐式(追问/转话题) + 上下文           │
+└────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h2>四、反馈信号设计</h2>
+    
+    <h3>4.1 信号类型与权重</h3>
+    <table>
+        <tr><th>类型</th><th>信号</th><th>权重范围</th><th>捕获方式</th></tr>
+        <tr><td><strong>显式正面</strong></td><td>点赞、采纳、未修改</td><td>+0.5 ~ +1.0</td><td>UI 按钮</td></tr>
+        <tr><td><strong>显式负面</strong></td><td>踩、修改答案、换来源</td><td>-0.3 ~ -0.5</td><td>UI + 修改检测</td></tr>
+        <tr><td><strong>隐式正面</strong></td><td>追问、继续同话题</td><td>+0.1 ~ +0.3</td><td>对话分析</td></tr>
+        <tr><td><strong>隐式负面</strong></td><td>转话题、结束对话</td><td>-0.1 ~ -0.2</td><td>行为检测</td></tr>
+    </table>
+
+    <h2>五、RL 特性分析</h2>
+    
+    <h3>5.1 RL 框架映射</h3>
+    <table>
+        <tr><th>RL 元素</th><th>本方案对应</th></tr>
+        <tr><td><strong>State</strong></td><td>当前映射表 + 用户历史反馈 + 意图分布</td></tr>
+        <tr><td><strong>Action</strong></td><td>更新映射：添加/修改/删除/权重调整</td></tr>
+        <tr><td><strong>Reward</strong></td><td>用户反馈信号（显式+隐式+上下文）</td></tr>
+        <tr><td><strong>Policy</strong></td><td>更新触发策略：何时、如何更新</td></tr>
+        <tr><td><strong>Environment</strong></td><td>用户对话交互过程</td></tr>
+    </table>
+
+    <h3>5.2 训练策略</h3>
+    <div class="info-box">
+        <strong>推荐策略: Offline 预训练 + Online 微调</strong>
+        <ul>
+            <li><strong>Phase 1:</strong> 离线初始化 - LLM 零样本推断 + 历史日志预训练</li>
+            <li><strong>Phase 2:</strong> 在线迭代 - 实时反馈收集 + A/B 测试验证</li>
+            <li><strong>Phase 3:</strong> 持续优化 - 低频 Chunk 定期校验 + 新 Chunk 自动初始化</li>
+        </ul>
+    </div>
+
+    <h2>六、少样本启动机制</h2>
+    
+    <h3>6.1 最小数据需求</h3>
+    <table>
+        <tr><th>阶段</th><th>交互次数</th><th>映射质量</th></tr>
+        <tr><td><strong>零样本初始化</strong></td><td>0</td><td>中等 (LLM推断)</td></tr>
+        <tr><td><strong>初步校验</strong></td><td>10-50</td><td>中高 (关键映射验证)</td></tr>
+        <tr><td><strong>稳定版本</strong></td><td>100-500</td><td>高 (高置信度映射)</td></tr>
+        <tr><td><strong>持续优化</strong></td><td>持续积累</td><td>渐进提升</td></tr>
+    </table>
+
+    <h2>七、创新点总结</h2>
+    <ol>
+        <li><strong>反向映射</strong>：首次提出从内容反向构建意图映射</li>
+        <li><strong>Chunk级粒度</strong>：比现有方法的文档级更细粒度</li>
+        <li><strong>零样本启动</strong>：无需历史数据即可初始化</li>
+        <li><strong>三源反馈融合</strong>：显式+隐式+上下文综合信号</li>
+        <li><strong>RLHF风格迭代</strong>：低成本的持续优化机制</li>
+    </ol>
+
+    <h2>八、核心论文参考</h2>
+    <table>
+        <tr><th>论文</th><th>会议/期刊</th><th>相关点</th></tr>
+        <tr><td>DMA: Dynamic Memory Alignment</td><td>arXiv:2511.04880</td><td>多粒度反馈设计</td></tr>
+        <tr><td>RouteRAG</td><td>arXiv:2512.09487</td><td>RL 路由策略</td></tr>
+        <tr><td>CID-GraphRAG</td><td>AAAI 2026 Workshop</td><td>意图图谱构建</td></tr>
+        <tr><td>R3: Retrieval-Retention-Refinement</td><td>NeurIPS 2025</td><td>强化对比学习</td></tr>
+        <tr><td>Conservative Q-Learning</td><td>NeurIPS 2020</td><td>Offline RL 保守策略</td></tr>
+        <tr><td>Implicit Q-Learning</td><td>ICLR 2022</td><td>In-sample Q 学习</td></tr>
+    </table>
+
+    <hr>
+    <p style="color: #718096; font-size: 0.9em;">
+        本文档由 Damon 与 Outis 协作生成，属于人机知识共创成果。
+    </p>
+</body>
+</html>
