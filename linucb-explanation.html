@@ -489,6 +489,192 @@ b ← b + r × x
                 </tr>
             </table>
 
+            <h2>九、Bandit vs RL：本质区别</h2>
+
+            <div class="highlight">
+                <h3>核心结论</h3>
+                <p>Contextual Bandit 和传统 RL 没有绝对的优劣，而是<strong>适用场景不同</strong>。</p>
+            </div>
+
+            <table>
+                <tr>
+                    <th>维度</th>
+                    <th>Contextual Bandit (LinUCB)</th>
+                    <th>传统 RL (DQN/PPO等)</th>
+                </tr>
+                <tr>
+                    <td><strong>决策步数</strong></td>
+                    <td>单步</td>
+                    <td>多步序列</td>
+                </tr>
+                <tr>
+                    <td><strong>状态转移</strong></td>
+                    <td>无（每次独立）</td>
+                    <td>有（状态序列）</td>
+                </tr>
+                <tr>
+                    <td><strong>奖励延迟</strong></td>
+                    <td>即时反馈</td>
+                    <td>可能延迟多步</td>
+                </tr>
+                <tr>
+                    <td><strong>目标</strong></td>
+                    <td>单步最优</td>
+                    <td>累积长期最优</td>
+                </tr>
+                <tr>
+                    <td><strong>复杂度</strong></td>
+                    <td>低</td>
+                    <td>高</td>
+                </tr>
+                <tr>
+                    <td><strong>收敛速度</strong></td>
+                    <td>快</td>
+                    <td>慢</td>
+                </tr>
+            </table>
+
+            <h3>问题建模对比</h3>
+
+            <div class="example">
+                <div class="example-title">Contextual Bandit</div>
+                <pre>
+状态 → 动作 → 好了，结束
+
+每次查询独立，不影响下次查询
+奖励 = 用户对这次回答的反馈（即时）
+                </pre>
+            </div>
+
+            <div class="example">
+                <div class="example-title">RL (MDP)</div>
+                <pre>
+状态₁ → 动作₁ → 状态₂ → 动作₂ → ... → 最终奖励
+
+状态序列有依赖
+奖励可能延迟（比如游戏通关）
+                </pre>
+            </div>
+
+            <h3>"累积优化"的区别</h3>
+
+            <p>两种算法都会"累积优化"，但本质不同：</p>
+
+            <table>
+                <tr>
+                    <th>对比</th>
+                    <th>Bandit 累积</th>
+                    <th>RL 累积</th>
+                </tr>
+                <tr>
+                    <td><strong>累积方式</strong></td>
+                    <td>参数 θ 逐渐优化</td>
+                    <td>策略 π 逐渐优化</td>
+                </tr>
+                <tr>
+                    <td><strong>决策关系</strong></td>
+                    <td>独立（每次查询不依赖上次）</td>
+                    <td>序列（当前状态依赖之前动作）</td>
+                </tr>
+                <tr>
+                    <td><strong>奖励来源</strong></td>
+                    <td>即时反馈累加</td>
+                    <td>可能延迟（只有最后有奖励）</td>
+                </tr>
+                <tr>
+                    <td><strong>优化目标</strong></td>
+                    <td>θ（预测模型）</td>
+                    <td>π（策略）</td>
+                </tr>
+                <tr>
+                    <td><strong>状态转移</strong></td>
+                    <td>无</td>
+                    <td>有</td>
+                </tr>
+            </table>
+
+            <h3>IntentWeight 为什么选 Bandit？</h3>
+
+            <pre>
+用户查询₁ → 返回 chunk → 用户反馈 → 结束
+用户查询₂ → 返回 chunk → 用户反馈 → 结束
+
+特点:
+  ✅ 单步决策（一次查询一次回答）
+  ✅ 即时反馈（用户马上反应）
+  ✅ 状态独立（下次查询不依赖上次）
+
+结论: Contextual Bandit 是正确建模
+            </pre>
+
+            <h3>如果用 RL 会怎样？</h3>
+
+            <pre>
+假设用 DQN 做 RAG 精排:
+
+状态 s = [查询embedding, 历史对话, 用户画像]
+动作 a = 选择 chunk
+奖励 r = 用户反馈
+状态转移 s' = ??? (下次查询是什么？)
+
+问题:
+  ❌ 状态转移不明确（用户下次查询不可预测）
+  ❌ 没有长期规划意义（每次查询独立）
+  ❌ 训练复杂度高，收敛慢
+  ❌ 需要大量序列数据（对话历史）
+            </pre>
+
+            <h3>适用场景对比</h3>
+
+            <table>
+                <tr>
+                    <th>场景</th>
+                    <th>Bandit</th>
+                    <th>RL</th>
+                </tr>
+                <tr>
+                    <td>RAG 精排</td>
+                    <td>✅ 每次查询独立</td>
+                    <td>❌ 过度复杂</td>
+                </tr>
+                <tr>
+                    <td>推荐系统</td>
+                    <td>✅ 单次推荐</td>
+                    <td>⚠️ 部分序列场景</td>
+                </tr>
+                <tr>
+                    <td>广告投放</td>
+                    <td>✅ 单次展示</td>
+                    <td>❌ 过度复杂</td>
+                </tr>
+                <tr>
+                    <td>游戏 AI</td>
+                    <td>❌ 无状态序列</td>
+                    <td>✅ 长期规划</td>
+                </tr>
+                <tr>
+                    <td>机器人控制</td>
+                    <td>❌ 无动作序列</td>
+                    <td>✅ 连续动作</td>
+                </tr>
+                <tr>
+                    <td>单轮对话</td>
+                    <td>✅ 单轮问答</td>
+                    <td>❌ 过度复杂</td>
+                </tr>
+                <tr>
+                    <td>多轮对话</td>
+                    <td>⚠️ 部分适用</td>
+                    <td>✅ 有状态转移</td>
+                </tr>
+            </table>
+
+            <div class="highlight">
+                <h3>结论</h3>
+                <p>不是 LinUCB 比 RL 好，而是 <strong>Bandit 问题用 Bandit 解决，RL 问题用 RL 解决</strong>。</p>
+                <p>IntentWeight 的 RAG 精排是 Bandit 问题，所以 LinUCB 是正确选择。</p>
+            </div>
+
             <h2>总结</h2>
             
             <table>
