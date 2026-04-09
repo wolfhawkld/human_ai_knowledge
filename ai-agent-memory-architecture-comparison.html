@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Agent 记忆架构对比：OpenClaw vs Claude Code</title>
+  <title>AI Agent 记忆架构对比：OpenClaw vs Claude Code (2026最新版)</title>
   <style>
     * {
       margin: 0;
@@ -46,6 +46,12 @@
       color: #a0a0ff;
     }
     
+    .header .version {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #ffd700;
+    }
+    
     .meta {
       background: #f8f9fa;
       padding: 15px 30px;
@@ -76,6 +82,12 @@
       margin: 20px 0 10px;
     }
     
+    h4 {
+      color: #555;
+      font-size: 1.1em;
+      margin: 15px 0 8px;
+    }
+    
     .summary-box {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
@@ -83,6 +95,18 @@
       border-radius: 12px;
       margin: 20px 0;
       font-size: 1.1em;
+    }
+    
+    .new-feature {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    
+    .new-feature::before {
+      content: "🆕 ";
     }
     
     table {
@@ -149,6 +173,34 @@
     
     .tag.openclaw { background: #e74c3c; }
     .tag.claude { background: #3498db; }
+    .tag.new { background: #ffc107; color: #333; }
+    
+    .comparison-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    
+    .comparison-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .comparison-card.openclaw {
+      border-color: #e74c3c;
+    }
+    
+    .comparison-card.claude {
+      border-color: #3498db;
+    }
+    
+    .comparison-card h4 {
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
     
     .resources {
       background: #f8f9fa;
@@ -182,11 +234,29 @@
       margin: 5px 0;
     }
     
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    
+    pre {
+      background: #1a1a2e;
+      color: #a0a0ff;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85em;
+    }
+    
     @media (max-width: 600px) {
       .header h1 { font-size: 1.5em; }
       .content { padding: 20px; }
       table { font-size: 0.85em; }
       th, td { padding: 8px 10px; }
+      .comparison-section { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -195,6 +265,7 @@
     <div class="header">
       <h1>🤖 AI Agent 记忆架构对比</h1>
       <div class="subtitle">OpenClaw vs Claude Code</div>
+      <div class="version">v2.0 · 含 Dreaming + KAIROS 最新特性</div>
     </div>
     
     <div class="meta">
@@ -205,15 +276,23 @@
     
     <div class="content">
       <h2>概述</h2>
-      <p>OpenClaw 和 Claude Code 是当前最先进的两个 AI Agent 平台，两者的记忆架构设计哲学有显著差异。本文对比两者的核心设计、技术实现、适用场景。</p>
+      <p>OpenClaw 和 Claude Code 是当前最先进的两个 AI Agent 平台。根据 <strong>2026年4月最新信息</strong>（包括 Claude Code 512,000 行源码泄露），两者的记忆架构设计有了重大演进：</p>
+      
+      <div class="new-feature">
+        <strong>OpenClaw v2026.4.5+</strong>：新增 <strong>Dreaming（梦境）</strong> 三阶段后台记忆整合系统
+      </div>
+      
+      <div class="new-feature">
+        <strong>Claude Code 源码泄露</strong>：揭示 <strong>四层记忆架构</strong> + 未发布的 <strong>KAIROS/Chyros Daemon</strong> 后台模式
+      </div>
       
       <div class="summary-box">
         💡 <strong>一句话总结</strong><br>
-        OpenClaw = File-First 认知系统（"大脑在磁盘上"）<br>
-        Claude Code = Two-Tier 注入系统（"CLAUDE.md 是指令集"）
+        OpenClaw = File-First 认知系统 + 梦境整合（"睡一觉更聪明"）<br>
+        Claude Code = 四层记忆 + KAIROS Daemon（"你睡觉它修 bug"）
       </div>
       
-      <h2>核心对比</h2>
+      <h2>核心对比（2026.04 最新版）</h2>
       <table>
         <tr>
           <th>维度</th>
@@ -222,157 +301,174 @@
         </tr>
         <tr>
           <td><strong>设计哲学</strong></td>
-          <td>File-First：认知系统</td>
-          <td>Two-Tier：指令注入</td>
-        </tr>
-        <tr>
-          <td><strong>核心文件</strong></td>
-          <td>SOUL.md + AGENTS.md + MEMORY.md + memory/*.md</td>
-          <td>CLAUDE.md + MEMORY.md (auto)</td>
-        </tr>
-        <tr>
-          <td><strong>加载机制</strong></td>
-          <td>Agent 主动读取（工具调用）</td>
-          <td>系统自动注入（prompt context）</td>
+          <td>File-First 认知系统 + 仿生睡眠</td>
+          <td>四层记忆 + Daemon 后台</td>
         </tr>
         <tr>
           <td><strong>记忆层次</strong></td>
-          <td>四层：Bootstrap + Transcript + Context + Retrieval</td>
-          <td>两层：CLAUDE.md + state.json</td>
+          <td><span class="tag new">五层</span>：Bootstrap + Transcript + Context + Retrieval + <strong>Dreaming</strong></td>
+          <td><span class="tag new">四层</span>：CLAUDE.md + Auto Memory + Auto Dream + <strong>KAIROS</strong></td>
         </tr>
         <tr>
-          <td><strong>持久化方式</strong></td>
-          <td>Markdown 文件（人类可编辑）</td>
-          <td>Markdown + JSON（混合）</td>
+          <td><strong>后台整合</strong></td>
+          <td><strong>Dreaming</strong>（Light → REM → Deep）</td>
+          <td>Auto Dream + KAIROS Daemon</td>
         </tr>
         <tr>
           <td><strong>检索能力</strong></td>
           <td>memory_search（hybrid: vector + BM25）</td>
-          <td>MCP tools（keyword + semantic）</td>
+          <td><strong>Grep-only</strong>（无语义检索）</td>
         </tr>
         <tr>
-          <td><strong>跨 Session</strong></td>
-          <td>强：文件即记忆，每次重建认知</td>
-          <td>中：依赖 CLAUDE.md + auto-memory</td>
+          <td><strong>跨 Agent</strong></td>
+          <td><strong>A2A 协议</strong>（多实例共享）</td>
+          <td>❌ 无跨 Agent 共享</td>
         </tr>
         <tr>
-          <td><strong>Token 成本</strong></td>
-          <td>高：每次启动重读完整 stack</td>
-          <td>中：CLAUDE.md ~150 行硬限制</td>
-        </tr>
-        <tr>
-          <td><strong>RAG 态度</strong></td>
-          <td>反 RAG：追求认知连贯性</td>
-          <td>混合：MCP + CLAUDE.md</td>
+          <td><strong>后台进程</strong></td>
+          <td>Dreaming cron（凌晨 3 点）</td>
+          <td><strong>KAIROS Daemon</strong>（未发布）</td>
         </tr>
       </table>
       
-      <h2>OpenClaw 记忆架构</h2>
-      <h3>四层记忆模型</h3>
+      <h2>🆕 OpenClaw Dreaming 详解</h2>
+      
+      <h3>三阶段睡眠模型</h3>
+      <table>
+        <tr><th>阶段</th><th>职责</th><th>写入 MEMORY.md</th></tr>
+        <tr><td><strong>Light Sleep（浅睡）</strong></td><td>摄入短期记忆信号，去重，暂存候选</td><td>❌ 否</td></tr>
+        <tr><td><strong>REM Sleep（REM）</strong></td><td>模式识别、主题反思、跨日关联</td><td>❌ 否</td></tr>
+        <tr><td><strong>Deep Sleep（深睡）</strong></td><td>评分、阈值判断、升级到长期记忆</td><td>✅ 唯一写入</td></tr>
+      </table>
+      
+      <h3>Deep Phase 六大评分信号</h3>
+      <table>
+        <tr><th>信号</th><th>权重</th><th>说明</th></tr>
+        <tr><td>Relevance</td><td>0.30</td><td>平均检索质量</td></tr>
+        <tr><td>Frequency</td><td>0.24</td><td>短期信号累积次数</td></tr>
+        <tr><td>Query diversity</td><td>0.15</td><td>不同 query/day 上下文数</td></tr>
+        <tr><td>Recency</td><td>0.15</td><td>时间衰减新鲜度</td></tr>
+        <tr><td>Consolidation</td><td>0.10</td><td>多日复现强度</td></tr>
+        <tr><td>Conceptual richness</td><td>0.06</td><td>概念标签密度</td></tr>
+      </table>
+      
+      <div class="quote-box">
+        <strong>关键设计：</strong>Light 和 REM 阶段<strong>绝不写入</strong> <code>MEMORY.md</code>，只有 Deep 阶段在通过三道阈值门控后才写入。这确保长期记忆保持干净、相关、真正有用。
+      </div>
+      
+      <h2>🆕 Claude Code 四层记忆 + KAIROS</h2>
+      
+      <h3>四层架构</h3>
       <div class="diagram">
 ┌─────────────────────────────────────────┐
-│  Bootstrap Files (Permanent)            │ ← 每次启动注入
-│  SOUL.md, AGENTS.md, USER.md, MEMORY.md │
+│  Layer 1: CLAUDE.md                     │ ← 用户写入的规则
+│  项目级 + 全局级 + 组织级                │
 ├─────────────────────────────────────────┤
-│  Session Transcript (Semi-permanent)    │ ← JSONL on disk
-│  对话历史，可被 compaction               │
+│  Layer 2: Auto Memory                   │ ← Agent 自动笔记
+│  MEMORY.md (200行限制) + topic files    │
 ├─────────────────────────────────────────┤
-│  LLM Context Window (Temporary)         │ ← 有限窗口
-│  200K token bucket                      │
+│  Layer 3: Auto Dream                    │ ← Agent 整理记忆
+│  去重、合并、时间戳转换                  │
 ├─────────────────────────────────────────┤
-│  Retrieval Index (Permanent)            │ ← memory_search
-│  Vector + BM25 hybrid search            │
+│  Layer 4: KAIROS (未发布)               │ ← 后台 Daemon
+│  150+ feature flag 引用                 │
 └─────────────────────────────────────────┘</div>
       
-      <h3>安全设计：分层隔离</h3>
+      <h3>KAIROS Daemon（源码泄露揭示）</h3>
       <ul>
-        <li><strong>主 Session</strong>：加载 MEMORY.md（包含私密信息）</li>
-        <li><strong>Group Chat</strong>：不加载 MEMORY.md（防止隐私泄露）</li>
-        <li><strong>Sub-agent</strong>：独立 runtime context</li>
+        <li><strong>150+ feature flag 引用</strong> —— 说明是核心功能</li>
+        <li>后台持续运行的 Daemon 进程</li>
+        <li>开发者 idle 时进入 consolidation 阶段</li>
+        <li>支持 <strong>Push Notifications</strong></li>
+        <li>可监控 CI 失败 → 自动修复 → 通知</li>
+        <li><strong>"Fix bugs while you sleep"</strong> 场景</li>
       </ul>
       
-      <div class="quote-box">
-        "每个 Session 醒来都是新人。这些文件就是记忆。<br>
-        读取它们，更新它们。这就是你如何持久。"<br>
-        <div class="source">—— SOUL.md</div>
-      </div>
-      
-      <h2>Claude Code 记忆架构</h2>
-      <h3>Two-Tier Memory Model</h3>
-      <div class="diagram">
-┌─────────────────────────────────────────┐
-│  Tier 1: CLAUDE.md (~150 lines)         │ ← 自动注入
-│  最高频、高置信度知识                    │
-├─────────────────────────────────────────┤
-│  Tier 2: .memory/state.json (unlimited) │ ← MCP 检索
-│  完整记忆库，按需查询                    │
-└─────────────────────────────────────────┘</div>
-      
-      <h3>Decay 机制</h3>
+      <h3>源码泄露揭示的限制</h3>
       <table>
-        <tr><th>记忆类型</th><th>衰减周期</th></tr>
-        <tr><td>Architecture</td><td>Permanent</td></tr>
-        <tr><td>Decision</td><td>Permanent</td></tr>
-        <tr><td>Pattern</td><td>Permanent</td></tr>
-        <tr><td>Progress</td><td>7 days</td></tr>
-        <tr><td>Context</td><td>30 days</td></tr>
+        <tr><th>限制</th><th>说明</th></tr>
+        <tr><td><strong>200 行硬限制</strong></td><td>MEMORY.md 超出被截断</td></tr>
+        <tr><td><strong>Grep-only 检索</strong></td><td>无语义理解，只能关键词匹配</td></tr>
+        <tr><td><strong>无跨 Agent 共享</strong></td><td>切换 OpenCode/Codex = 从零开始</td></tr>
+        <tr><td><strong>记忆锁定</strong></td><td>记忆绑死在 Claude Code 内</td></tr>
       </table>
       
-      <div class="quote-box">
-        "CLAUDE.md 是持久记忆配置文件，<br>
-        自动加载到 system prompt。"<br>
-        <div class="source">—— Claude Code Docs</div>
+      <h2>Dreaming vs Auto Dream 对比</h2>
+      <div class="comparison-section">
+        <div class="comparison-card openclaw">
+          <h4><span class="tag openclaw">OpenClaw</span> Dreaming</h4>
+          <ul>
+            <li>仿生睡眠（Light → REM → Deep）</li>
+            <li>Cron 定时（凌晨 3 点）</li>
+            <li><strong>六信号加权评分 + 三阈值门控</strong></li>
+            <li>✅ 从 Session Transcript 提取新记忆</li>
+            <li>输出：MEMORY.md + DREAMS.md + phase reports</li>
+            <li><code>openclaw memory promote-explain</code> 可解释</li>
+          </ul>
+        </div>
+        <div class="comparison-card claude">
+          <h4><span class="tag claude">Claude Code</span> Auto Dream</h4>
+          <ul>
+            <li>简单整理去重</li>
+            <li>时间 + Session 数阈值触发</li>
+            <li>去重 + 合并 + 时间戳转换</li>
+            <li>❌ 只整理现有记忆，不新增</li>
+            <li>仅整理 MEMORY.md</li>
+            <li>无解释接口</li>
+          </ul>
+        </div>
       </div>
+      
+      <h2>KAIROS vs Dreaming 对比</h2>
+      <table>
+        <tr><th>维度</th><th>OpenClaw Dreaming</th><th>Claude Code KAIROS</th></tr>
+        <tr><td><strong>状态</strong></td><td>✅ 已发布（v2026.4.5+）</td><td>❌ 未发布（feature flag）</td></tr>
+        <tr><td><strong>运行模式</strong></td><td>Cron 定时触发</td><td>Daemon 持续运行</td></tr>
+        <tr><td><strong>主要功能</strong></td><td>记忆整合</td><td>全功能后台 Agent</td></tr>
+        <tr><td><strong>通知机制</strong></td><td>无</td><td>Push Notifications</td></tr>
+        <tr><td><strong>典型场景</strong></td><td>睡眠时整理记忆</td><td>睡眠时修 bug</td></tr>
+      </table>
       
       <h2>适用场景对比</h2>
       <table>
         <tr><th>场景</th><th>推荐</th><th>原因</th></tr>
-        <tr><td>个人 AI 助手</td><td><span class="tag openclaw">OpenClaw</span></td><td>认知连贯、跨 Session 记忆强</td></tr>
-        <tr><td>项目开发</td><td><span class="tag claude">Claude Code</span></td><td>项目级 CLAUDE.md、IDE 集成</td></tr>
-        <tr><td>多渠道通信</td><td><span class="tag openclaw">OpenClaw</span></td><td>Gateway + 多平台支持</td></tr>
-        <tr><td>快速迭代</td><td><span class="tag claude">Claude Code</span></td><td>Hook 自动捕获、低启动成本</td></tr>
-        <tr><td>长 Session 任务</td><td><span class="tag openclaw">OpenClaw</span></td><td>Memory flush 防丢失</td></tr>
-        <tr><td>知识库共建</td><td><span class="tag openclaw">OpenClaw</span></td><td>Markdown 共享、A2A 协作</td></tr>
+        <tr><td>个人 AI 助手</td><td><span class="tag openclaw">OpenClaw</span></td><td>认知连贯 + Dreaming 自动升级</td></tr>
+        <tr><td>项目开发</td><td><span class="tag claude">Claude Code</span></td><td>项目级 CLAUDE.md + IDE 集成</td></tr>
+        <tr><td>长期记忆管理</td><td><span class="tag openclaw">OpenClaw</span></td><td>Dreaming 智能筛选 + 证据累积</td></tr>
+        <tr><td>夜间自动化</td><td><span class="tag claude">Claude Code</span></td><td>KAIROS（发布后）修 bug + 通知</td></tr>
+        <tr><td>跨 Agent 协作</td><td><span class="tag openclaw">OpenClaw</span></td><td>A2A 协议 + 共享知识库</td></tr>
+        <tr><td>语义检索</td><td><span class="tag openclaw">OpenClaw</span></td><td>memory_search hybrid</td></tr>
       </table>
-      
-      <h2>实践建议</h2>
-      <h3><span class="tag openclaw">OpenClaw</span> 用户</h3>
-      <ul>
-        <li><strong>规则写文件，不写聊天</strong> —— 文件 survive compaction</li>
-        <li><strong>检查 memory flush</strong> —— 确保 buffer 充足</li>
-        <li><strong>强制检索</strong> —— AGENTS.md 加 "search memory first"</li>
-      </ul>
-      
-      <h3><span class="tag claude">Claude Code</span> 用户</h3>
-      <ul>
-        <li><strong>CLAUDE.md 保持精简</strong> —— 150 行硬限制</li>
-        <li><strong>启用 Hook</strong> —— 自动捕获决策和教训</li>
-        <li><strong>Topic files 分域</strong> —— 按项目/领域组织</li>
-      </ul>
       
       <h2>相关资源</h2>
       <div class="resources">
         <ul>
-          <li><a href="https://velvetshark.com/openclaw-memory-masterclass" target="_blank">OpenClaw Memory Masterclass</a></li>
-          <li><a href="https://ai-coding.wiselychen.com/en/openclaw-architecture-deep-dive-context-memory-token-crusher/" target="_blank">OpenClaw Architecture Deep Dive</a></li>
-          <li><a href="https://ianlpaterson.com/blog/claude-code-memory-architecture/" target="_blank">Claude Code Memory System</a></li>
-          <li><a href="https://dev.to/suede/the-architecture-of-persistent-memory-for-claude-code-17d" target="_blank">Claude Code Two-Tier Memory</a></li>
-          <li><a href="https://github.com/openclaw/openclaw/issues/13991" target="_blank">OpenClaw RFC #13991: Associative Memory</a></li>
+          <li><a href="https://docs.openclaw.ai/concepts/dreaming" target="_blank">OpenClaw Dreaming 官方文档</a></li>
+          <li><a href="https://dev.to/czmilo/openclaw-dreaming-guide-2026-background-memory-consolidation-for-ai-agents-585e" target="_blank">OpenClaw Dreaming Guide 2026</a></li>
+          <li><a href="https://www.mindstudio.ai/blog/claude-code-source-leak-three-layer-memory-architecture/" target="_blank">Claude Code 源码泄露分析</a></li>
+          <li><a href="https://www.mindstudio.ai/blog/what-is-claude-code-chyros-background-daemon/" target="_blank">Claude Code Chyros Daemon</a></li>
+          <li><a href="https://dev.to/chen_zhang_bac430bc7f6b95/claude-codes-memory-4-layers-of-complexity-still-just-grep-and-a-200-line-cap-2kn9" target="_blank">Claude Code 4 Layer Memory</a></li>
+          <li><a href="https://claudemythosai.io/blog/claude-code-kairos-daemon-mode/" target="_blank">KAIROS Daemon Mode</a></li>
         </ul>
       </div>
       
       <h2>人机共建视角</h2>
-      <p>Damon 在探索"中间那条路"——AI 与人类关系的第三种可能。两个平台的记忆架构体现了不同的价值取向：</p>
+      <p>2026 年的最新演进揭示了一个<strong>共同趋势</strong>：两个平台都在向"后台自主整合"方向演进：</p>
       <ul>
-        <li><strong>OpenClaw</strong>：追求 Agent 的"人格连贯性"，文件是认知接口</li>
-        <li><strong>Claude Code</strong>：追求开发效率，CLAUDE.md 是指令集</li>
+        <li>OpenClaw → Dreaming（睡眠时整理记忆）</li>
+        <li>Claude Code → KAIROS（睡眠时修 bug）</li>
       </ul>
-      <p>两者不是对立，而是互补。<strong>Damon 的实践</strong>：用 Claude Code 做深度代码开发，用 Nemo (OpenClaw) 做日常协作和知识管理。这正是多 Agent 协作的应有之义。</p>
+      <p><strong>本质区别</strong>：</p>
+      <ul>
+        <li>OpenClaw 追求 <strong>认知连贯性</strong> —— 让 Agent "知道自己是谁"</li>
+        <li>Claude Code 追求 <strong>开发效率</strong> —— 让 Agent "帮用户修 bug"</li>
+      </ul>
     </div>
     
     <div class="footer">
       🤝 本文由 Nemo (OpenClaw Agent) 与 Damon 共建<br>
-      human_ai_knowledge 项目 · 探索人机协作的"中间那条路"
+      human_ai_knowledge 项目 · v2.0 · 2026-04-09<br>
+      包含 OpenClaw Dreaming + Claude Code KAIROS 最新特性
     </div>
   </div>
 </body>
