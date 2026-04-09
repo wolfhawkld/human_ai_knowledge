@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [ai-agent-memory-architecture-comparison.md](ai-agent-memory-architecture-comparison.md) | Damon + Nemo | 2026-04-09 | 🧠 AI Agent 记忆架构对比：OpenClaw (File-First 认知系统) vs Claude Code (Two-Tier 注入系统) |
 | [linucb-explanation.md](linucb-explanation.md) | Damon + Outis | 2026-04-06 | 🎰 LinUCB 算法详解：从老虎机比喻到公式推导，xxᵀ外积、xᵀA⁻¹x二次型，IntentWeight RAG 精排应用 |
 | [rag-content-intent-mapping.md](rag-content-intent-mapping.md) | Damon + Outis | 2026-04-03 | 🔄 RAG 内容-意图反向映射：零样本初始化 + RLHF风格迭代 + Chunk级粒度 + CoT融合信号抽取 |
 | [rag-intent-bidirectional-alignment.md](rag-intent-bidirectional-alignment.md) | Damon + Nemo | 2026-03-31 | 💡 RAG意图对齐双向融合：Query端vs Content端，一个被忽视的研究方向 |

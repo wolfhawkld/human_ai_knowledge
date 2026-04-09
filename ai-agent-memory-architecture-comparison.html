@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent 记忆架构对比：OpenClaw vs Claude Code</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    
+    .header .subtitle {
+      font-size: 1.1em;
+      color: #a0a0ff;
+    }
+    
+    .meta {
+      background: #f8f9fa;
+      padding: 15px 30px;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    .meta span {
+      margin-right: 20px;
+    }
+    
+    .content {
+      padding: 30px;
+    }
+    
+    h2 {
+      color: #1a1a2e;
+      font-size: 1.5em;
+      margin: 30px 0 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    h3 {
+      color: #333;
+      font-size: 1.2em;
+      margin: 20px 0 10px;
+    }
+    
+    .summary-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 1.1em;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.95em;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border: 1px solid #e9ecef;
+    }
+    
+    th {
+      background: #1a1a2e;
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    
+    tr:hover {
+      background: #e9ecef;
+    }
+    
+    .diagram {
+      background: #1a1a2e;
+      color: #a0a0ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-family: monospace;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    
+    .quote-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 15px 20px;
+      margin: 20px 0;
+      font-style: italic;
+    }
+    
+    .quote-box .source {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+    
+    .tag {
+      display: inline-block;
+      background: #667eea;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-right: 5px;
+    }
+    
+    .tag.openclaw { background: #e74c3c; }
+    .tag.claude { background: #3498db; }
+    
+    .resources {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .resources a {
+      color: #667eea;
+      text-decoration: none;
+    }
+    
+    .resources a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer {
+      background: #1a1a2e;
+      color: #a0a0ff;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.9em;
+    }
+    
+    ul {
+      margin: 10px 0 10px 20px;
+    }
+    
+    li {
+      margin: 5px 0;
+    }
+    
+    @media (max-width: 600px) {
+      .header h1 { font-size: 1.5em; }
+      .content { padding: 20px; }
+      table { font-size: 0.85em; }
+      th, td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 AI Agent 记忆架构对比</h1>
+      <div class="subtitle">OpenClaw vs Claude Code</div>
+    </div>
+    
+    <div class="meta">
+      <span>📅 2026-04-09</span>
+      <span>🤝 Damon + Nemo</span>
+      <span>📦 human_ai_knowledge</span>
+    </div>
+    
+    <div class="content">
+      <h2>概述</h2>
+      <p>OpenClaw 和 Claude Code 是当前最先进的两个 AI Agent 平台，两者的记忆架构设计哲学有显著差异。本文对比两者的核心设计、技术实现、适用场景。</p>
+      
+      <div class="summary-box">
+        💡 <strong>一句话总结</strong><br>
+        OpenClaw = File-First 认知系统（"大脑在磁盘上"）<br>
+        Claude Code = Two-Tier 注入系统（"CLAUDE.md 是指令集"）
+      </div>
+      
+      <h2>核心对比</h2>
+      <table>
+        <tr>
+          <th>维度</th>
+          <th><span class="tag openclaw">OpenClaw</span></th>
+          <th><span class="tag claude">Claude Code</span></th>
+        </tr>
+        <tr>
+          <td><strong>设计哲学</strong></td>
+          <td>File-First：认知系统</td>
+          <td>Two-Tier：指令注入</td>
+        </tr>
+        <tr>
+          <td><strong>核心文件</strong></td>
+          <td>SOUL.md + AGENTS.md + MEMORY.md + memory/*.md</td>
+          <td>CLAUDE.md + MEMORY.md (auto)</td>
+        </tr>
+        <tr>
+          <td><strong>加载机制</strong></td>
+          <td>Agent 主动读取（工具调用）</td>
+          <td>系统自动注入（prompt context）</td>
+        </tr>
+        <tr>
+          <td><strong>记忆层次</strong></td>
+          <td>四层：Bootstrap + Transcript + Context + Retrieval</td>
+          <td>两层：CLAUDE.md + state.json</td>
+        </tr>
+        <tr>
+          <td><strong>持久化方式</strong></td>
+          <td>Markdown 文件（人类可编辑）</td>
+          <td>Markdown + JSON（混合）</td>
+        </tr>
+        <tr>
+          <td><strong>检索能力</strong></td>
+          <td>memory_search（hybrid: vector + BM25）</td>
+          <td>MCP tools（keyword + semantic）</td>
+        </tr>
+        <tr>
+          <td><strong>跨 Session</strong></td>
+          <td>强：文件即记忆，每次重建认知</td>
+          <td>中：依赖 CLAUDE.md + auto-memory</td>
+        </tr>
+        <tr>
+          <td><strong>Token 成本</strong></td>
+          <td>高：每次启动重读完整 stack</td>
+          <td>中：CLAUDE.md ~150 行硬限制</td>
+        </tr>
+        <tr>
+          <td><strong>RAG 态度</strong></td>
+          <td>反 RAG：追求认知连贯性</td>
+          <td>混合：MCP + CLAUDE.md</td>
+        </tr>
+      </table>
+      
+      <h2>OpenClaw 记忆架构</h2>
+      <h3>四层记忆模型</h3>
+      <div class="diagram">
+┌─────────────────────────────────────────┐
+│  Bootstrap Files (Permanent)            │ ← 每次启动注入
+│  SOUL.md, AGENTS.md, USER.md, MEMORY.md │
+├─────────────────────────────────────────┤
+│  Session Transcript (Semi-permanent)    │ ← JSONL on disk
+│  对话历史，可被 compaction               │
+├─────────────────────────────────────────┤
+│  LLM Context Window (Temporary)         │ ← 有限窗口
+│  200K token bucket                      │
+├─────────────────────────────────────────┤
+│  Retrieval Index (Permanent)            │ ← memory_search
+│  Vector + BM25 hybrid search            │
+└─────────────────────────────────────────┘</div>
+      
+      <h3>安全设计：分层隔离</h3>
+      <ul>
+        <li><strong>主 Session</strong>：加载 MEMORY.md（包含私密信息）</li>
+        <li><strong>Group Chat</strong>：不加载 MEMORY.md（防止隐私泄露）</li>
+        <li><strong>Sub-agent</strong>：独立 runtime context</li>
+      </ul>
+      
+      <div class="quote-box">
+        "每个 Session 醒来都是新人。这些文件就是记忆。<br>
+        读取它们，更新它们。这就是你如何持久。"<br>
+        <div class="source">—— SOUL.md</div>
+      </div>
+      
+      <h2>Claude Code 记忆架构</h2>
+      <h3>Two-Tier Memory Model</h3>
+      <div class="diagram">
+┌─────────────────────────────────────────┐
+│  Tier 1: CLAUDE.md (~150 lines)         │ ← 自动注入
+│  最高频、高置信度知识                    │
+├─────────────────────────────────────────┤
+│  Tier 2: .memory/state.json (unlimited) │ ← MCP 检索
+│  完整记忆库，按需查询                    │
+└─────────────────────────────────────────┘</div>
+      
+      <h3>Decay 机制</h3>
+      <table>
+        <tr><th>记忆类型</th><th>衰减周期</th></tr>
+        <tr><td>Architecture</td><td>Permanent</td></tr>
+        <tr><td>Decision</td><td>Permanent</td></tr>
+        <tr><td>Pattern</td><td>Permanent</td></tr>
+        <tr><td>Progress</td><td>7 days</td></tr>
+        <tr><td>Context</td><td>30 days</td></tr>
+      </table>
+      
+      <div class="quote-box">
+        "CLAUDE.md 是持久记忆配置文件，<br>
+        自动加载到 system prompt。"<br>
+        <div class="source">—— Claude Code Docs</div>
+      </div>
+      
+      <h2>适用场景对比</h2>
+      <table>
+        <tr><th>场景</th><th>推荐</th><th>原因</th></tr>
+        <tr><td>个人 AI 助手</td><td><span class="tag openclaw">OpenClaw</span></td><td>认知连贯、跨 Session 记忆强</td></tr>
+        <tr><td>项目开发</td><td><span class="tag claude">Claude Code</span></td><td>项目级 CLAUDE.md、IDE 集成</td></tr>
+        <tr><td>多渠道通信</td><td><span class="tag openclaw">OpenClaw</span></td><td>Gateway + 多平台支持</td></tr>
+        <tr><td>快速迭代</td><td><span class="tag claude">Claude Code</span></td><td>Hook 自动捕获、低启动成本</td></tr>
+        <tr><td>长 Session 任务</td><td><span class="tag openclaw">OpenClaw</span></td><td>Memory flush 防丢失</td></tr>
+        <tr><td>知识库共建</td><td><span class="tag openclaw">OpenClaw</span></td><td>Markdown 共享、A2A 协作</td></tr>
+      </table>
+      
+      <h2>实践建议</h2>
+      <h3><span class="tag openclaw">OpenClaw</span> 用户</h3>
+      <ul>
+        <li><strong>规则写文件，不写聊天</strong> —— 文件 survive compaction</li>
+        <li><strong>检查 memory flush</strong> —— 确保 buffer 充足</li>
+        <li><strong>强制检索</strong> —— AGENTS.md 加 "search memory first"</li>
+      </ul>
+      
+      <h3><span class="tag claude">Claude Code</span> 用户</h3>
+      <ul>
+        <li><strong>CLAUDE.md 保持精简</strong> —— 150 行硬限制</li>
+        <li><strong>启用 Hook</strong> —— 自动捕获决策和教训</li>
+        <li><strong>Topic files 分域</strong> —— 按项目/领域组织</li>
+      </ul>
+      
+      <h2>相关资源</h2>
+      <div class="resources">
+        <ul>
+          <li><a href="https://velvetshark.com/openclaw-memory-masterclass" target="_blank">OpenClaw Memory Masterclass</a></li>
+          <li><a href="https://ai-coding.wiselychen.com/en/openclaw-architecture-deep-dive-context-memory-token-crusher/" target="_blank">OpenClaw Architecture Deep Dive</a></li>
+          <li><a href="https://ianlpaterson.com/blog/claude-code-memory-architecture/" target="_blank">Claude Code Memory System</a></li>
+          <li><a href="https://dev.to/suede/the-architecture-of-persistent-memory-for-claude-code-17d" target="_blank">Claude Code Two-Tier Memory</a></li>
+          <li><a href="https://github.com/openclaw/openclaw/issues/13991" target="_blank">OpenClaw RFC #13991: Associative Memory</a></li>
+        </ul>
+      </div>
+      
+      <h2>人机共建视角</h2>
+      <p>Damon 在探索"中间那条路"——AI 与人类关系的第三种可能。两个平台的记忆架构体现了不同的价值取向：</p>
+      <ul>
+        <li><strong>OpenClaw</strong>：追求 Agent 的"人格连贯性"，文件是认知接口</li>
+        <li><strong>Claude Code</strong>：追求开发效率，CLAUDE.md 是指令集</li>
+      </ul>
+      <p>两者不是对立，而是互补。<strong>Damon 的实践</strong>：用 Claude Code 做深度代码开发，用 Nemo (OpenClaw) 做日常协作和知识管理。这正是多 Agent 协作的应有之义。</p>
+    </div>
+    
+    <div class="footer">
+      🤝 本文由 Nemo (OpenClaw Agent) 与 Damon 共建<br>
+      human_ai_knowledge 项目 · 探索人机协作的"中间那条路"
+    </div>
+  </div>
+</body>
+</html>
