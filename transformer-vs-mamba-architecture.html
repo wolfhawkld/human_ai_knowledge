@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transformer vs Mamba 架构对比 | 人机知识库</title>
-    <style>
+    <title>Transformer vs Mamba：两大架构的核心机制对比 | 人机知识库</title>
+<style>
         * {
             margin: 0;
             padding: 0;
@@ -201,241 +201,500 @@
     <div class="container">
         <div class="header">
             <h1>Transformer vs Mamba：两大架构的核心机制对比</h1>
-            <div class="meta">创建时间：2026-04-12 · 来源：Damon + Metis 对话整理</div>
-            <div class="tags">
-                <span class="tag">Transformer</span>
-                <span class="tag">Mamba</span>
-                <span class="tag">自注意力</span>
-                <span class="tag">SSM</span>
-                <span class="tag">KV Cache</span>
+            <div class="meta">
+                创建时间：2026-04-12 | 来源：Damon + Metis 对话整理
             </div>
         </div>
-
         <div class="content">
-            <div class="overview">
-                <p><strong>核心对比：</strong>Transformer 通过自注意力机制实现全局信息关联，以空间换取精确回溯能力；Mamba 通过选择性状态空间模型实现时序压缩，以"智能压缩"换取无限序列长度。本文深入剖析两者的核心机制原理。</p>
-            </div>
+<h1>Transformer vs Mamba：两大架构的核心机制对比</h1>
+<blockquote>
+<p>创建时间：2026-04-12
+来源：Damon + Metis 对话整理
+关键词：[Transformer, Mamba, 自注意力, KV Cache, SSM, 状态空间模型, 线性复杂度]</p>
+</blockquote>
+<h2>概述</h2>
+<p>Transformer 和 Mamba 代表了当前深度学习架构的两条主要路径。Transformer 通过自注意力机制实现全局信息关联，以空间换取精确回溯能力；Mamba 通过选择性状态空间模型实现时序压缩，以"智能压缩"换取无限序列长度。本文深入剖析两者的核心机制原理。</p>
+<hr />
+<h2>Transformer：自注意力与 KV Cache</h2>
+<h3>核心思想</h3>
+<p>Transformer 的核心是 <strong>自注意力机制</strong>：让每个 token 都能"看到"所有历史 token，计算它们之间的关联程度。</p>
+<h3>QKV 机制详解</h3>
+<p>每个 token 会生成三个向量：</p>
+<p>|| 向量 | 作用 | 直观理解 |
+|------|------|---------|
+| <strong>Q (Query)</strong> | 发出查询 | "我要找什么信息？" |
+| <strong>K (Key)</strong> | 提供索引 | "我是什么内容，有什么标签？" |
+| <strong>V (Value)</strong> | 提供内容 | "我的实际信息是什么？" |</p>
+<h4>QKV 核心定义（Outis 版）</h4>
+<p>|| 向量 | 本质 | 角色 | 动作 |
+|------|------|------|------|
+| <strong>Q</strong> | 问题 | 主动方 | "我来问" |
+| <strong>K</strong> | 索引 | 被动方 | "你来被问" |
+| <strong>V</strong> | 内容 | 提供方 | "这是你要的" |</p>
+<p>核心公式：</p>
+<pre><code>Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V
+                     └─┬──┘ └─┬─┘
+                     相关性  归一化
+</code></pre>
+<p>数学直觉：
+- <strong>Q·Kᵀ</strong> = 相关性矩阵（每个 token 对每个 token 的关注程度）
+- <strong>softmax</strong> = 归一化为概率分布（权重和 = 1）
+- <strong>· V</strong> = 按权重提取内容（加权求和）</p>
+<h4>数学表达</h4>
+<pre><code>Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V
+</code></pre>
+<h4>运作流程</h4>
+<pre><code>输入序列: &quot;今天 天气 很好&quot;
 
-            <h2>Transformer：自注意力与 KV Cache</h2>
-            
-            <h3>核心思想</h3>
-            <p>Transformer 的核心是 <strong>自注意力机制</strong>：让每个 token 都能"看到"所有历史 token，计算它们之间的关联程度。</p>
-
-            <h3>QKV 机制详解</h3>
-            <p>每个 token 会生成三个向量：</p>
-            <table>
-                <tr><th>向量</th><th>作用</th><th>直观理解</th></tr>
-                <tr><td><strong>Q (Query)</strong></td><td>发出查询</td><td>"我要找什么信息？"</td></tr>
-                <tr><td><strong>K (Key)</strong></td><td>提供索引</td><td>"我是什么内容，有什么标签？"</td></tr>
-                <tr><td><strong>V (Value)</strong></td><td>提供内容</td><td>"我的实际信息是什么？"</td></tr>
-            </table>
-
-            <h4>数学表达</h4>
-            <div class="formula">Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V</div>
-
-            <h4>运作流程（以"今天 天气 很好"为例）</h4>
-            <pre>
 Step 1: 每个 token 生成 Q, K, V
-  "今天" → Q₁, K₁, V₁
-  "天气" → Q₂, K₂, V₂
-  "很好" → Q₃, K₃, V₃
+  &quot;今天&quot; → Q₁, K₁, V₁
+  &quot;天气&quot; → Q₂, K₂, V₂
+  &quot;很好&quot; → Q₃, K₃, V₃
 
 Step 2: 计算注意力权重（每个 token 的 Q 去问所有 token 的 K）
-  
-  Token "天气" 的视角:
-    Q₂ · K₁ = "天气" 对 "今天" 的关注程度 → 权重 w₁
-    Q₂ · K₂ = "天气" 对自己的关注程度 → 权重 w₂
-    Q₂ · K₃ = "天气" 对 "很好" 的关注程度 → 权重 w₃
-  
+
+  Token &quot;天气&quot; 的视角:
+    Q₂ · K₁ = &quot;天气&quot; 对 &quot;今天&quot; 的关注程度 → 权重 w₁
+    Q₂ · K₂ = &quot;天气&quot; 对自己的关注程度 → 权重 w₂
+    Q₂ · K₃ = &quot;天气&quot; 对 &quot;很好&quot; 的关注程度 → 权重 w₃
+
   softmax 后: w₁=0.2, w₂=0.3, w₃=0.5
 
 Step 3: 加权聚合（用权重取所有 V 的加权和）
+
   context₂ = w₁·V₁ + w₂·V₂ + w₃·V₃
-  这就是 "天气" 在当前上下文中的"理解后的表示"
+
+  这就是 &quot;天气&quot; 在当前上下文中的&quot;理解后的表示&quot;
 
 Step 4: 预测下一个 token
-  context₂ + 原始 token 表示 → 前馈网络 → 预测</pre>
 
-            <div class="insight">
-                <strong>关键洞察：</strong>Q 问的是"相关性"，不是"答案"。Q 不是去找"最高的下一个 token"，而是在问"你和我有什么关系？我该多关注你？"。最终通过加权聚合所有 V，得到"上下文理解后的表示"，然后基于这个表示去预测下一个 token。
-            </div>
+  context₂ + 原始 token 表示 → 前馈网络 → 预测下一个 token
+</code></pre>
+<h4>关键洞察</h4>
+<p><strong>Q 问的是"相关性"，不是"答案"</strong></p>
+<ul>
+<li>Q 不是去找"最高的下一个 token"</li>
+<li>Q 是在问"你和我有什么关系？我该多关注你？"</li>
+<li>最终通过加权聚合所有 V，得到"上下文理解后的表示"</li>
+<li>然后基于这个表示去预测下一个 token</li>
+</ul>
+<p><strong>Q 不是人工设定的"检索词"，而是神经网络自己学出来的！</strong></p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>答案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q 是什么？</td>
+<td>token embedding 经过 W_Q 变换后的向量</td>
+</tr>
+<tr>
+<td>Q 代表什么？</td>
+<td>"我这个 token 需要什么样的上下文来理解我自己"</td>
+</tr>
+<tr>
+<td>Q 怎么来的？</td>
+<td>神经网络通过大量数据学习出来的 W_Q 权重矩阵</td>
+</tr>
+<tr>
+<td>Q 会变吗？</td>
+<td>会！训练时 W_Q 会不断调整，学会"什么样的查询最有效"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>形象类比：每个 token 是一个侦探</strong></p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>侦探的 Q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"红烧肉"</td>
+<td>侦探拿着放大镜找："这道菜的食材、做法在哪？"</td>
+</tr>
+<tr>
+<td>"要"</td>
+<td>侦探拿着放大镜找："动词前后的主语宾语在哪？"</td>
+</tr>
+<tr>
+<td>"大火"</td>
+<td>侦探拿着放大镜找："这个火候用在什么步骤？"</td>
+</tr>
+<tr>
+<td>"烧开"</td>
+<td>侦探拿着放大镜找："烧开前面是什么火候？"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>W_Q 就是训练侦探学会"应该找什么线索"的教科书</strong></p>
+<p><strong>数学总结</strong></p>
+<pre><code>输入: x = Embedding(token)
+Q = x × W_Q
+K = x × W_K
+V = x × W_V
 
-            <h3>KV Cache：空间换精确</h3>
-            <p>推理时，生成每个新 token 都需要计算它与所有历史 token 的注意力，这需要所有历史 token 的 K 和 V。如果不缓存，每次都要重新计算 → 效率极低。</p>
+Attention(x) = softmax(Q × Kᵀ) × V
+</code></pre>
+<p>每个 token 的 Q 都是它自己的语义经过"学习好的变换"后，变成的"需求向量"</p>
+<h3>KV Cache：空间换精确</h3>
+<h4>为什么需要缓存？</h4>
+<p>推理时，生成每个新 token 都需要：
+1. 计算它与所有历史 token 的注意力
+2. 这需要所有历史 token 的 K 和 V</p>
+<p>如果不缓存，每次都要重新计算所有历史 token 的 K、V → 重复计算，效率极低。</p>
+<h4>缓存的是什么？</h4>
+<pre><code>KV Cache 存储的内容:
+  [K₁, V₁, K₂, V₂, K₃, V₃, K₄, V₄, ...]
 
-            <h4>缓存内容</h4>
-            <pre>KV Cache: [K₁, V₁, K₂, V₂, K₃, V₃, K₄, V₄, ...]
-每个 token 的 K 和 V 都被保存
-（不存 Q，因为 Q 只用于当前 token 的查询）</pre>
-
-            <h4>为什么"巨大"？</h4>
-            <pre>公式: KV_cache_size = 2 × layers × heads × d_head × seq_len
+  每个 token 的 K 和 V 都被保存
+  （注意：不存 Q，因为 Q 只用于当前 token 的查询）
+</code></pre>
+<h4>为什么"巨大"？</h4>
+<pre><code>公式: KV_cache_size = 2 × layers × heads × d_head × seq_len
 
 举例 Llama-2-70B:
   - 80 层 × 64 头 × 128 维 × 2 (K和V) × seq_len
   - 每个 token 约 1.3 MB
-  - 100K token ≈ 130 GB 显存！</pre>
+  - 100K token ≈ 130 GB 显存！
+</code></pre>
+<h4>多层多头的结构</h4>
+<pre><code>每个 Transformer 层:
+  - 有独立的注意力模块
+  - 每个注意力模块有多头（如 32 头）
+  - 每头都要存自己的 K、V
 
-            <h3>Transformer 的代价与收益</h3>
-            <table>
-                <tr><th>方面</th><th>代价</th><th>收益</th></tr>
-                <tr><td>训练</td><td>高计算量 O(n²)</td><td>完全并行，GPU 利用率高</td></tr>
-                <tr><td>推理</td><td>KV cache 内存爆炸</td><td>可精确回溯任意历史位置</td></tr>
-                <tr><td>长序列</td><td>受限于显存</td><td>全局视野，信息无损</td></tr>
-            </table>
+所以:
+  Layer 1: 32 头 × 128 维 × seq_len × 2
+  Layer 2: 32 头 × 128 维 × seq_len × 2
+  ...
+  Layer 80: 32 头 × 128 维 × seq_len × 2
 
-            <p><strong>本质：空间换精确回溯能力</strong></p>
-
-            <h2>Mamba：选择性状态空间模型</h2>
-
-            <h3>核心思想</h3>
-            <p>Mamba 的核心是 <strong>选择性状态空间模型 (SSM)</strong>：用一个固定大小的状态向量 h 来"压缩"整个历史序列，通过逐 token 更新状态来传递信息。</p>
-
-            <h3>SSM 基础原理</h3>
-            <p>状态空间模型来自控制论/信号处理：</p>
-            <pre>连续形式:
-  h'(t) = A·h(t) + B·x(t)    # 状态如何演化
+总计: 80 × 32 × 128 × seq_len × 2
+</code></pre>
+<h3>Transformer 的代价与收益</h3>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>代价</th>
+<th>收益</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练</td>
+<td>高计算量 (O(n²))</td>
+<td>完全并行，GPU 利用率高</td>
+</tr>
+<tr>
+<td>推理</td>
+<td>KV cache 内存爆炸</td>
+<td>可精确回溯任意历史位置</td>
+</tr>
+<tr>
+<td>长序列</td>
+<td>受限于显存</td>
+<td>全局视野，信息无损</td>
+</tr>
+</tbody>
+</table>
+<p><strong>本质</strong>：空间换精确回溯能力。</p>
+<hr />
+<h2>Mamba：选择性状态空间模型</h2>
+<h3>核心思想</h3>
+<p>Mamba 的核心是 <strong>选择性状态空间模型 (SSM)</strong>：用一个固定大小的状态向量 h 来"压缩"整个历史序列，通过逐 token 更新状态来传递信息。</p>
+<h3>SSM 基础原理</h3>
+<p>状态空间模型来自控制论/信号处理：</p>
+<pre><code>连续形式:
+  h'(t) = A·h(t) + B·x(t)    # 状态如何演化（微分方程）
   y(t)  = C·h(t) + D·x(t)    # 如何从状态输出
 
 离散化后（用于神经网络）:
   h_t = Ā·h_{t-1} + B̄·x_t    # 状态更新（线性递推）
-  y_t = C·h_t                 # 输出</pre>
+  y_t = C·h_t                 # 输出
+</code></pre>
+<h4>直观理解：RNN 的进化</h4>
+<pre><code>传统 RNN:
+  h(t) = tanh(W·h(t-1) + U·x(t))
+  问题：梯度消失，无法学习长距离依赖
 
-            <h4>直观理解：RNN 的进化</h4>
-            <pre>传统 RNN:  h(t) = tanh(W·h(t-1) + U·x(t))
-          问题：梯度消失，无法学习长距离依赖
+LSTM:
+  h(t) = f·h(t-1) + i·x(t)   # f=遗忘门, i=输入门
+  解决了梯度问题，但门控参数固定
 
-LSTM:     h(t) = f·h(t-1) + i·x(t)   # f=遗忘门, i=输入门
-          解决了梯度问题，但门控参数固定
+Mamba (选择性 SSM):
+  h(t) = A(x)·h(t-1) + B(x)·x(t)
+  关键创新：A 和 B 由当前输入动态生成！
+</code></pre>
+<h3>选择性机制：Mamba 的核心创新</h3>
+<p>传统 SSM：A、B、C 是固定参数，学完后对所有输入一视同仁。</p>
+<p>Mamba：让 A、B、C 依赖于输入内容 → 模型学会"选择"什么该记住、什么该丢弃。</p>
+<h4>数学表达</h4>
+<pre><code class="language-python"># 伪代码
+def mamba_layer(x):
+    # 输入 x: [batch, seq_len, d_model]
 
-Mamba:    h(t) = A(x)·h(t-1) + B(x)·x(t)
-          关键创新：A 和 B 由当前输入动态生成！</pre>
-
-            <h3>选择性机制：Mamba 的核心创新</h3>
-            <p>传统 SSM：A、B、C 是固定参数，对所有输入一视同仁。</p>
-            <p>Mamba：让 A、B、C 依赖于输入内容 → 模型学会"选择"什么该记住、什么该丢弃。</p>
-
-            <h4>动态参数生成</h4>
-            <pre>def mamba_layer(x):
     # 动态生成 SSM 参数（选择性！）
-    A = linear_A(x)  # 由输入决定"保留多少历史"
-    B = linear_B(x)  # 由输入决定"新信息写多少进去"
-    C = linear_C(x)  # 由输入决定"输出什么"
-    
-    # 扫描计算
+    A = linear_A(x)  # [batch, seq_len, d_state]  
+    B = linear_B(x)  # 由输入决定&quot;保留多少历史&quot;
+    C = linear_C(x)  # 由输入决定&quot;输出什么&quot;
+
+    # 扫描计算（硬件优化的并行扫描）
+    h = initial_state
     for t in range(seq_len):
         h = A[t] * h + B[t] * x[t]   # 状态更新
         y[t] = C[t] * h               # 输出
-    
-    return y</pre>
 
-            <h4>选择性参数的作用</h4>
-            <table>
-                <tr><th>参数</th><th>作用</th><th>直观理解</th></tr>
-                <tr><td><strong>A(x)</strong></td><td>控制历史保留程度</td><td>"旧状态还剩多少？"</td></tr>
-                <tr><td><strong>B(x)</strong></td><td>控制新信息写入程度</td><td>"新信息写多少进去？"</td></tr>
-                <tr><td><strong>C(x)</strong></td><td>控制输出提取方式</td><td>"从状态中取什么出来？"</td></tr>
-            </table>
+    return y
+</code></pre>
+<h4>直观例子：模型如何"选择"</h4>
+<pre><code>输入: &quot;小明今年25岁，住在上海，喜欢打篮球...&quot;
 
-            <div class="insight">
-                <strong>核心洞察：</strong>模型学会了"什么重要、什么不重要"，实现了智能压缩。当遇到"25岁"时生成较大的 B 值写入状态；当遇到虚词时生成很小的 B 值丢弃噪声。
-            </div>
+当遇到 &quot;25岁&quot; 时:
+  - 输入 x 经过 linear_B → 生成较大的 B 值
+  - 模型学会：&quot;这是重要信息，写入状态&quot;
+  - h 更新，包含年龄信息
 
-            <h3>状态维度：固定大小的"记忆胶囊"</h3>
-            <pre>Transformer: 每个 token 存完整的 K, V (~KB per token)
+当遇到 &quot;的&quot;、&quot;了&quot; 等虚词时:
+  - 输入 x 经过 linear_B → 生成很小的 B 值
+  - 模型学会：&quot;这是噪声，丢弃&quot;
+  - h 几乎不变，虚词被过滤
+
+当需要回忆 &quot;25岁&quot; 时:
+  - 当前输入 x 经过 linear_C → 激活年龄相关的 C 通道
+  - y = C·h → 从状态中提取年龄信息
+</code></pre>
+<h4>选择性参数的作用</h4>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+<th>直观理解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A(x)</strong></td>
+<td>控制历史保留程度</td>
+<td>"旧状态还剩多少？"</td>
+</tr>
+<tr>
+<td><strong>B(x)</strong></td>
+<td>控制新信息写入程度</td>
+<td>"新信息写多少进去？"</td>
+</tr>
+<tr>
+<td><strong>C(x)</strong></td>
+<td>控制输出提取方式</td>
+<td>"从状态中取什么出来？"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>核心洞察</strong>：模型学会了"什么重要、什么不重要"，实现了智能压缩。</p>
+<h3>状态维度：固定大小的"记忆胶囊"</h3>
+<pre><code>Transformer: 每个 token 存完整的 K, V (~KB per token)
              总量随序列线性增长
 
 Mamba: 整个历史压缩到一个 h (~KB 总量，不增长!)
 
 具体数字（Mamba-1.4B）:
   - d_state = 16（状态维度）
+  - d_model = 2048
   - 每层状态 = 16 × 2048 × 4 bytes ≈ 128 KB
   - 24 层 ≈ 3 MB 总状态
 
 对比:
   Transformer 100K token ≈ 130 GB
   Mamba 100K token ≈ 3 MB
-  
-差距：43000 倍！</pre>
 
-            <h3>Mamba 的代价与收益</h3>
-            <table>
-                <tr><th>方面</th><th>代价</th><th>收益</th></tr>
-                <tr><td>训练</td><td>需硬件优化的并行扫描</td><td>同样可并行训练</td></tr>
-                <tr><td>推理</td><td>O(1) 固定内存</td><td>极快，速度恒定</td></tr>
-                <tr><td>长序列</td><td>信息可能有损压缩</td><td>理论无限制，实测百万 token</td></tr>
-                <tr><td>回溯</td><td>无法精确回溯历史细节</td><td>可提取"压缩精华"</td></tr>
-            </table>
+差距：43000 倍！
+</code></pre>
+<h3>状态更新的时序递进</h3>
+<pre><code>初始状态: h₀ = 0
 
-            <p><strong>本质：压缩换无限长度能力</strong></p>
+Token 1: &quot;小明&quot;
+  h₁ = A(&quot;小明&quot;)·h₀ + B(&quot;小明&quot;)·x₁
+  h₁ 包含：&quot;有个叫小明的人&quot;
 
-            <h2>核心对比总结</h2>
+Token 2: &quot;今年&quot;
+  h₂ = A(&quot;今年&quot;)·h₁ + B(&quot;今年&quot;)·x₂
+  h₂ 包含：&quot;小明 + 时间相关&quot;
 
-            <div class="comparison-grid">
-                <div class="comparison-card transformer">
-                    <h3>Transformer</h3>
-                    <p>"我把所有历史都存着，你要什么我随时给你"</p>
-                    <ul>
-                        <li>精确，信息无损</li>
-                        <li>内存爆炸 (O(n))</li>
-                        <li>可精确回溯任意位置</li>
-                        <li>适合知识密集任务</li>
-                    </ul>
-                </div>
-                <div class="comparison-card mamba">
-                    <h3>Mamba</h3>
-                    <p>"我把历史压缩成精华，只给你最重要的"</p>
-                    <ul>
-                        <li>高效，固定内存 (O(1))</li>
-                        <li>信息可能有损</li>
-                        <li>无限序列长度</li>
-                        <li>适合长文档、边缘部署</li>
-                    </ul>
-                </div>
-            </div>
+Token 3: &quot;25岁&quot;
+  h₃ = A(&quot;25岁&quot;)·h₂ + B(&quot;25岁&quot;)·x₃
+  B(&quot;25岁&quot;) 较大 → 重要信息写入
+  h₃ 包含：&quot;小明 + 25岁&quot;
 
-            <h3>计算复杂度对比</h3>
-            <table>
-                <tr><th>模型</th><th>训练复杂度</th><th>推理复杂度</th><th>推理内存</th></tr>
-                <tr><td>Transformer</td><td>O(n²)</td><td>O(n) per token</td><td>O(n) KV cache</td></tr>
-                <tr><td>Mamba</td><td>O(n) 并行扫描</td><td>O(1) per token</td><td>O(1) 固定状态</td></tr>
-            </table>
+Token 4: &quot;住在&quot;
+  h₄ = A(&quot;住在&quot;)·h₃ + B(&quot;住在&quot;)·x₄
+  h₄ 包含：&quot;小明 + 25岁 + 地点相关&quot;
 
-            <h3>适用场景</h3>
-            <table>
-                <tr><th>场景</th><th>推荐架构</th><th>原因</th></tr>
-                <tr><td>知识密集型任务</td><td>Transformer</td><td>需精确回溯知识</td></tr>
-                <tr><td>RAG 系统</td><td>Transformer</td><td>需匹配检索结果</td></tr>
-                <tr><td>超长文档处理</td><td>Mamba</td><td>百万 token 不爆内存</td></tr>
-                <tr><td>流式生成</td><td>Mamba</td><td>恒定推理速度</td></tr>
-                <tr><td>边缘设备部署</td><td>Mamba</td><td>内存受限场景</td></tr>
-                <tr><td>需要精确引用</td><td>Transformer</td><td>可回溯原文位置</td></tr>
-            </table>
+Token 5: &quot;上海&quot;
+  h₅ = A(&quot;上海&quot;)·h₄ + B(&quot;上海&quot;)·x₅
+  B(&quot;上海&quot;) 较大 → 地点信息写入
+  h₅ 包含：&quot;小明 + 25岁 + 上海&quot;
 
-            <div class="highlight-box">
-                <h4>一句话总结</h4>
-                <p><strong>Transformer</strong>：空间换精确回溯能力（训练并行 + 推理可查任意位置）</p>
-                <p><strong>Mamba</strong>：压缩换无限长度能力（固定内存 + 恒定推理速度）</p>
-            </div>
+...继续逐 token 递进更新...
 
-            <h2>参考资料</h2>
-            <ul>
-                <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (2017)</a> — Transformer 原论文</li>
-                <li><a href="https://arxiv.org/abs/2312.00752">Mamba: Linear-Time Sequence Modeling with Selective State Spaces (2023)</a> — Mamba 原论文</li>
-                <li><a href="https://arxiv.org/abs/2111.00996">Efficiently Modeling Long Sequences with Structured State Spaces (2022)</a> — S4 论文，Mamba 的前身</li>
-            </ul>
+最终状态 h_n 包含整个序列的&quot;压缩精华&quot;
+</code></pre>
+<h3>Mamba 的代价与收益</h3>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>代价</th>
+<th>收益</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练</td>
+<td>需硬件优化的并行扫描</td>
+<td>同样可并行训练</td>
+</tr>
+<tr>
+<td>推理</td>
+<td>O(1) 固定内存</td>
+<td>极快，速度恒定</td>
+</tr>
+<tr>
+<td>长序列</td>
+<td>信息可能有损压缩</td>
+<td>理论无限制，实测百万 token</td>
+</tr>
+<tr>
+<td>回溯</td>
+<td>无法精确回溯历史细节</td>
+<td>可提取"压缩精华"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>本质</strong>：压缩换无限长度能力。</p>
+<hr />
+<h2>核心对比总结</h2>
+<h3>信息处理方式</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>历史信息存储</th>
+<th>信息获取方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transformer</td>
+<td>无损存储所有 K、V</td>
+<td>随时可查任意位置</td>
+</tr>
+<tr>
+<td>Mamba</td>
+<td>有损压缩到状态 h</td>
+<td>从压缩状态中提取</td>
+</tr>
+</tbody>
+</table>
+<h3>计算复杂度</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>训练复杂度</th>
+<th>推理复杂度</th>
+<th>推理内存</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transformer</td>
+<td>O(n²)</td>
+<td>O(n) per token</td>
+<td>O(n) KV cache</td>
+</tr>
+<tr>
+<td>Mamba</td>
+<td>O(n) 并行扫描</td>
+<td>O(1) per token</td>
+<td>O(1) 固定状态</td>
+</tr>
+</tbody>
+</table>
+<h3>最简洁的一句话对比</h3>
+<pre><code>Transformer:
+  &quot;我把所有历史都存着，你要什么我随时给你&quot;
+  → 精确，但内存爆炸
+
+Mamba:
+  &quot;我把历史压缩成精华，只给你最重要的&quot;
+  → 高效，但可能漏掉细节
+</code></pre>
+<h3>适用场景</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐架构</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识密集型任务</td>
+<td>Transformer</td>
+<td>需精确回溯知识</td>
+</tr>
+<tr>
+<td>RAG 系统</td>
+<td>Transformer</td>
+<td>需匹配检索结果</td>
+</tr>
+<tr>
+<td>超长文档处理</td>
+<td>Mamba</td>
+<td>百万 token 不爆内存</td>
+</tr>
+<tr>
+<td>流式生成</td>
+<td>Mamba</td>
+<td>恒定推理速度</td>
+</tr>
+<tr>
+<td>边缘设备部署</td>
+<td>Mamba</td>
+<td>内存受限场景</td>
+</tr>
+<tr>
+<td>需要精确引用</td>
+<td>Transformer</td>
+<td>可回溯原文位置</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>参考资料</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (2017)</a> — Transformer 原论文</li>
+<li><a href="https://arxiv.org/abs/2312.00752">Mamba: Linear-Time Sequence Modeling with Selective State Spaces (2023)</a> — Mamba 原论文</li>
+<li><a href="https://arxiv.org/abs/2111.00996">Efficiently Modeling Long Sequences with Structured State Spaces (2022)</a> — S4 论文，Mamba 的前身</li>
+</ul>
+<hr />
+<h2>相关文档</h2>
+<ul>
+<li><a href="deep-learning-architecture-evolution.md">deep-learning-architecture-evolution.md</a> — 深度学习架构演变全景</li>
+<li><a href="deep-learning-metaphors.md">deep-learning-metaphors.md</a> — 深度学习核心概念类比</li>
+</ul>
         </div>
-
         <div class="footer">
-            <p>由 <strong>Damon</strong> 和 <strong>Metis</strong> 共同整理</p>
-            <p class="related">
-                相关文档：
-                <a href="deep-learning-architecture-evolution.html">深度学习架构演变</a> ·
-                <a href="deep-learning-metaphors.html">深度学习核心概念类比</a>
-            </p>
-            <p style="margin-top: 12px;">
-                📦 <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub: wolfhawkld/human_ai_knowledge</a>
-            </p>
+            <p>人机知识库 | AI 与人类对话的知识沉淀</p>
+            <p><a href="index.html">返回索引</a></p>
         </div>
     </div>
 </body>
