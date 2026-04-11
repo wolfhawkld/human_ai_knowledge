@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度学习架构演变：从起源到 SOTA | 人机知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 40px;
+        }
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            opacity: 0.8;
+            font-size: 1em;
+        }
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+        .header .meta span {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 16px;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: #1a1a2e;
+            margin: 32px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        h3 {
+            color: #2d3748;
+            margin: 24px 0 12px 0;
+        }
+        p {
+            margin-bottom: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 12px 8px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        th {
+            background: #f7fafc;
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f7fafc;
+        }
+        code {
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .highlight strong {
+            font-size: 1.1em;
+        }
+        .timeline {
+            background: #f7fafc;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-year {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 60px;
+        }
+        .timeline-content {
+            color: #4a5568;
+        }
+        ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .footer {
+            background: #f7fafc;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .comparison-cell {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .comparison-cell.header {
+            background: #667eea;
+            color: #fff;
+            font-weight: 600;
+        }
+        .comparison-cell.highlight-cell {
+            background: #fef3c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-link" style="color: #fff;">← 返回知识库</a>
+            <h1>🧠 深度学习架构演变：从起源到 SOTA</h1>
+            <p class="subtitle">从 LeNet 到 Transformer，再到挑战 O(n²) 的 Mamba</p>
+            <div class="meta">
+                <span>📅 2026-04-12</span>
+                <span>👤 Damon + Outis</span>
+                <span>🏷️ 深度学习 / 架构演变</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="highlight">
+                <strong>核心洞察：</strong> 深度学习架构经历了从"专用架构"（CNN/RNN）到"统一架构"（Transformer）再到"高效架构"（Mamba）的三次范式转变。每次转变都解决了前一架构的核心瓶颈。
+            </div>
+
+            <h2>一、早期奠基期（1980s-2010）</h2>
+            <table>
+                <tr><th>年份</th><th>架构</th><th>核心创新</th><th>意义</th></tr>
+                <tr><td>1986</td><td>BP反向传播</td><td>多层网络训练算法</td><td>深度学习的数学基础</td></tr>
+                <tr><td>1989-1998</td><td><strong>LeNet</strong> (LeCun)</td><td>卷积层 + 池化层</td><td>CNN鼻祖，手写数字识别</td></tr>
+                <tr><td>1997</td><td><strong>LSTM</strong></td><td>门控机制解决梯度消失</td><td>长序列记忆，RNN里程碑</td></tr>
+            </table>
+
+            <h2>二、CNN黄金时代（2012-2016）</h2>
+            <p><strong>图像识别领域的革命性突破</strong></p>
+            <table>
+                <tr><th>年份</th><th>架构</th><th>核心创新</th><th>贡献</th></tr>
+                <tr><td>2012</td><td><strong>AlexNet</strong></td><td>ReLU + Dropout + GPU</td><td>深度学习爆发的起点</td></tr>
+                <tr><td>2014</td><td><strong>VGGNet</strong></td><td>小卷积核(3×3)堆叠</td><td>证明深度比宽度重要</td></tr>
+                <tr><td>2014</td><td><strong>GoogLeNet</strong></td><td>多尺度并行卷积</td><td>提升效率，减少参数</td></tr>
+                <tr><td>2015</td><td><strong>ResNet</strong></td><td><strong>残差连接</strong></td><td>解决深层网络退化，可训练100+层</td></tr>
+                <tr><td>2016</td><td><strong>DenseNet</strong></td><td>密集连接</td><td>特征复用，参数更少</td></tr>
+            </table>
+
+            <div class="timeline">
+                <strong>关键技术演进：</strong>
+                <ul>
+                    <li>Xavier/He初始化 → 稳定训练</li>
+                    <li>BatchNorm → 加速收敛</li>
+                    <li>Skip Connection → 深层网络可行</li>
+                </ul>
+            </div>
+
+            <h2>三、序列建模时代（2014-2017）</h2>
+            <table>
+                <tr><th>年份</th><th>架构</th><th>核心创新</th><th>应用</th></tr>
+                <tr><td>2014</td><td><strong>GRU</strong></td><td>简化的门控机制</td><td>LSTM的轻量替代</td></tr>
+                <tr><td>2014</td><td><strong>Seq2Seq</strong></td><td>Encoder-Decoder</td><td>机器翻译框架</td></tr>
+                <tr><td>2015</td><td><strong>Attention</strong></td><td>对齐机制</td><td>突破固定向量瓶颈</td></tr>
+                <tr><td>2014-2015</td><td><strong>GAN</strong></td><td>生成器-判别器博弈</td><td>生成模型的突破</td></tr>
+            </table>
+
+            <h2>四、Transformer革命（2017-2020）</h2>
+            <div class="highlight">
+                <strong>"Attention Is All You Need"</strong> — Transformer彻底改变了NLP，并扩展到所有领域
+            </div>
+            <table>
+                <tr><th>年份</th><th>架构</th><th>核心创新</th><th>影响</th></tr>
+                <tr><td>2017</td><td><strong>Transformer</strong></td><td>自注意力 + 位置编码</td><td>抛弃RNN，并行计算</td></tr>
+                <tr><td>2018</td><td><strong>BERT</strong></td><td>双向预训练 + MLM</td><td>NLP预训练范式</td></tr>
+                <tr><td>2018</td><td><strong>GPT</strong></td><td>单向生成式预训练</td><td>生成能力的起点</td></tr>
+                <tr><td>2020</td><td><strong>ViT</strong></td><td>图像patch化</td><td>Transformer进入CV</td></tr>
+            </table>
+
+            <h3>Transformer核心优势</h3>
+            <ul>
+                <li>并行计算（vs RNN串行）</li>
+                <li>长距离依赖直接建模</li>
+                <li>统一架构（NLP/CV/Audio）</li>
+            </ul>
+
+            <h2>五、大规模预训练时代（2020-2023）</h2>
+            <table>
+                <tr><th>模型</th><th>规模</th><th>创新点</th><th>时间</th></tr>
+                <tr><td><strong>GPT-3</strong></td><td>175B参数</td><td>In-context learning</td><td>2020</td></tr>
+                <tr><td><strong>CLIP</strong></td><td>图文对预训练</td><td>多模态对齐</td><td>2021</td></tr>
+                <tr><td><strong>DALL-E</strong></td><td>文本生成图像</td><td>Transformer+VAE</td><td>2021</td></tr>
+                <tr><td><strong>Stable Diffusion</strong></td><td>潜空间扩散</td><td>高效图像生成</td><td>2022</td></tr>
+                <tr><td><strong>GPT-4</strong></td><td>多模态输入</td><td>强推理能力</td><td>2023</td></tr>
+            </table>
+
+            <h2>六、新架构挑战Transformer（2023-2025）</h2>
+
+            <h3>1. Diffusion + Transformer（DiT）</h3>
+            <table>
+                <tr><th>架构</th><th>创新</th><th>应用</th></tr>
+                <tr><td><strong>DiT</strong></td><td>Transformer替代U-Net</td><td>高质量图像生成</td></tr>
+                <tr><td><strong>Sora</strong></td><td>DiT架构 + 视频patch</td><td>视频生成</td></tr>
+            </table>
+
+            <h3>2. 状态空间模型（SSM/Mamba）</h3>
+            <div class="highlight">
+                <strong>解决 Transformer 的 O(n²) 复杂度问题</strong> — Mamba 实现了线性复杂度 O(n)，在长序列任务中展现出巨大潜力
+            </div>
+            <table>
+                <tr><th>年份</th><th>架构</th><th>核心创新</th><th>优势</th></tr>
+                <tr><td>2023</td><td><strong>Mamba-1</strong></td><td>选择机制 + 并行扫描</td><td><strong>线性复杂度 O(n)</strong></td></tr>
+                <tr><td>2024</td><td><strong>Mamba-2</strong></td><td>结构化状态空间对偶(SSD)</td><td>训练速度提升2-8倍</td></tr>
+            </table>
+
+            <h3>Mamba三大创新</h3>
+            <ul>
+                <li><strong>HiPPO内存初始化</strong> → 长程记忆</li>
+                <li><strong>选择机制 (Selective SSM)</strong> → 内容感知建模</li>
+                <li><strong>硬件感知计算</strong> → GPU高效实现（扫描而非卷积）</li>
+            </ul>
+
+            <h3>3. 混合架构</h3>
+            <table>
+                <tr><th>架构</th><th>组合</th><th>目的</th></tr>
+                <tr><td><strong>Jamba</strong></td><td>Mamba + Attention</td><td>长序列 + 全局注意力</td></tr>
+                <tr><td><strong>MAD</strong></td><td>Mamba + DiT</td><td>视频预测</td></tr>
+            </table>
+
+            <h2>七、架构演变四大趋势</h2>
+            <pre>
+1. 计算复杂度优化
+   CNN局部 → Transformer全局O(n²) → Mamba线性O(n)
+
+2. 统一架构
+   CNN(CV) + RNN(NLP) → Transformer统一 → SSM扩展
+
+3. 规模化
+   LeNet(5层) → ResNet(152层) → GPT-4(万亿级)
+
+4. 多模态融合
+   单模态 → CLIP(图文) → GPT-4V(全模态) → DiT(生成)</pre>
+
+            <h2>八、关键技术对比</h2>
+            <table>
+                <tr><th>特性</th><th>CNN</th><th>RNN/LSTM</th><th>Transformer</th><th>Mamba</th></tr>
+                <tr><td><strong>并行性</strong></td><td>高</td><td>低（串行）</td><td>高</td><td>高</td></tr>
+                <tr><td><strong>长距离依赖</strong></td><td>弱</td><td>弱</td><td>强</td><td>强</td></tr>
+                <tr><td><strong>复杂度</strong></td><td>O(n)</td><td>O(n)</td><td class="highlight-cell"><strong>O(n²)</strong></td><td class="highlight-cell"><strong>O(n)</strong></td></tr>
+                <tr><td><strong>适用领域</strong></td><td>图像</td><td>序列</td><td>全领域</td><td>全领域（新兴）</td></tr>
+            </table>
+
+            <h2>九、未来方向</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">趋势1</div>
+                    <div class="timeline-content"><strong>Mamba vs Transformer之争</strong> — Transformer生态成熟但长序列受限，Mamba线性复杂度但生态待完善，混合架构可能是最优解</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">趋势2</div>
+                    <div class="timeline-content"><strong>架构融合</strong> — Mamba + Attention（Jamba），DiT + Mamba（图像生成），CNN + Transformer + Mamba（多尺度）</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">趋势3</div>
+                    <div class="timeline-content"><strong>新范式探索</strong> — 更长序列（百万级token）、更高效推理（端侧部署）、更强推理能力（符号+神经）</div>
+                </div>
+            </div>
+
+            <h2>参考文献</h2>
+            <ul>
+                <li><a href="https://arxiv.org/abs/1512.03385" target="_blank">ResNet (2015)</a> — Deep Residual Learning</li>
+                <li><a href="https://arxiv.org/abs/1706.03762" target="_blank">Transformer (2017)</a> — Attention Is All You Need</li>
+                <li><a href="https://arxiv.org/abs/1810.04805" target="_blank">BERT (2018)</a> — Pre-training of Deep Bidirectional Transformers</li>
+                <li><a href="https://arxiv.org/abs/2010.11929" target="_blank">ViT (2020)</a> — An Image is Worth 16x16 Words</li>
+                <li><a href="https://arxiv.org/abs/2312.00752" target="_blank">Mamba (2023)</a> — Linear-Time Sequence Modeling</li>
+                <li><a href="https://arxiv.org/abs/2405.21075" target="_blank">Mamba-2 (2024)</a> — Transformers are SSMs</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>
+                📦 <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub: human_ai_knowledge</a>
+            </p>
+            <p style="margin-top: 8px;">
+                由 <strong>Damon</strong> + <strong>Outis</strong> 生成 | 2026-04-12
+            </p>
+        </div>
+    </div>
+</body>
+</html>
