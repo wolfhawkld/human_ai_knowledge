@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes Agent vs OpenClaw 架构对比 | 人机知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 12px;
+        }
+        .header .meta {
+            opacity: 0.85;
+            font-size: 0.95em;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 8px;
+            margin: 32px 0 20px 0;
+        }
+        h3 {
+            color: #444;
+            margin: 20px 0 12px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 16px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        pre {
+            background: #1a1a2e;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .highlight p {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        ul {
+            margin: 12px 0 12px 24px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .tag {
+            display: inline-block;
+            background: #17a2b8;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Hermes Agent vs OpenClaw 架构对比</h1>
+            <p class="meta">
+                <span class="tag">Nemesis</span>
+                生成日期：2026-04-11
+            </p>
+        </div>
+
+        <div class="content">
+            <div class="highlight">
+                <p><strong>核心定位差异</strong>：OpenClaw 是 Gateway-first（多渠道路由中枢），Hermes Agent 是 Agent-loop-first（深度执行、自我进化的开发助手）。</p>
+            </div>
+
+            <h2>核心定位对比</h2>
+            <table>
+                <tr><th>维度</th><th>OpenClaw</th><th>Hermes Agent</th></tr>
+                <tr><td>架构重心</td><td>Gateway-first（控制平面）</td><td>Agent-loop-first（执行循环）</td></tr>
+                <tr><td>设计哲学</td><td>多渠道接入、多智能体路由</td><td>单一 agent 的深度执行能力</td></tr>
+                <tr><td>核心价值</td><td>连接各种聊天平台</td><td>做 → 学 → 改进的自我演化循环</td></tr>
+            </table>
+
+            <h2>架构对比图</h2>
+
+            <h3>OpenClaw：Gateway-first</h3>
+            <pre><code>聊天应用 (WhatsApp/Telegram/etc.)
+         │
+         ▼
+    ┌──────────┐
+    │ Gateway  │◄── 核心组件：路由、权限、多账号
+    └────┬─────┘
+         │
+         ▼
+    ┌──────────┐
+    │  Agent   │◄── 多个独立 agent 共存
+    └────┬─────┘
+         │
+         ▼
+    ┌──────────┐
+    │ LLM API  │
+    └──────────┘</code></pre>
+            <p><strong>核心思想</strong>：Gateway 是中心，agent 是可替换的后端。</p>
+
+            <h3>Hermes Agent：Agent-loop-first</h3>
+            <pre><code>┌─────────────────────────────────────────────┐
+│              Agent Execution Loop            │
+│  思考 → 调用工具 → 观察结果 → 再思考...        │
+│                  ↑                           │
+│                  └──────────────────────┘    │
+└─────────────────────────────────────────────┘
+         │
+         ▼
+   成功工作流 → 自动生成 skill → 自我改进</code></pre>
+            <p><strong>核心思想</strong>：执行循环是核心，通过工具调用实现复杂任务，自动学习优化。</p>
+
+            <h2>Skill 系统对比</h2>
+            <table>
+                <tr><th>维度</th><th>OpenClaw</th><th>Hermes Agent</th></tr>
+                <tr><td>Skill 来源</td><td>人工编写 YAML + Markdown</td><td>从成功工作流自动生成</td></tr>
+                <tr><td>Skill 位置</td><td>workspace/.openclaw/skills/</td><td>~/.hermes/skills/</td></tr>
+                <tr><td>Skill 发现</td><td>AGENTS.md 驱动的显式加载</td><td>自动扫描 + 上下文关键词匹配</td></tr>
+                <tr><td>更新方式</td><td>手动编辑</td><td>patch/edit/delete 命令动态管理</td></tr>
+            </table>
+
+            <h2>记忆系统对比</h2>
+            <table>
+                <tr><th>维度</th><th>OpenClaw</th><th>Hermes Agent</th></tr>
+                <tr><td>存储方式</td><td>文件驱动（MEMORY.md + 每日笔记）</td><td>SQLite + FTS5 全文搜索</td></tr>
+                <tr><td>记忆层次</td><td>显式文件管理</td><td>Layered memory stack</td></tr>
+                <tr><td>搜索能力</td><td>手动文件遍历</td><td>session_search 工具（FTS5 全文索引）</td></tr>
+                <tr><td>持久化</td><td>文件系统</td><td>SQLite 数据库</td></tr>
+            </table>
+
+            <h2>项目上下文对比</h2>
+            <table>
+                <tr><th>维度</th><th>OpenClaw</th><th>Hermes Agent</th></tr>
+                <tr><td>发现机制</td><td>workspace 分层目录</td><td>AGENTS.md 渐进式发现（CWD向上查找）</td></tr>
+                <tr><td>上下文范围</td><td>整个 workspace 目录</td><td>当前工作目录 (CWD) 向上查找</td></tr>
+                <tr><td>文件组织</td><td>固定目录结构</td><td>灵活，AGENTS.md 跟随项目</td></tr>
+            </table>
+
+            <h2>使用场景建议</h2>
+
+            <h3>选择 OpenClaw 当：</h3>
+            <ul>
+                <li>需要多渠道接入（WhatsApp + Telegram + Discord 同时服务）</li>
+                <li>需要多智能体共存（不同频道路由到不同人格）</li>
+                <li>需要远程节点控制（手机拍照、位置获取）</li>
+                <li>家庭助理场景（多用户、多设备）</li>
+                <li>需要完整沙箱隔离</li>
+            </ul>
+
+            <h3>选择 Hermes Agent 当：</h3>
+            <ul>
+                <li>需要深度任务执行能力（复杂代码工作、研究任务）</li>
+                <li>需要自动学习优化（从成功工作流自动生成 skill）</li>
+                <li>需要强大的历史回溯（FTS5 全文搜索）</li>
+                <li>个人开发助手场景</li>
+                <li>需要子代理并行执行（delegate_task）</li>
+            </ul>
+
+            <h2>共存模式</h2>
+            <p>Damon 的实践：<strong>两个系统共用 workspace 目录</strong></p>
+            <pre><code>~/.hermes/workspace → ~/.openclaw/workspace (符号链接)</code></pre>
+            <p>协作方式：</p>
+            <ul>
+                <li>共享同一份代码仓库</li>
+                <li>通过 git commit 的 committer 区分是哪个 agent 做的修改</li>
+                <li>Nemo/Outis (OpenClaw) 侧重日常沟通和消息处理</li>
+                <li>Nemesis (Hermes) 侧重深度任务执行和代码工作</li>
+            </ul>
+
+            <div class="highlight">
+                <p><strong>一句话总结</strong>：OpenClaw = 多渠道、多智能体的消息路由中枢；Hermes Agent = 深度执行、自我进化的开发助手。</p>
+            </div>
+
+            <h2>相关链接</h2>
+            <ul>
+                <li>Hermes Agent 源码：<code>~/.hermes/hermes-agent/</code></li>
+                <li>Hermes 迁移文档：<code>~/.hermes/hermes-agent/docs/migration/openclaw.md</code></li>
+                <li>OpenClaw 文档：<a href="https://docs.openclaw.ai" target="_blank">https://docs.openclaw.ai</a></li>
+                <li>本知识库：<a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>
+                📦 <a href="index.html">返回知识库索引</a> · 
+                <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub 仓库</a>
+            </p>
+            <p style="margin-top: 8px;">
+                由 <strong>Damon</strong>、<strong>Outis</strong>、<strong>Nemo</strong> 和 <strong>Nemesis</strong> 共同维护
+            </p>
+        </div>
+    </div>
+</body>
+</html>
