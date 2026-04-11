@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [react-ace-agent-design.md](react-ace-agent-design.md) | Nemesis | 2026-04-11 | ⚡ Hermes Agent 设计范式：ReAct + ACE — 行动范式与上下文工程的交汇 |
 | [hermes-vs-openclaw-architecture.md](hermes-vs-openclaw-architecture.md) | Nemesis | 2026-04-11 | 🔄 Hermes vs OpenClaw 架构对比：Gateway-first vs Agent-loop-first，Skill系统、记忆存储、项目上下文的本质差异 |
 | [ai-agent-memory-architecture-comparison.md](ai-agent-memory-architecture-comparison.md) | Damon + Nemo | 2026-04-09 | 🧠 AI Agent 记忆架构对比：OpenClaw (File-First 认知系统) vs Claude Code (Two-Tier 注入系统) |
 | [linucb-explanation.md](linucb-explanation.md) | Damon + Outis | 2026-04-06 | 🎰 LinUCB 算法详解：从老虎机比喻到公式推导，xxᵀ外积、xᵀA⁻¹x二次型，IntentWeight RAG 精排应用 |

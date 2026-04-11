@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes Agent 设计范式：ReAct + ACE | 人机知识库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            opacity: 0.85;
+            font-size: 1.1em;
+        }
+        .header .meta {
+            margin-top: 16px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: #6f42c1;
+            border-bottom: 3px solid #6f42c1;
+            padding-bottom: 8px;
+            margin: 32px 0 20px 0;
+        }
+        h3 {
+            color: #1a1a2e;
+            margin: 24px 0 12px 0;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 16px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        code, pre {
+            background: #f4f4f4;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        code {
+            padding: 3px 8px;
+            font-size: 0.9em;
+        }
+        pre {
+            padding: 16px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        pre code {
+            padding: 0;
+            background: none;
+        }
+        .formula {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #6f42c1;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        .formula-arrow {
+            color: #6f42c1;
+            font-weight: bold;
+        }
+        .highlight-box {
+            background: #f8f9fa;
+            border-left: 4px solid #6f42c1;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #6f42c1;
+            text-decoration: none;
+        }
+        ul, ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .check {
+            color: #28a745;
+        }
+        .cross {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Hermes Agent 设计范式：ReAct + ACE</h1>
+            <p class="subtitle">行动范式与上下文工程的交汇</p>
+            <p class="meta">Damon + Nemesis · 2026-04-11</p>
+        </div>
+
+        <div class="content">
+            <div class="highlight-box">
+                <strong>核心结论：</strong> Hermes Agent = ReAct + ACE<br>
+                <span style="opacity: 0.8;">两个范式缺一不可，上下文质量决定推理质量，推理质量决定行动质量。</span>
+            </div>
+
+            <h2>范式对比</h2>
+            <table>
+                <tr>
+                    <th>范式</th>
+                    <th>解决的问题</th>
+                    <th>核心机制</th>
+                </tr>
+                <tr>
+                    <td><strong>ReAct</strong></td>
+                    <td>怎么行动</td>
+                    <td>推理 → 执行 → 观察 → 循环</td>
+                </tr>
+                <tr>
+                    <td><strong>ACE</strong></td>
+                    <td>怎么思考</td>
+                    <td>上下文从哪来、怎么组织、怎么管理</td>
+                </tr>
+            </table>
+
+            <div class="formula">
+                好的上下文 (ACE) <span class="formula-arrow">→</span> 高质量推理 (ReAct) <span class="formula-arrow">→</span> 正确的行动 <span class="formula-arrow">→</span> 有效结果
+            </div>
+
+            <h2>ReAct：行动范式</h2>
+            <p>ReAct (Reasoning + Acting) 是 Agent 的核心循环机制：</p>
+            
+            <pre><code>while api_call_count < max_iterations:
+    response = client.chat(...)      # Reason: 推理当前状态
+    if response.tool_calls:
+        for tool_call in response.tool_calls:
+            result = handle_function_call(...)  # Act: 执行工具
+            messages.append(tool_result)        # Observe: 观察结果
+    else:
+        return response.content      # 完成</code></pre>
+
+            <p>循环步骤：</p>
+            <ol>
+                <li><strong>Reason</strong> — 模型分析当前状态，决定下一步做什么</li>
+                <li><strong>Act</strong> — 调用工具（terminal、web_search、file 操作等）</li>
+                <li><strong>Observe</strong> — 看工具返回的结果</li>
+                <li><strong>循环</strong> — 基于观察结果再推理，再行动</li>
+            </ol>
+
+            <h2>ACE：上下文工程</h2>
+            <p>ACE (Agentic Context Engineering) 关注上下文的质量和效率。</p>
+
+            <h3>Hermes 的上下文架构</h3>
+            <pre><code>┌─────────────────────────────────┐
+│  System Prompt (静态)           │  ← 缓存
+├─────────────────────────────────┤
+│  Memory (用户偏好/环境事实)      │  ← 缓存
+├─────────────────────────────────┤
+│  AGENTS.md (项目上下文)          │  ← 缓存
+├─────────────────────────────────┤
+│  Skills (已加载的技能)           │  ← 按需加载
+├─────────────────────────────────┤
+│  对话历史                        │  ← 动态，可压缩
+├─────────────────────────────────┤
+│  当前消息                         │
+└─────────────────────────────────┘</code></pre>
+
+            <h3>ACE 核心问题与 Hermes 实现</h3>
+            <table>
+                <tr>
+                    <th>ACE 问题</th>
+                    <th>Hermes 实现</th>
+                </tr>
+                <tr>
+                    <td>上下文从哪来</td>
+                    <td>AGENTS.md（项目级）、Memory（持久化）、Skills（可加载）</td>
+                </tr>
+                <tr>
+                    <td>上下文怎么组织</td>
+                    <td>分层注入：系统提示 → Memory → Context Files → 对话历史</td>
+                </tr>
+                <tr>
+                    <td>上下文太长怎么办</td>
+                    <td>Context compression 自动压缩历史</td>
+                </tr>
+                <tr>
+                    <td>如何减少重复注入</td>
+                    <td>Prompt caching 缓存静态前缀</td>
+                </tr>
+                <tr>
+                    <td>如何保持一致性</td>
+                    <td>Memory 存储偏好/事实，跨会话携带</td>
+                </tr>
+                <tr>
+                    <td>如何复用流程</td>
+                    <td>Skill system 记录可复用的工作流</td>
+                </tr>
+            </table>
+
+            <h2>缓存机制详解</h2>
+            <h3>Prompt Caching 缓存什么</h3>
+            <table>
+                <tr>
+                    <th>内容类型</th>
+                    <th>是否缓存</th>
+                </tr>
+                <tr>
+                    <td>系统提示 (AGENTS.md 等)</td>
+                    <td><span class="check">✅</span> 缓存</td>
+                </tr>
+                <tr>
+                    <td>工具定义 (schema)</td>
+                    <td><span class="check">✅</span> 缓存</td>
+                </tr>
+                <tr>
+                    <td>Memory 注入内容</td>
+                    <td><span class="check">✅</span> 缓存</td>
+                </tr>
+                <tr>
+                    <td>对话历史</td>
+                    <td><span class="cross">❌</span> 每次重新发送</td>
+                </tr>
+                <tr>
+                    <td>当前消息</td>
+                    <td><span class="cross">❌</span> 每次新的</td>
+                </tr>
+            </table>
+
+            <h3>实时性问题的处理</h3>
+            <p>同一会话内重复问实时性问题（如"现在几点"），可能得到"过期"答案：</p>
+            <ul>
+                <li>第一次：调用工具 → 返回 12:30 → 加入对话历史</li>
+                <li>第二次：模型看到历史里有答案 → 可能复用而非重新查询</li>
+            </ul>
+            <p>这是模型行为层面的问题，不是缓存机制本身。</p>
+            <p><strong>解决方式</strong>：用户换个问法、系统层面策略、更强的模型有更好的时效性判断。</p>
+
+            <h2>为什么两个范式必须结合</h2>
+            <div class="highlight-box">
+                <p><strong>单有 ReAct 不够</strong>：没有好上下文 → 推理质量差 → 行动方向错</p>
+                <p><strong>单有 ACE 不够</strong>：有好上下文但不行动 → 只会思考不会执行</p>
+                <p><strong>组合起来才完整</strong>：</p>
+                <pre style="margin-top: 12px; background: none; border: none; padding: 0;"><code>ACE: 知道要做什么（上下文质量）
+    ↓
+ReAct: 知道怎么做（行动能力）
+    ↓
+结果: 完成任务</code></pre>
+            </div>
+
+            <h2>总结</h2>
+            <p>Hermes Agent 的设计本质：</p>
+            <ol>
+                <li><strong>ReAct 是骨架</strong> — 提供行动循环的基本结构</li>
+                <li><strong>ACE 是血肉</strong> — 填充上下文内容，决定推理质量</li>
+                <li><strong>两者结合</strong> — 才是完整的智能 Agent</li>
+            </ol>
+
+            <div class="formula" style="font-size: 1em; background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%); color: #fff; border: none;">
+                上下文质量决定推理质量，推理质量决定行动质量
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                📦 <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">GitHub: wolfhawkld/human_ai_knowledge</a>
+            </p>
+            <p style="margin-top: 8px;">
+                由 <strong>Damon</strong>、<strong>Outis</strong>、<strong>Nemo</strong> 和 <strong>Nemesis</strong> 共同维护
+            </p>
+        </div>
+    </div>
+</body>
+</html>
