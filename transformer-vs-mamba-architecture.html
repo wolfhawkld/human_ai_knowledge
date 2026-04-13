@@ -458,6 +458,119 @@ Mamba: 整个历史压缩到一个 h (~KB 总量，不增长!)
                 <p><strong>Mamba</strong>：压缩换无限长度能力（固定内存 + 恒定推理速度）</p>
             </div>
 
+            <h2>Agent 记忆视角下的深层对比</h2>
+            <p class="meta">整理自 Damon 与元宝对话（2026-04-13，高铁上）</p>
+
+            <h3>SSM 状态 vs RL 状态：两种"状态"的本质差异</h3>
+            <p>状态空间模型 (SSM) 和强化学习 (RL) 都使用"状态"概念，但承载的信息截然不同：</p>
+            <table>
+                <tr><th>维度</th><th>SSM 隐藏状态 <code>h</code></th><th>RL 环境状态 <code>s</code></th></tr>
+                <tr><td><strong>本质</strong></td><td>历史的内部记忆（压缩、摘要）</td><td>环境的当前快照（描述、表征）</td></tr>
+                <tr><td><strong>更新方程</strong></td><td><code>h_t = A·h_{t-1} + B·x_t</code> (线性，参数可学)</td><td><code>s_{t+1} = f(s_t, a_t)</code> (由环境决定)</td></tr>
+                <tr><td><strong>更新目的</strong></td><td>融合新信息，生成历史摘要</td><td>预测下一步环境状态</td></tr>
+                <tr><td><strong>驱动输入</strong></td><td>被观测的被动数据流 <code>x_t</code></td><td>智能体主动采取的动作 <code>a_t</code></td></tr>
+                <tr><td><strong>核心目标</strong></td><td>表示学习（高效建模序列）</td><td>决策学习（最大化累积奖励）</td></tr>
+            </table>
+            <div class="highlight-box">
+                <h4>关键洞察</h4>
+                <p>SSM 是"表示学习"，RL 是"决策学习"。Mamba 的状态 <code>h_t</code> 是对历史的<strong>记忆压缩</strong>，不是对环境的<strong>决策状态</strong>。</p>
+            </div>
+
+            <h3>认知神经科学映射：人类记忆与 Agent 记忆</h3>
+            <table>
+                <tr><th>人类记忆类型</th><th>Agent 实现方案</th><th>核心特征</th></tr>
+                <tr><td><strong>工作记忆</strong></td><td>当前上下文窗口</td><td>容量有限，保留时间短</td></tr>
+                <tr><td><strong>情景记忆</strong></td><td>任务交互轨迹存储</td><td>记录具体经历和决策过程</td></tr>
+                <tr><td><strong>语义记忆</strong></td><td>知识库事实存储</td><td>存储概念、规则和常识</td></tr>
+                <tr><td><strong>程序记忆</strong></td><td>可重用技能固化</td><td>通过重复获得的自动化技能</td></tr>
+            </table>
+            <p><strong>Transformer 适合语义记忆</strong>（精确回溯知识），<strong>Mamba 适合工作记忆</strong>（高效压缩当前上下文）。</p>
+
+            <h2>Mamba 隐式学习的深层机制</h2>
+            <h3>Δ、B、C 如何学会"选择"</h3>
+            <p>Mamba 没有显式的注意力权重，但通过 Δ_t、B_t、C_t 实现了隐式的"选择性"：</p>
+            <pre><code>Δ_t = SoftPlus(Linear_Δ(x_t))  # 记忆强度（写多少）
+B_t = Linear_B(x_t)            # 写入方向（写什么）
+C_t = Linear_C(x_t)            # 输出方式（取什么）</code></pre>
+
+            <h3>任务损失如何"隐式教会"模型选择</h3>
+            <table>
+                <tr><th>语言特征</th><th>模型如何隐式学会利用</th><th>参数优化表现</th></tr>
+                <tr><td><strong>信息量</strong></td><td>高频词预测错误损失小；低频词（实体）预测正确收益大</td><td><strong>Δ_t</strong> 对高信息量词输出较大值</td></tr>
+                <tr><td><strong>句式与句法</strong></td><td>预测动词需识别主语；预测句号需识别从句结束</td><td><strong>A</strong> 和 <strong>B_t, C_t</strong> 编码语法结构</td></tr>
+                <tr><td><strong>语义与上下文</strong></td><td>预测"苹果"后的词需区分水果还是公司</td><td><strong>h_t</strong> 成为上文语义浓缩</td></tr>
+                <tr><td><strong>长期依赖</strong></td><td>预测结尾答案需记住开头问题</td><td><strong>A</strong> 被优化为合适的"记忆衰减"特性</td></tr>
+            </table>
+            <div class="highlight-box">
+                <h4>核心洞察</h4>
+                <p>选择性是实现的"工具"，隐式学习才是"指挥棒"。模型不显式标注"这是关键词"，但通过任务损失学会了识别。</p>
+            </div>
+
+            <h2>记忆隐喻对比</h2>
+            <h3>Transformer：显式的"全息关系图谱"</h3>
+            <p>每个 token 都存着完整的 K（索引）和 V（内容），任意两个 token 之间都有一条"连线"（注意力权重）。</p>
+            <div class="insight-box">
+                <p><strong>图书馆类比</strong>：像图书馆，每本书都有索引，随时查阅。空间换取精确回溯。</p>
+            </div>
+
+            <h3>Mamba：动态的"渐进式摘要本"</h3>
+            <p>状态 h 是一个不断更新的"笔记本"，每次读到新内容，就"消化"进笔记本。</p>
+            <div class="insight-box">
+                <p><strong>记者笔记本类比</strong>：像记者的笔记本，边采访边记录精华。压缩换取无限长度。</p>
+            </div>
+
+            <table>
+                <tr><th>Transformer</th><th>Mamba</th></tr>
+                <tr><td>像<strong>图书馆</strong>，每本书都有索引，随时查阅</td><td>像<strong>记者的笔记本</strong>，边采访边记录精华</td></tr>
+                <tr><td>空间换取精确回溯</td><td>压缩换取无限长度</td></tr>
+                <tr><td>"你要什么我随时给你"</td><td>"我只给你最重要的"</td></tr>
+            </table>
+
+            <h2>纠偏能力差异</h2>
+            <h3>Transformer：具备"全局投票"纠偏能力</h3>
+            <p>如果中间某个 token 的理解有偏差，后续的每个 token 都可以通过注意力机制"回头看"原始的正确信息，通过加权投票纠正偏差。</p>
+            <div class="insight-box">
+                <p><strong>民主投票类比</strong>：每个人都能直接表达意见，可纠错。</p>
+            </div>
+
+            <h3>Mamba：面临"状态污染"挑战</h3>
+            <p>如果中间某个 token 写入了错误信息，错误会"污染"状态 h，后续所有 token 都基于被污染的状态工作，无法"回头看"纠正。</p>
+            <div class="insight-box">
+                <p><strong>记者笔记本类比</strong>：一旦记错，后面的笔记都基于错误前提。</p>
+            </div>
+
+            <h3>对 Agent 记忆系统的启示</h3>
+            <ul>
+                <li><strong>Transformer 更适合需要精确回溯的场景</strong>（知识检索、RAG）</li>
+                <li><strong>Mamba 需要外部记忆系统辅助</strong>（外部存储正确信息，状态污染时可查阅）</li>
+                <li><strong>混合架构可能是最优解</strong>：用 Mamba 处理长序列流，用 Transformer 或外部存储做精确回溯</li>
+            </ul>
+
+            <h2>融合架构方向</h2>
+            <h3>方向一：Transformer + Mamba 混合</h3>
+            <pre><code>输入 → [Mamba 层] → 压缩上下文
+     → [Transformer 层] → 精确关联
+     → [Mamba 层] → 高效输出</code></pre>
+            <p>Mamba 负责：长序列处理，恒定内存；Transformer 负责：关键位置精确关联。</p>
+
+            <h3>方向二：MoE + 统一 Mamba 模块</h3>
+            <pre><code>输入 → [Mamba 模块] → 状态摘要
+     → [MoE 专家选择] → 专业化处理
+     → [输出]</code></pre>
+            <p>Mamba 作为"统一入口"，MoE 做专业化分支。</p>
+
+            <h3>MemMamba：记笔记启发的记忆架构</h3>
+            <p>人大、上海AI Lab 等提出的 MemMamba，受人类"记笔记"启发：</p>
+            <ul>
+                <li><strong>工作记忆</strong>：当前上下文窗口</li>
+                <li><strong>笔记层</strong>：关键信息显式存储（类似外置笔记）</li>
+                <li><strong>状态 h</strong>：隐式压缩的历史摘要</li>
+            </ul>
+            <div class="highlight-box">
+                <h4>核心思想</h4>
+                <p>结合 Mamba 的高效压缩 + 显式存储的关键信息，解决状态污染问题，可查阅"笔记"纠正错误。</p>
+            </div>
+
             <h2>参考资料</h2>
             <ul>
                 <li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need (2017)</a> — Transformer 原论文</li>
