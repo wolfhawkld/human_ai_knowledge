@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU 显存与模型 Fine-tune 资源配置指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .meta {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background: #e9ecef;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        pre code {
+            background: transparent;
+            color: inherit;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+        }
+        .info {
+            color: #3498db;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            font-weight: 500;
+        }
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            margin: 30px 0;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GPU 显存与模型 Fine-tune 资源配置指南</h1>
+        <div class="meta">
+            <p>📌 Nemo 整理 | 2026-04-14 | 基于 Ti-One 平台实践经验</p>
+        </div>
+
+        <h2>概述</h2>
+        <p>在有限 GPU 显存资源下（如 24GB），如何选择合适的模型进行 fine-tune？本文涵盖不同任务类型（LLM、BERT、RL）的模型选择和资源配置方案。</p>
+
+        <div class="section-divider"></div>
+
+        <h2>显存与模型规模对照表</h2>
+
+        <h3>基本原则</h3>
+        <table>
+            <tr>
+                <th>Fine-tuning 方法</th>
+                <th>显存需求（每 1B 参数）</th>
+                <th>计算公式</th>
+            </tr>
+            <tr>
+                <td><strong>Full Fine-tuning</strong></td>
+                <td>~20-30 GB/B</td>
+                <td>参数量 × 精度 × 3~4（梯度+优化器）</td>
+            </tr>
+            <tr>
+                <td><strong>LoRA (16-bit)</strong></td>
+                <td>~2 GB/B + overhead</td>
+                <td>基模 2GB/B + LoRA 参数 + optimizer</td>
+            </tr>
+            <tr>
+                <td><strong>QLoRA (4-bit)</strong></td>
+                <td>~0.5-0.6 GB/B</td>
+                <td>量化后的基模 + LoRA + optimizer</td>
+            </tr>
+        </table>
+
+        <h3>24GB 显存推荐模型</h3>
+
+        <h4>QLoRA (4-bit) 方案</h4>
+        <table>
+            <tr>
+                <th>模型</th>
+                <th>参数量</th>
+                <th>显存占用</th>
+                <th>可行性</th>
+                <th>推荐场景</th>
+            </tr>
+            <tr>
+                <td><strong>Qwen2.5-7B</strong></td>
+                <td>7B</td>
+                <td>4-5 GB</td>
+                <td class="success">✅ 推荐</td>
+                <td>中文任务首选</td>
+            </tr>
+            <tr>
+                <td><strong>Qwen2.5-14B</strong></td>
+                <td>14B</td>
+                <td>8-10 GB</td>
+                <td class="success">✅ 可行</td>
+                <td>需要更强能力</td>
+            </tr>
+            <tr>
+                <td><strong>LLaMA-3-8B</strong></td>
+                <td>8B</td>
+                <td>5-6 GB</td>
+                <td class="success">✅ 推荐</td>
+                <td>英文任务首选</td>
+            </tr>
+            <tr>
+                <td><strong>LLaMA-2-13B</strong></td>
+                <td>13B</td>
+                <td>8-10 GB</td>
+                <td class="success">✅ 可行</td>
+                <td>经典选择</td>
+            </tr>
+        </table>
+
+        <h4>BERT 类模型（全参数微调）</h4>
+        <table>
+            <tr>
+                <th>模型</th>
+                <th>参数量</th>
+                <th>显存占用</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td><strong>BERT-base</strong></td>
+                <td>110M</td>
+                <td>~0.5 GB</td>
+                <td>24GB 可跑多任务并行</td>
+            </tr>
+            <tr>
+                <td><strong>BERT-large</strong></td>
+                <td>340M</td>
+                <td>~1-2 GB</td>
+                <td>全参数微调轻松</td>
+            </tr>
+            <tr>
+                <td><strong>RoBERTa-large</strong></td>
+                <td>355M</td>
+                <td>~1-2 GB</td>
+                <td>同上</td>
+            </tr>
+            <tr>
+                <td><strong>DeBERTa-v3-large</strong></td>
+                <td>390M</td>
+                <td>~2 GB</td>
+                <td>中文效果好</td>
+            </tr>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <h2>任务类型与模型选择</h2>
+
+        <h3>语义类任务</h3>
+        <table>
+            <tr>
+                <th>任务</th>
+                <th>推荐模型</th>
+                <th>显存需求</th>
+                <th>训练方式</th>
+            </tr>
+            <tr>
+                <td>意图分类</td>
+                <td>BERT-base/large</td>
+                <td>1-4 GB</td>
+                <td>全参数微调</td>
+            </tr>
+            <tr>
+                <td>语义聚类</td>
+                <td>Sentence-BERT</td>
+                <td>1-2 GB</td>
+                <td>Embedding + HDBSCAN</td>
+            </tr>
+            <tr>
+                <td>情感分析</td>
+                <td>BERT-base</td>
+                <td>&lt; 1 GB</td>
+                <td>全参数微调</td>
+            </tr>
+        </table>
+
+        <h3>RL 算法验证任务</h3>
+        <table>
+            <tr>
+                <th>任务类型</th>
+                <th>推荐模型</th>
+                <th>显存需求</th>
+                <th>算法</th>
+            </tr>
+            <tr>
+                <td>经典 RL（CartPole）</td>
+                <td>小型 MLP</td>
+                <td>&lt; 100 MB</td>
+                <td>PPO/DQN/A2C</td>
+            </tr>
+            <tr>
+                <td>语义分类 RL</td>
+                <td>BERT + MLP</td>
+                <td>1-2 GB</td>
+                <td>PPO/RLHF</td>
+            </tr>
+            <tr>
+                <td>摘要生成 RL（SUPO）</td>
+                <td>Qwen2.5-1.5B</td>
+                <td>6-8 GB</td>
+                <td>Policy Gradient</td>
+            </tr>
+        </table>
+
+        <div class="section-divider"></div>
+
+        <h2>Ti-One 平台配置指南</h2>
+
+        <h3>平台特点</h3>
+        <table>
+            <tr>
+                <th>特点</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>预装框架</td>
+                <td>PyTorch、TensorFlow、Transformers</td>
+            </tr>
+            <tr>
+                <td>资源分配</td>
+                <td>GPU 按块分配（如 0.5块 L20 = 24GB）</td>
+            </tr>
+            <tr>
+                <td>任务类型</td>
+                <td>Notebook（交互调试）、Training Job（正式训练）</td>
+            </tr>
+            <tr>
+                <td>调度系统</td>
+                <td>自动资源管理和任务队列</td>
+            </tr>
+        </table>
+
+        <h3>GPU 资源对照</h3>
+        <table>
+            <tr>
+                <th>GPU 类型</th>
+                <th>单卡显存</th>
+                <th>分块配置</th>
+            </tr>
+            <tr>
+                <td><strong>L20</strong></td>
+                <td>48 GB</td>
+                <td>0.5块 = 24GB</td>
+            </tr>
+            <tr>
+                <td><strong>A100</strong></td>
+                <td>40/80 GB</td>
+                <td>按需求分配</td>
+            </tr>
+            <tr>
+                <td><strong>V100</strong></td>
+                <td>32 GB</td>
+                <td>按需求分配</td>
+            </tr>
+        </table>
+
+        <h3>环境准备</h3>
+        <pre><code># 1. 检查 PyTorch 版本
+python -c "import torch; print(torch.__version__)"
+
+# 2. 安装额外依赖
+pip install transformers datasets scikit-learn hdbscan
+
+# 3. 检查 GPU 显存
+nvidia-smi</code></pre>
+
+        <h3>BERT 微调示例</h3>
+        <pre><code>from transformers import BertForSequenceClassification, Trainer
+
+model = BertForSequenceClassification.from_pretrained(
+    "bert-base-chinese",
+    num_labels=5  # Speech Act 5类
+)
+
+training_args = TrainingArguments(
+    per_device_train_batch_size=16,  # 24GB 可用较大 batch
+    fp16=True,  # 混合精度
+)
+
+trainer = Trainer(model=model, args=training_args)
+trainer.train()</code></pre>
+
+        <h3>QLoRA 微调示例</h3>
+        <pre><code>from transformers import BitsAndBytesConfig
+from peft import LoraConfig
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+)
+
+lora_config = LoraConfig(r=16, lora_alpha=32)
+
+model = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-7B",
+    quantization_config=bnb_config,
+)</code></pre>
+
+        <div class="section-divider"></div>
+
+        <h2>核心结论</h2>
+        <div class="highlight">
+            <ul>
+                <li><strong>24GB 显存足够</strong>：BERT 全参数微调、QLoRA-7B/14B、小型 LLM + RL</li>
+                <li><strong>BERT 类模型轻松</strong>：全参数微调，不需要 LoRA/QLoRA</li>
+                <li><strong>LLM 需要 QLoRA</strong>：否则显存不够</li>
+                <li><strong>RL 算法验证极省资源</strong>：MLP + CartPole 几乎零开销</li>
+                <li><strong>语义类 RL 需要 BERT</strong>：不能用纯 MLP</li>
+            </ul>
+        </div>
+
+        <div class="summary">
+            <p>💡 一句话总结：24GB 显存可以轻松微调 BERT（全参数），也可以用 QLoRA 微调 7B-14B LLM，是语义类任务和 RL 验证的理想配置。</p>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <h2>相关资源</h2>
+        <ul>
+            <li>IntentWeight 项目：<code>~/.openclaw/workspace/IntentWeight/</code></li>
+            <li>QLoRA 论文：<a href="https://arxiv.org/abs/2305.14314">arXiv:2305.14314</a></li>
+            <li>LoRA 论文：<a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a></li>
+        </ul>
+
+    </div>
+</body>
+</html>
