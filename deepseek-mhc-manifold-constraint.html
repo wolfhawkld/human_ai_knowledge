@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek mHC：流形约束下的 Hyper-Connections</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.0em;
+            margin-bottom: 12px;
+        }
+        .header .subtitle {
+            opacity: 0.85;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+        .meta-item {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 16px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        .highlight-box strong {
+            color: #667eea;
+        }
+        h2 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 8px;
+            margin: 32px 0 20px;
+            font-size: 1.4em;
+        }
+        h3 {
+            color: #16213e;
+            margin: 24px 0 12px;
+            font-size: 1.2em;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        .formula {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        th {
+            background: #667eea;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .code-block {
+            background: #1a1a2e;
+            color: #f8f9fa;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .insight-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #fd7e14;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .insight-box strong {
+            color: #fd7e14;
+        }
+        ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-right: 8px;
+        }
+        .tag.damon { background: #fd7e14; }
+        .tag.nemo { background: #17a2b8; }
+        .resources {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .resources ul {
+            margin: 0;
+        }
+        .resources a {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 DeepSeek mHC</h1>
+            <p class="subtitle">流形约束下的 Hyper-Connections</p>
+            <div class="meta">
+                <span class="meta-item">📅 2026-04-20</span>
+                <span class="meta-item">📄 arXiv:2512.24880</span>
+                <span class="meta-item"><span class="tag damon">Damon</span><span class="tag nemo">Nemo</span></span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="highlight-box">
+                <strong>一句话总结：</strong>mHC 用数学约束保证稳定性，用动态学习保留表达能力——"约束"是稳定性的来源，"动态"是表达能力的来源。
+            </div>
+
+            <h2>核心问题</h2>
+            <p>原始 Hyper-Connections (HC) 扩展了 residual stream 的宽度，增加了连接复杂度，但：</p>
+            <ul>
+                <li><strong>无约束的混合矩阵</strong> → 信号爆炸/消失</li>
+                <li><strong>多层组合后</strong> → 偏离 identity mapping</li>
+                <li><strong>训练不稳定</strong> → 大规模训练时 loss 突增</li>
+            </ul>
+
+            <h2>流形约束是什么？</h2>
+            <p>mHC 将残差连接矩阵投影到<strong>双随机矩阵流形（Birkhoff polytope）</strong>：</p>
+            <div class="formula">
+ℋ^res ∈ ℝ^(n×n) : 所有元素非负，每行之和=1，每列之和=1
+            </div>
+            <p>这正是"全正且行列各自值之和为1的矩阵"！</p>
+
+            <h2>为什么选这个流形？</h2>
+            <table>
+                <tr>
+                    <th>性质</th>
+                    <th>含义</th>
+                </tr>
+                <tr>
+                    <td><strong>范数保持</strong></td>
+                    <td>双随机矩阵谱范数 ≤ 1，防止梯度爆炸</td>
+                </tr>
+                <tr>
+                    <td><strong>组合封闭</strong></td>
+                    <td>双随机矩阵相乘仍是双随机矩阵，多层稳定</td>
+                </tr>
+                <tr>
+                    <td><strong>几何解释</strong></td>
+                    <td>Birkhoff polytope = 置换矩阵的凸包，混合=置换的加权平均</td>
+                </tr>
+            </table>
+            <p>当 n=1 时，约束退化成标量 1，恰好恢复原始 identity mapping。</p>
+
+            <h2>动态机制：每个 token 都有自己的矩阵</h2>
+            <div class="code-block">
+ℋ̃_l^res = α_l^res · mat(x̃'_l φ_l^res) + b_l^res    ← 动态生成"倾向矩阵"
+ℋ_l^res = Sinkhorn-Knopp(ℋ̃_l^res)                   ← 硬投影到双随机流形
+            </div>
+            <table>
+                <tr>
+                    <th>部分</th>
+                    <th>作用</th>
+                    <th>是否学习</th>
+                </tr>
+                <tr>
+                    <td><strong>φ_l^res, b_l^res</strong></td>
+                    <td>根据当前 token 生成"倾向"</td>
+                    <td>✅ 训练学习</td>
+                </tr>
+                <tr>
+                    <td><strong>Sinkhorn-Knopp</strong></td>
+                    <td>强制投影成双随机矩阵</td>
+                    <td>❌ 固定数学操作</td>
+                </tr>
+            </table>
+
+            <h3>推理流程</h3>
+            <ul>
+                <li>每个 token 根据隐藏状态动态生成原始矩阵</li>
+                <li>Sinkhorn-Knopp 迭代（20次）投影到流形</li>
+                <li>用得到的双随机矩阵混合 n 个 residual stream</li>
+            </ul>
+
+            <div class="insight-box">
+                <strong>关键洞察：</strong>真正泛化的是"意图"，稳定性靠数学保证。<br>
+                <br>
+                打个比方：你学习的是"我想把信息怎么分配"的<strong>意图</strong>，Sinkhorn-Knopp 是<strong>约束机制</strong>，确保意图不会破坏稳定性。
+            </div>
+
+            <h2>名字的逻辑链</h2>
+            <p>HC 让残差拓扑变得复杂 → 但无约束导致不稳定 → 用流形约束恢复 identity mapping 性质 → 同时保留动态性</p>
+            <ul>
+                <li><strong>Manifold-Constrained</strong> = 稳定性来源</li>
+                <li><strong>Hyper-Connections</strong> = 动态表达能力</li>
+            </ul>
+
+            <h2>技术细节</h2>
+            <ul>
+                <li><strong>Sinkhorn-Knopp 算法</strong>：先 exp() 保证非负，再交替归一化行和列</li>
+                <li><strong>推理开销</strong>：≈ 6.7%（expansion rate n=4）</li>
+                <li><strong>优化手段</strong>：kernel fusion + recompute + DualPipe 通信重叠</li>
+            </ul>
+
+            <div class="resources">
+                <h3>相关资源</h3>
+                <ul>
+                    <li>论文：<a href="https://arxiv.org/abs/2512.24880" target="_blank">mHC: Manifold-Constrained Hyper-Connections</a></li>
+                    <li>前作：<a href="https://arxiv.org/abs/2409.19606" target="_blank">Hyper-Connections (ByteDance)</a></li>
+                    <li>GitHub：<a href="https://github.com/tokenbender/mHC-manifold-constrained-hyper-connections" target="_blank">tokenbender/mHC</a></li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <strong>一句话记忆：</strong>动态生成倾向，流形强制约束——意图自由，结果稳定。
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                📦 <a href="https://github.com/wolfhawkld/human_ai_knowledge" target="_blank">人机知识库</a> |
+                📄 <a href="deepseek-mhc-manifold-constraint.md">Markdown 源文件</a>
+            </p>
+            <p style="margin-top: 8px;">
+                由 <strong>Damon</strong> 与 <strong>Nemo</strong> 对话生成
+            </p>
+        </div>
+    </div>
+</body>
+</html>
