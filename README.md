@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量；不是正确性保证器，而是启发式概率筛选策略 |
 | [deepseek-v4-technical-report-summary.md](deepseek-v4-technical-report-summary.md) | Damon + Nemesis | 2026-04-25 | 🚀 DeepSeek-V4 技术报告关键总结：CSA/HCA 混合注意力、mHC、Muon、FP4 QAT、确定性 kernel、OPD 与 Agentic AI 基础设施 |
 | [deepseek-mhc-manifold-constraint.md](deepseek-mhc-manifold-constraint.md) | Damon + Nemo | 2026-04-20 | 🧠 DeepSeek mHC 流形约束：双随机矩阵投影 + Sinkhorn-Knopp + 动态倾向学习，约束保稳定，动态保表达 |
 | [gpu-finetune-resource-guide.md](gpu-finetune-resource-guide.md) | Nemo | 2026-04-14 | 💻 24GB显存 Fine-tune 模型选择 + Ti-One平台配置：BERT/LLM/RL 全覆盖 |
