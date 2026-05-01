@@ -1,110 +1,85 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contrastive Decoding：用“强弱模型相减”凸显高质量答案</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
-            line-height: 1.75;
-            color: #273043;
-            background: linear-gradient(135deg, #0f172a 0%, #312e81 55%, #7c3aed 100%);
-            min-height: 100vh;
-            padding: 40px 18px;
-        }
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.98);
-            border-radius: 22px;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.32);
-            overflow: hidden;
-        }
-        header {
-            padding: 46px 44px;
-            color: #fff;
-            background: radial-gradient(circle at top left, #60a5fa 0%, transparent 32%), linear-gradient(135deg, #111827 0%, #4c1d95 100%);
-        }
-        header h1 { margin: 0 0 14px; font-size: 2.25rem; line-height: 1.22; }
-        header p { margin: 0; opacity: 0.88; font-size: 1.05rem; }
-        .meta { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .badge { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; padding: 6px 12px; font-size: 0.9rem; }
-        main { padding: 40px 44px 48px; }
-        h2 { color: #1e1b4b; margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 3px solid #a78bfa; }
-        h3 { color: #3730a3; margin-top: 24px; }
-        p { margin: 12px 0; }
-        blockquote { margin: 20px 0; padding: 18px 22px; background: #f5f3ff; border-left: 5px solid #7c3aed; border-radius: 12px; color: #3b2f65; }
-        code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
-        pre { overflow-x: auto; padding: 16px 18px; background: #111827; color: #e5e7eb; border-radius: 14px; }
-        .formula { text-align: center; font-size: 1.08rem; background: #eef2ff; color: #1e1b4b; padding: 16px; border-radius: 14px; margin: 18px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 18px 0; overflow: hidden; border-radius: 12px; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
-        th { background: #ede9fe; color: #312e81; }
-        tr:nth-child(even) td { background: #fafafa; }
-        .summary { margin-top: 34px; padding: 22px; background: linear-gradient(135deg, #ecfeff 0%, #f5f3ff 100%); border: 1px solid #c4b5fd; border-radius: 16px; font-weight: 700; color: #1e1b4b; }
-        footer { padding: 22px 44px; background: #f8fafc; color: #64748b; font-size: 0.92rem; }
-        @media (max-width: 680px) {
-            header, main, footer { padding-left: 24px; padding-right: 24px; }
-            header h1 { font-size: 1.75rem; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contrastive Decoding：强弱模型相减的解码策略</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; line-height: 1.75; color: #273043; background: linear-gradient(135deg, #0f172a, #312e81 55%, #7c3aed); min-height: 100vh; padding: 40px 18px; }
+    .container { max-width: 960px; margin: 0 auto; background: rgba(255,255,255,.98); border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.32); overflow: hidden; }
+    header { padding: 46px 44px; color: #fff; background: radial-gradient(circle at top left, #60a5fa 0%, transparent 32%), linear-gradient(135deg, #111827, #4c1d95); }
+    header h1 { margin: 0 0 14px; font-size: 2.2rem; line-height: 1.22; }
+    header p { margin: 0; opacity: .88; font-size: 1.05rem; }
+    .meta { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 6px 12px; font-size: .9rem; }
+    main { padding: 40px 44px 48px; }
+    h2 { color: #1e1b4b; margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 3px solid #a78bfa; }
+    h3 { color: #3730a3; margin-top: 24px; }
+    blockquote { margin: 20px 0; padding: 18px 22px; background: #f5f3ff; border-left: 5px solid #7c3aed; border-radius: 12px; color: #3b2f65; }
+    pre { overflow-x: auto; padding: 16px 18px; background: #111827; color: #e5e7eb; border-radius: 14px; }
+    .formula { text-align: center; font-size: 1.08rem; background: #eef2ff; color: #1e1b4b; padding: 16px; border-radius: 14px; margin: 18px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
+    th { background: #ede9fe; color: #312e81; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .summary { margin-top: 34px; padding: 22px; background: linear-gradient(135deg, #ecfeff, #f5f3ff); border: 1px solid #c4b5fd; border-radius: 16px; font-weight: 700; color: #1e1b4b; }
+    footer { padding: 22px 44px; background: #f8fafc; color: #64748b; font-size: .92rem; }
+    @media (max-width: 680px) { header, main, footer { padding-left: 24px; padding-right: 24px; } header h1 { font-size: 1.75rem; } }
+  </style>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>Contrastive Decoding：用“强弱模型相减”凸显高质量答案</h1>
-        <p>它不是“正确答案保证器”，而是一种利用强弱模型概率差异扣除浅层模式的解码策略。</p>
-        <div class="meta">
-            <span class="badge">📅 2026-05-01</span>
-            <span class="badge">👤 Damon + 🤖 Nemo</span>
-            <span class="badge">LLM 解码策略</span>
-            <span class="badge">概率差分</span>
-        </div>
-    </header>
-    <main>
-        <h2>概述</h2>
-        <p>Contrastive decoding 使用一个强模型和一个弱模型同时给候选 token 或答案打分。它的核心不是证明“正确答案一定最大”，而是通过相减压低弱模型也容易给高分的浅层、模板化、空泛答案，让强模型相对弱模型更有优势的候选凸显出来。</p>
+  <header>
+    <h1>Contrastive Decoding：用“强弱模型相减”凸显高质量答案</h1>
+    <p>它不是“正确答案保证器”，而是一种利用强弱模型概率差异扣除浅层模式的解码策略。</p>
+    <div class="meta">
+      <span class="badge">📅 2026-05-01</span>
+      <span class="badge">👤 Damon + 🤖 Nemo</span>
+      <span class="badge">LLM 解码策略</span>
+      <span class="badge">概率差分</span>
+    </div>
+  </header>
+  <main>
+    <h2>概述</h2>
+    <p>Contrastive decoding 使用一个强模型和一个弱模型同时给候选 token 或答案打分。它的核心不是证明“正确答案一定最大”，而是通过相减压低弱模型也容易给高分的浅层、模板化、空泛答案，让强模型相对弱模型更有优势的候选凸显出来。</p>
 
-        <h2>基本公式</h2>
-        <div class="formula">score(x) = log p<sub>expert</sub>(x | c) − α · log p<sub>amateur</sub>(x | c)</div>
-        <p>当 α = 1 时，它近似于一个 likelihood ratio：</p>
-        <div class="formula">log p<sub>expert</sub>(x | c) − log p<sub>amateur</sub>(x | c) = log [p<sub>expert</sub>(x | c) / p<sub>amateur</sub>(x | c)]</div>
-        <p>也就是说，它衡量的是：强模型相对于弱模型，对这个候选多支持多少。</p>
+    <h2>基本公式</h2>
+    <div class="formula">score(x) = log p<sub>expert</sub>(x | c) − α · log p<sub>amateur</sub>(x | c)</div>
+    <p>当 α = 1 时，它近似于一个 likelihood ratio：</p>
+    <div class="formula">log p<sub>expert</sub>(x | c) − log p<sub>amateur</sub>(x | c) = log [p<sub>expert</sub>(x | c) / p<sub>amateur</sub>(x | c)]</div>
 
-        <h2>直觉解释</h2>
-        <blockquote>Contrastive decoding 实际上在问：哪个候选最能体现强模型相对于弱模型的能力增量？</blockquote>
-        <p>它偏好的是“强模型支持度高，并且弱模型支持度没那么高”的候选。背后的经验假设是：弱模型更容易高估常见、顺滑、模板化但不一定正确的答案；强模型更可能识别出具体、正确、需要知识或推理能力的答案。</p>
+    <h2>直觉解释</h2>
+    <blockquote>Contrastive decoding 实际上在问：哪个候选最能体现强模型相对于弱模型的能力增量？</blockquote>
+    <p>它偏好的是“强模型支持度高，并且弱模型支持度没那么高”的候选。背后的经验假设是：弱模型更容易高估常见、顺滑、模板化但不一定正确的答案；强模型更可能识别出具体、正确、需要知识或推理能力的答案。</p>
 
-        <h2>它不能保证正确答案一定最大</h2>
-        <p>Contrastive decoding 没有数学保证说正确答案一定会在相减后排第一。它依赖一个假设：正确答案在强模型那里概率高，而在弱模型那里没有同样高；错误、空泛、模板化答案则更容易被弱模型也给出高概率。</p>
+    <h2>它不能保证正确答案一定最大</h2>
+    <p>Contrastive decoding 没有数学保证说正确答案一定会在相减后排第一。它依赖一个假设：正确答案在强模型那里概率高，而在弱模型那里没有同样高；错误、空泛、模板化答案则更容易被弱模型也给出高概率。</p>
 
-        <h2>常见失败情况</h2>
-        <h3>1. 弱模型也知道正确答案</h3>
-        <p>如果问题很简单，弱模型也能准确回答，那么正确答案在弱模型那里也会有很高概率。相减后，正确答案的优势反而可能被削弱。</p>
-        <h3>2. 强模型本身也错了</h3>
-        <p>如果强模型对错误答案也很确信，contrastive decoding 不能凭空纠正强模型的知识错误或推理错误。</p>
-        <h3>3. 弱模型对某个奇怪候选概率极低</h3>
-        <p>某些不合理 token 可能因为弱模型概率极低而获得很大的差值。因此实际方法通常会加 plausibility constraint：先过滤掉强模型自己都不太相信的候选，再做强弱模型相减。</p>
-        <pre>V_head = { x : p_expert(x | c) ≥ β · max p_expert(· | c) }</pre>
+    <h2>常见失败情况</h2>
+    <h3>1. 弱模型也知道正确答案</h3>
+    <p>如果问题很简单，弱模型也能准确回答，那么正确答案在弱模型那里也会有很高概率。相减后，正确答案的优势反而可能被削弱。</p>
+    <h3>2. 强模型本身也错了</h3>
+    <p>如果强模型对错误答案也很确信，contrastive decoding 不能凭空纠正强模型的知识错误或推理错误。</p>
+    <h3>3. 弱模型对某个奇怪候选概率极低</h3>
+    <p>某些不合理 token 可能因为弱模型概率极低而获得很大的差值。因此实际方法通常会加 plausibility constraint：先过滤掉强模型自己都不太相信的候选，再做强弱模型相减。</p>
+    <pre>V_head = { x : p_expert(x | c) ≥ β · max p_expert(· | c) }</pre>
 
-        <h2>为什么它有用</h2>
-        <p>很多 LLM 的生成问题不只是“不知道正确答案”，而是 decoding 时容易被高频、顺滑、模板化的模式吸走。Contrastive decoding 的价值就在于保留强模型认为合理的候选，同时惩罚弱模型也觉得自然的浅层答案，从而放大强模型的知识、语义和推理优势。</p>
+    <h2>为什么它有用</h2>
+    <p>很多 LLM 的生成问题不只是“不知道正确答案”，而是 decoding 时容易被高频、顺滑、模板化的模式吸走。Contrastive decoding 的价值就在于保留强模型认为合理的候选，同时惩罚弱模型也觉得自然的浅层答案，从而放大强模型的知识、语义和推理优势。</p>
 
-        <h2>与普通解码的区别</h2>
-        <table>
-            <tr><th>方法</th><th>主要选择依据</th><th>风险</th></tr>
-            <tr><td>Greedy decoding</td><td>每一步选择强模型概率最高的 token</td><td>容易走向局部最优、模板化</td></tr>
-            <tr><td>Sampling</td><td>按概率采样，引入随机性</td><td>可能不稳定、产生低质量输出</td></tr>
-            <tr><td>Beam search</td><td>保留多个高概率路径</td><td>容易偏向通顺但保守的答案</td></tr>
-            <tr><td>Contrastive decoding</td><td>选择强模型相对弱模型优势最大的候选</td><td>依赖强弱模型差异假设</td></tr>
-        </table>
+    <h2>与普通解码的区别</h2>
+    <table>
+      <tr><th>方法</th><th>主要选择依据</th><th>风险</th></tr>
+      <tr><td>Greedy decoding</td><td>每一步选择强模型概率最高的 token</td><td>容易走向局部最优、模板化</td></tr>
+      <tr><td>Sampling</td><td>按概率采样，引入随机性</td><td>可能不稳定、产生低质量输出</td></tr>
+      <tr><td>Beam search</td><td>保留多个高概率路径</td><td>容易偏向通顺但保守的答案</td></tr>
+      <tr><td>Contrastive decoding</td><td>选择强模型相对弱模型优势最大的候选</td><td>依赖强弱模型差异假设</td></tr>
+    </table>
 
-        <div class="summary">一句话总结：Contrastive decoding 不能保证正确答案一定胜出；它是通过“强模型概率 − 弱模型概率”来尽可能扣除浅层、常见、模板化模式，让更能体现强模型能力增量的答案凸显出来。</div>
-    </main>
-    <footer>Human-AI Knowledge · 由 Damon 与 Nemo 共建</footer>
+    <div class="summary">一句话总结：Contrastive decoding 不能保证正确答案一定胜出；它是通过“强模型概率 − 弱模型概率”来尽可能扣除浅层、常见、模板化模式，让更能体现强模型能力增量的答案凸显出来。</div>
+  </main>
+  <footer>Human-AI Knowledge · 由 Damon 与 Nemo 共建</footer>
 </div>
 </body>
 </html>
