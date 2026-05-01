@@ -68,6 +68,23 @@
     <h2>为什么它有用</h2>
     <p>很多 LLM 的生成问题不只是“不知道正确答案”，而是 decoding 时容易被高频、顺滑、模板化的模式吸走。Contrastive decoding 的价值就在于保留强模型认为合理的候选，同时惩罚弱模型也觉得自然的浅层答案，从而放大强模型的知识、语义和推理优势。</p>
 
+
+    <h2>与 RRF 的类比：一种带负权的融合/重排</h2>
+    <p>从数学操作和排序重排的角度看，contrastive decoding 和 RRF（Reciprocal Rank Fusion）有一个有趣的共同点：它们都不是直接相信单一路径的原始分数，而是用额外信号重新塑形候选集合的排序。</p>
+    <p>RRF 的典型形式是：</p>
+    <div class="formula">score(d) = Σ<sub>i</sub> 1 / (k + rank<sub>i</sub>(d))</div>
+    <p>它是在多个检索器或排序器之间做<strong>正向融合</strong>：多个系统都觉得某个文档靠前，这个文档就会被整体提上来。</p>
+    <p>Contrastive decoding 则更像一种<strong>差分融合</strong>或<strong>带负权的 score fusion</strong>：</p>
+    <div class="formula">score(x) = log p<sub>expert</sub>(x | c) − α · log p<sub>amateur</sub>(x | c)</div>
+    <p>如果用信息检索语言描述，可以把弱模型看作一个 anti-ranker：RRF 是“多个 ranker 都说你好，所以我更信你”；contrastive decoding 是“强模型说你好，但弱模型没那么看好，所以你更像强模型能力增量”。</p>
+    <table>
+      <tr><th>方法</th><th>操作本质</th><th>信号方向</th></tr>
+      <tr><td>RRF</td><td>多路排序正向融合</td><td>多个 ranker 共同加分</td></tr>
+      <tr><td>Contrastive decoding</td><td>强弱模型差分重排</td><td>强模型加分，弱模型扣分</td></tr>
+      <tr><td>Hybrid Search rerank</td><td>稀疏/稠密/重排器融合</td><td>多种相关性信号共同塑形</td></tr>
+    </table>
+    <p>这个类比能帮助理解 contrastive decoding：它不是一个独立的“真理判定器”，而是一种用弱模型作为反向参照物的候选重排机制。</p>
+
     <h2>与普通解码的区别</h2>
     <table>
       <tr><th>方法</th><th>主要选择依据</th><th>风险</th></tr>
@@ -77,7 +94,7 @@
       <tr><td>Contrastive decoding</td><td>选择强模型相对弱模型优势最大的候选</td><td>依赖强弱模型差异假设</td></tr>
     </table>
 
-    <div class="summary">一句话总结：Contrastive decoding 不能保证正确答案一定胜出；它是通过“强模型概率 − 弱模型概率”来尽可能扣除浅层、常见、模板化模式，让更能体现强模型能力增量的答案凸显出来。</div>
+    <div class="summary">一句话总结：Contrastive decoding 不能保证正确答案一定胜出；它是通过“强模型概率 − 弱模型概率”来尽可能扣除浅层、常见、模板化模式，让更能体现强模型能力增量的答案凸显出来；从排序视角看，它也可以理解为一种“强模型正权、弱模型负权”的融合/重排。</div>
   </main>
   <footer>Human-AI Knowledge · 由 Damon 与 Nemo 共建</footer>
 </div>
