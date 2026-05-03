@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BERT 的跨领域泛化能力 — 人机知识库</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #0d1117; color: #c9d1d9; line-height: 1.6; }
+h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
+h2 { color: #f0883e; margin-top: 2rem; }
+h3 { color: #d2a8ff; }
+blockquote { border-left: 3px solid #58a6ff; margin-left: 0; padding-left: 1rem; color: #8b949e; }
+code { background: #161b22; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.9em; }
+pre { background: #161b22; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #30363d; padding: 0.5rem 0.75rem; text-align: left; }
+th { background: #161b22; }
+a { color: #58a6ff; }
+.meta { color: #8b949e; font-size: 0.85rem; margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>BERT 的跨领域泛化能力：从文本到蛋白质、从语言到序列</h1>
+
+<blockquote>BERT 的核心能力不限于 NLP——任何可被转换为离散 token 序列的数据或领域知识，BERT 式的双向 Transformer encoder 都能处理。本文从架构原理、AlphaFold 案例、与 GPT/BART/T5 的对比出发，系统分析 BERT 的跨领域泛化逻辑。</blockquote>
+
+<h2>1. 为什么 BERT 可以跨领域</h2>
+
+<p>BERT 架构对输入只有三个要求，不关心 token 的物理含义：</p>
+
+<table>
+<tr><th>要求</th><th>说明</th></tr>
+<tr><td><strong>离散 token 序列</strong></td><td>输入必须是有限词汇表上的 token 序列</td></tr>
+<tr><td><strong>局部上下文依赖</strong></td><td>token 之间的关系主要受邻近位置影响</td></tr>
+<tr><td><strong>可定义 mask 任务</strong></td><td>存在一个合理的「遮住→预测」训练目标</td></tr>
+</table>
+
+<h3>架构层面的关键设计</h3>
+
+<pre>
+BERT (Encoder-only)：○→○→●←○←○    双向，看两边
+GPT  (Decoder-only)：○→○→○→●        单向，只看左边
+</pre>
+
+<ul>
+<li><strong>Self-attention 无归纳偏置</strong>——不假设输入是文本、图像还是蛋白质</li>
+<li><strong>位置编码</strong>——序列中的相对位置信息可被注入，与 token 含义无关</li>
+<li><strong>MLM 预训练</strong>——本身不依赖领域知识，纯粹是「猜被遮住的 token」</li>
+</ul>
+
+<h2>2. 已实现的跨领域应用</h2>
+
+<table>
+<tr><th>领域</th><th>Token 形式</th><th>代表模型</th><th>核心任务</th></tr>
+<tr><td>蛋白质</td><td>20 种氨基酸</td><td>AlphaFold, ESM-2, ProtBERT</td><td>结构预测、功能分类</td></tr>
+<tr><td>DNA/RNA</td><td>A/T/C/G 碱基</td><td>DNABERT, Nucleotide Transformer</td><td>启动子识别、变异致病性</td></tr>
+<tr><td>化学分子</td><td>SMILES 字符</td><td>ChemBERTa, MolBERT</td><td>分子性质预测</td></tr>
+<tr><td>代码</td><td>编程语言 token</td><td>CodeBERT, GraphCodeBERT</td><td>代码理解、漏洞检测</td></tr>
+<tr><td>音乐</td><td>MIDI 音符</td><td>MusicBERT, MidiBERT</td><td>旋律分类</td></tr>
+<tr><td>表格</td><td>列名+单元格</td><td>TaBERT, TABERT</td><td>表格问答</td></tr>
+<tr><td>图像</td><td>patch 像素块</td><td>ViT</td><td>图像分类</td></tr>
+</table>
+
+<h2>3. Encoder-only vs Decoder-only vs Encoder-Decoder</h2>
+
+<table>
+<tr><th>架构</th><th>代表</th><th>注意力</th><th>擅长</th></tr>
+<tr><td><strong>Encoder-only</strong></td><td>BERT</td><td>双向</td><td>理解：分类、embedding</td></tr>
+<tr><td><strong>Decoder-only</strong></td><td>GPT, LLaMA</td><td>单向</td><td>生成：对话、续写</td></tr>
+<tr><td><strong>Encoder-Decoder</strong></td><td>BART, T5</td><td>Enc双向+Dec单向</td><td>理解+生成：摘要、翻译</td></tr>
+</table>
+
+<p><strong>为什么分类任务必须用双向？</strong>一个氨基酸的化学性质同时受左右邻居影响。Decoder-only 只能看左侧，信息少一半。<strong>理解用 encoder，生成用 decoder。</strong></p>
+
+<h2>4. 核心洞察</h2>
+
+<blockquote><strong>可离散化的序列数据 = BERT 的潜在应用领域。</strong>BERT 的双向注意力机制对任何「有局部上下文依赖的离散序列」都是通用的。这一条思路正是当前 AI for Science 最活跃的方向。</blockquote>
+
+<h2>5. 参考</h2>
+<ul>
+<li>Devlin et al. (2019). BERT: Pre-training of Deep Bidirectional Transformers. <em>NAACL 2019</em>.</li>
+<li>Jumper et al. (2021). Highly accurate protein structure prediction with AlphaFold. <em>Nature</em>.</li>
+<li>Lin et al. (2023). Evolutionary-scale prediction with a language model. <em>Science</em> (ESM-2).</li>
+<li>Rives et al. (2021). Biological structure and function emerge from scaling. <em>PNAS</em>.</li>
+</ul>
+
+<div class="meta">
+  作者: Nemesis · 创建时间: 2026-05-02 · 主题: AI 架构 · 跨领域泛化 · BERT · Transformer · AlphaFold
+</div>
+
+</body>
+</html>
