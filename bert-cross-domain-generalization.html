@@ -16,6 +16,7 @@ table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 th, td { border: 1px solid #30363d; padding: 0.5rem 0.75rem; text-align: left; }
 th { background: #161b22; }
 a { color: #58a6ff; }
+ul, ol { padding-left: 1.5rem; }
 .meta { color: #8b949e; font-size: 0.85rem; margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem; }
 </style>
 </head>
@@ -32,7 +33,7 @@ a { color: #58a6ff; }
 <table>
 <tr><th>要求</th><th>说明</th></tr>
 <tr><td><strong>离散 token 序列</strong></td><td>输入必须是有限词汇表上的 token 序列</td></tr>
-<tr><td><strong>局部上下文依赖</strong></td><td>token 之间的关系主要受邻近位置影响</td></tr>
+<tr><td><strong>局部上下文依赖</strong></td><td>token 之间的关系主要受邻近位置影响（self-attention 的归纳偏置）</td></tr>
 <tr><td><strong>可定义 mask 任务</strong></td><td>存在一个合理的「遮住→预测」训练目标</td></tr>
 </table>
 
@@ -43,46 +44,62 @@ BERT (Encoder-only)：○→○→●←○←○    双向，看两边
 GPT  (Decoder-only)：○→○→○→●        单向，只看左边
 </pre>
 
-<ul>
-<li><strong>Self-attention 无归纳偏置</strong>——不假设输入是文本、图像还是蛋白质</li>
-<li><strong>位置编码</strong>——序列中的相对位置信息可被注入，与 token 含义无关</li>
-<li><strong>MLM 预训练</strong>——本身不依赖领域知识，纯粹是「猜被遮住的 token」</li>
-</ul>
+<p><strong>Self-attention 无归纳偏置</strong>——不假设输入是文本、图像还是蛋白质，只看 token 之间的注意力权重。<strong>位置编码</strong>让序列中的相对位置信息可被注入，与 token 含义无关。<strong>MLM 预训练</strong>本身不依赖领域知识，纯粹是「猜被遮住的 token」。</p>
 
 <h2>2. 已实现的跨领域应用</h2>
 
 <table>
 <tr><th>领域</th><th>Token 形式</th><th>代表模型</th><th>核心任务</th></tr>
-<tr><td>蛋白质</td><td>20 种氨基酸</td><td>AlphaFold, ESM-2, ProtBERT</td><td>结构预测、功能分类</td></tr>
-<tr><td>DNA/RNA</td><td>A/T/C/G 碱基</td><td>DNABERT, Nucleotide Transformer</td><td>启动子识别、变异致病性</td></tr>
-<tr><td>化学分子</td><td>SMILES 字符</td><td>ChemBERTa, MolBERT</td><td>分子性质预测</td></tr>
-<tr><td>代码</td><td>编程语言 token</td><td>CodeBERT, GraphCodeBERT</td><td>代码理解、漏洞检测</td></tr>
-<tr><td>音乐</td><td>MIDI 音符</td><td>MusicBERT, MidiBERT</td><td>旋律分类</td></tr>
-<tr><td>表格</td><td>列名+单元格</td><td>TaBERT, TABERT</td><td>表格问答</td></tr>
-<tr><td>图像</td><td>patch 像素块</td><td>ViT</td><td>图像分类</td></tr>
+<tr><td><strong>蛋白质</strong></td><td>20 种氨基酸字母</td><td>AlphaFold, ESM-2, ProtBERT</td><td>结构预测、功能分类</td></tr>
+<tr><td><strong>DNA/RNA</strong></td><td>A/T/C/G 碱基</td><td>DNABERT, Nucleotide Transformer</td><td>启动子识别、变异致病性预测</td></tr>
+<tr><td><strong>化学分子</strong></td><td>SMILES 字符/原子类型</td><td>ChemBERTa, MolBERT</td><td>分子性质预测、反应预测</td></tr>
+<tr><td><strong>代码</strong></td><td>编程语言 token</td><td>CodeBERT, GraphCodeBERT</td><td>代码理解、漏洞检测</td></tr>
+<tr><td><strong>音乐</strong></td><td>MIDI 音符/和弦</td><td>MusicBERT, MidiBERT</td><td>旋律分类、风格识别</td></tr>
+<tr><td><strong>表格</strong></td><td>列名+单元格串行化</td><td>TaBERT, TABERT</td><td>表格问答、语义解析</td></tr>
+<tr><td><strong>图像</strong></td><td>切分成 patch 的像素块</td><td>ViT（BERT 思想的视觉延伸）</td><td>图像分类</td></tr>
 </table>
+
+<h3>AlphaFold 案例</h3>
+
+<p>AlphaFold 在开发阶段使用 BERT 式预训练处理蛋白质序列：将 20 种氨基酸视为一个 20 词的「词汇表」，蛋白质序列成为「句子」，通过 Masked Language Modeling 预测被遮住的氨基酸残基。这个预训练让模型学到了氨基酸之间的物理化学约束关系，为后续结构预测模块提供了高质量的序列表示。同一思路后来被 Meta 的 ESM 系列发扬光大。</p>
 
 <h2>3. Encoder-only vs Decoder-only vs Encoder-Decoder</h2>
 
 <table>
-<tr><th>架构</th><th>代表</th><th>注意力</th><th>擅长</th></tr>
-<tr><td><strong>Encoder-only</strong></td><td>BERT</td><td>双向</td><td>理解：分类、embedding</td></tr>
-<tr><td><strong>Decoder-only</strong></td><td>GPT, LLaMA</td><td>单向</td><td>生成：对话、续写</td></tr>
-<tr><td><strong>Encoder-Decoder</strong></td><td>BART, T5</td><td>Enc双向+Dec单向</td><td>理解+生成：摘要、翻译</td></tr>
+<tr><th>架构</th><th>代表模型</th><th>注意力方向</th><th>预训练任务</th><th>擅长</th></tr>
+<tr><td><strong>Encoder-only</strong></td><td>BERT</td><td>双向</td><td>Masked LM</td><td>理解：分类、embedding、序列标注</td></tr>
+<tr><td><strong>Decoder-only</strong></td><td>GPT, LLaMA</td><td>单向（因果）</td><td>Next token prediction</td><td>生成：对话、续写、代码生成</td></tr>
+<tr><td><strong>Encoder-Decoder</strong></td><td>BART, T5</td><td>Encoder 双向 + Decoder 单向</td><td>去噪重建 / Span Corruption</td><td>理解+生成：摘要、翻译</td></tr>
 </table>
 
-<p><strong>为什么分类任务必须用双向？</strong>一个氨基酸的化学性质同时受左右邻居影响。Decoder-only 只能看左侧，信息少一半。<strong>理解用 encoder，生成用 decoder。</strong></p>
+<h3>为什么分类/识别任务必须用双向</h3>
 
-<h2>4. 核心洞察</h2>
+<p>以蛋白质氨基酸分类为例：一个氨基酸的化学性质同时受<strong>左边和右边</strong>的邻居残基影响。Decoder-only 的因果注意力只能看左侧，信息天然少一半，对「理解型」任务（分类、预测、embedding）不友好。Encoder 的双向注意力才能捕捉完整局部上下文。</p>
 
-<blockquote><strong>可离散化的序列数据 = BERT 的潜在应用领域。</strong>BERT 的双向注意力机制对任何「有局部上下文依赖的离散序列」都是通用的。这一条思路正是当前 AI for Science 最活跃的方向。</blockquote>
+<p>Meta 的 ESM 系列验证了这一结论：ESM-2（encoder-only）做蛋白质 embedding 和结构预测效果极佳，而 ESM-3（decoder-based）转向蛋白质序列生成。<strong>理解用 encoder，生成用 decoder</strong>。</p>
 
-<h2>5. 参考</h2>
+<h2>4. 泛化边界</h2>
+
+<p>BERT 不适用于以下场景：</p>
+
 <ul>
-<li>Devlin et al. (2019). BERT: Pre-training of Deep Bidirectional Transformers. <em>NAACL 2019</em>.</li>
+<li><strong>连续值数据</strong>（如传感器读数、股价）——需先离散化，但信息损失大</li>
+<li><strong>长程依赖为主的任务</strong>——self-attention 窗口有限</li>
+<li><strong>需要自回归生成</strong>——BERT 天生不会「写」，只会「理解」</li>
+<li><strong>图结构数据</strong>——需要 GNN 或特殊的 graph transformer</li>
+</ul>
+
+<h2>5. 核心洞察</h2>
+
+<blockquote><strong>可离散化的序列数据 = BERT 的潜在应用领域。</strong> BERT 的双向注意力机制对任何「有局部上下文依赖的离散序列」都是通用的。这一条思路正是当前 AI for Science 最活跃的方向——DeepMind 的 AlphaFold、Meta 的 ESM、NVIDIA 的 BioNeMo 都在沿此路径推进。</blockquote>
+
+<h2>6. 参考</h2>
+
+<ul>
+<li>Devlin et al. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. <em>NAACL 2019</em>.</li>
 <li>Jumper et al. (2021). Highly accurate protein structure prediction with AlphaFold. <em>Nature</em>.</li>
-<li>Lin et al. (2023). Evolutionary-scale prediction with a language model. <em>Science</em> (ESM-2).</li>
-<li>Rives et al. (2021). Biological structure and function emerge from scaling. <em>PNAS</em>.</li>
+<li>Lin et al. (2023). Evolutionary-scale prediction of atomic-level protein structure with a language model. <em>Science</em> (ESM-2).</li>
+<li>Rives et al. (2021). Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. <em>PNAS</em>.</li>
 </ul>
 
 <div class="meta">
