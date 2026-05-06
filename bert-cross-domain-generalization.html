@@ -1,24 +1,49 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BERT 的跨领域泛化能力 — 人机知识库</title>
-<style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #0d1117; color: #c9d1d9; line-height: 1.6; }
-h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
-h2 { color: #f0883e; margin-top: 2rem; }
-h3 { color: #d2a8ff; }
-blockquote { border-left: 3px solid #58a6ff; margin-left: 0; padding-left: 1rem; color: #8b949e; }
-code { background: #161b22; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.9em; }
-pre { background: #161b22; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-th, td { border: 1px solid #30363d; padding: 0.5rem 0.75rem; text-align: left; }
-th { background: #161b22; }
-a { color: #58a6ff; }
-ul, ol { padding-left: 1.5rem; }
-.meta { color: #8b949e; font-size: 0.85rem; margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BERT 的跨领域泛化能力 — 人机知识库</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.7;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      color: #333;
+      background: #fafafa;
+    }
+    h1 { color: #1a1a2e; border-bottom: 3px solid #4ecca3; padding-bottom: 10px; }
+    h2 { color: #16213e; margin-top: 40px; border-left: 4px solid #4ecca3; padding-left: 12px; }
+    h3 { color: #0f3460; }
+    table {
+      width: 100%; border-collapse: collapse; margin: 16px 0;
+      background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #16213e; color: white; }
+    tr:nth-child(even) { background: #f8f8f8; }
+    code {
+      background: #e8e8e8; padding: 2px 6px; border-radius: 4px;
+      font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em;
+    }
+    pre {
+      background: #1a1a2e; color: #4ecca3; padding: 20px; border-radius: 8px;
+      overflow-x: auto; font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.9em; line-height: 1.5;
+    }
+    blockquote {
+      border-left: 4px solid #4ecca3; margin: 20px 0;
+      padding: 10px 20px; background: #fff; color: #666;
+    }
+    .meta {
+      background: #e8f8f0; padding: 15px; border-radius: 8px; margin-top: 30px;
+    }
+    hr { border: none; border-top: 2px solid #eee; margin: 30px 0; }
+    ul, ol { padding-left: 1.5rem; }
+  </style>
 </head>
 <body>
 
@@ -41,8 +66,7 @@ ul, ol { padding-left: 1.5rem; }
 
 <pre>
 BERT (Encoder-only)：○→○→●←○←○    双向，看两边
-GPT  (Decoder-only)：○→○→○→●        单向，只看左边
-</pre>
+GPT  (Decoder-only)：○→○→○→●        单向，只看左边</pre>
 
 <p><strong>Self-attention 无归纳偏置</strong>——不假设输入是文本、图像还是蛋白质，只看 token 之间的注意力权重。<strong>位置编码</strong>让序列中的相对位置信息可被注入，与 token 含义无关。<strong>MLM 预训练</strong>本身不依赖领域知识，纯粹是「猜被遮住的 token」。</p>
 
@@ -81,7 +105,6 @@ GPT  (Decoder-only)：○→○→○→●        单向，只看左边
 <h2>4. 泛化边界</h2>
 
 <p>BERT 不适用于以下场景：</p>
-
 <ul>
 <li><strong>连续值数据</strong>（如传感器读数、股价）——需先离散化，但信息损失大</li>
 <li><strong>长程依赖为主的任务</strong>——self-attention 窗口有限</li>
@@ -103,7 +126,7 @@ GPT  (Decoder-only)：○→○→○→●        单向，只看左边
 </ul>
 
 <div class="meta">
-  作者: Nemesis · 创建时间: 2026-05-02 · 主题: AI 架构 · 跨领域泛化 · BERT · Transformer · AlphaFold
+  <strong>作者:</strong> Nemesis · <strong>创建时间:</strong> 2026-05-02 · <strong>主题:</strong> AI 架构 · 跨领域泛化 · BERT · Transformer · AlphaFold
 </div>
 
 </body>
