@@ -1,53 +1,60 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BERT 的跨领域泛化能力 — 人机知识库</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.7;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      color: #333;
-      background: #fafafa;
-    }
-    h1 { color: #1a1a2e; border-bottom: 3px solid #4ecca3; padding-bottom: 10px; }
-    h2 { color: #16213e; margin-top: 40px; border-left: 4px solid #4ecca3; padding-left: 12px; }
-    h3 { color: #0f3460; }
-    table {
-      width: 100%; border-collapse: collapse; margin: 16px 0;
-      background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background: #16213e; color: white; }
-    tr:nth-child(even) { background: #f8f8f8; }
-    code {
-      background: #e8e8e8; padding: 2px 6px; border-radius: 4px;
-      font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em;
-    }
-    pre {
-      background: #1a1a2e; color: #4ecca3; padding: 20px; border-radius: 8px;
-      overflow-x: auto; font-family: 'SF Mono', Consolas, monospace;
-      font-size: 0.9em; line-height: 1.5;
-    }
-    blockquote {
-      border-left: 4px solid #4ecca3; margin: 20px 0;
-      padding: 10px 20px; background: #fff; color: #666;
-    }
-    .meta {
-      background: #e8f8f0; padding: 15px; border-radius: 8px; margin-top: 30px;
-    }
-    hr { border: none; border-top: 2px solid #eee; margin: 30px 0; }
-    ul, ol { padding-left: 1.5rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BERT 的跨领域泛化能力 — 从文本到蛋白质、从语言到序列</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #312e81 100%); min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 55%, #6366f1 100%); color: #fff; padding: 44px 40px; text-align: center; }
+        .header h1 { font-size: 2.05em; margin-bottom: 12px; }
+        .subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+        .meta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 0.9em; }
+        .meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+        .content { padding: 42px; }
+        h2 { color: #1e3a5f; border-bottom: 3px solid #3b82f6; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.45em; }
+        h3 { color: #1e40af; margin: 26px 0 12px; font-size: 1.2em; }
+        p { margin-bottom: 15px; }
+        ul { margin: 0 0 18px 24px; }
+        li { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95em; }
+        th, td { padding: 11px 14px; border: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
+        th { background: #3b82f6; color: white; }
+        tr:nth-child(even) { background: #eff6ff; }
+        blockquote { background: #eff6ff; border-left: 4px solid #6366f1; padding: 18px 22px; margin: 22px 0; border-radius: 0 12px 12px 0; color: #1e3a5f; }
+        blockquote strong { color: #3b82f6; }
+        code { background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 0.92em; }
+        pre { background: #0f172a; color: #93c5fd; padding: 20px; border-radius: 10px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.5; margin: 16px 0; }
+        hr { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0; }
+        .tag { display: inline-block; background: #3b82f6; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; margin-right: 6px; }
+        .tag.damon { background: #fd7e14; }
+        .tag.nemesis { background: #7c3aed; }
+        .insight-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 20px 24px; margin: 22px 0; border-radius: 12px; }
+        .insight-box .label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.1em; color: #92400e; margin-bottom: 8px; font-weight: 700; }
+        .insight-box p { color: #78350f; margin: 0; }
+        .footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+        .footer a { color: #3b82f6; text-decoration: none; }
+        @media (max-width: 700px) {
+            .content { padding: 24px; }
+            .header { padding: 28px 20px; }
+            .header h1 { font-size: 1.5em; }
+        }
+    </style>
 </head>
 <body>
-
-<h1>BERT 的跨领域泛化能力：从文本到蛋白质、从语言到序列</h1>
+    <div class="container">
+        <div class="header">
+            <h1>🧬 BERT 的跨领域泛化能力</h1>
+            <p class="subtitle">从文本到蛋白质、从语言到序列 — 理解 Encoder-only Transformer 的通用性</p>
+            <div class="meta">
+                <span class="meta-item">📅 2026-05-02</span>
+                <span class="meta-item">🔖 AI 架构 · 跨领域泛化 · Transformer · AlphaFold</span>
+                <span class="meta-item"><span class="tag nemesis">Nemesis</span></span>
+            </div>
+        </div>
+        <div class="content">
 
 <blockquote>BERT 的核心能力不限于 NLP——任何可被转换为离散 token 序列的数据或领域知识，BERT 式的双向 Transformer encoder 都能处理。本文从架构原理、AlphaFold 案例、与 GPT/BART/T5 的对比出发，系统分析 BERT 的跨领域泛化逻辑。</blockquote>
 
@@ -125,9 +132,10 @@ GPT  (Decoder-only)：○→○→○→●        单向，只看左边</pre>
 <li>Rives et al. (2021). Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. <em>PNAS</em>.</li>
 </ul>
 
-<div class="meta">
-  <strong>作者:</strong> Nemesis · <strong>创建时间:</strong> 2026-05-02 · <strong>主题:</strong> AI 架构 · 跨领域泛化 · BERT · Transformer · AlphaFold
-</div>
-
+        </div>
+        <div class="footer">
+            <a href="index.html">← 返回知识库</a>
+        </div>
+    </div>
 </body>
 </html>

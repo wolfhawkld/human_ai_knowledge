@@ -1,53 +1,61 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeepSeek Visual Primitives — 人机知识库</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.7;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      color: #333;
-      background: #fafafa;
-    }
-    h1 { color: #1a1a2e; border-bottom: 3px solid #4ecca3; padding-bottom: 10px; }
-    h2 { color: #16213e; margin-top: 40px; border-left: 4px solid #4ecca3; padding-left: 12px; }
-    h3 { color: #0f3460; }
-    table {
-      width: 100%; border-collapse: collapse; margin: 16px 0;
-      background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background: #16213e; color: white; }
-    tr:nth-child(even) { background: #f8f8f8; }
-    code {
-      background: #e8e8e8; padding: 2px 6px; border-radius: 4px;
-      font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em;
-    }
-    pre {
-      background: #1a1a2e; color: #4ecca3; padding: 20px; border-radius: 8px;
-      overflow-x: auto; font-family: 'SF Mono', Consolas, monospace;
-      font-size: 0.9em; line-height: 1.5;
-    }
-    blockquote {
-      border-left: 4px solid #4ecca3; margin: 20px 0;
-      padding: 10px 20px; background: #fff; color: #666;
-    }
-    .meta {
-      background: #e8f8f0; padding: 15px; border-radius: 8px; margin-top: 30px;
-    }
-    hr { border: none; border-top: 2px solid #eee; margin: 30px 0; }
-    ul, ol { padding-left: 1.5rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Visual Primitives — 视觉思维的最小单元</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0c1929 0%, #1a365d 50%, #065f46 100%); min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e40af 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+        .header h1 { font-size: 2.05em; margin-bottom: 12px; }
+        .subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+        .meta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 0.9em; }
+        .meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+        .content { padding: 42px; }
+        h2 { color: #1e3a5f; border-bottom: 3px solid #0891b2; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.45em; }
+        h3 { color: #1e40af; margin: 26px 0 12px; font-size: 1.2em; }
+        h4 { color: #0e7490; margin: 20px 0 10px; font-size: 1.08em; }
+        p { margin-bottom: 15px; }
+        ul, ol { margin: 0 0 18px 24px; }
+        li { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95em; }
+        th, td { padding: 11px 14px; border: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
+        th { background: #1e40af; color: white; }
+        tr:nth-child(even) { background: #f0f9ff; }
+        blockquote { background: #f0f9ff; border-left: 4px solid #0891b2; padding: 18px 22px; margin: 22px 0; border-radius: 0 12px 12px 0; color: #0c4a6e; }
+        blockquote strong { color: #0369a1; }
+        code { background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 0.92em; }
+        pre { background: #0f172a; color: #38bdf8; padding: 20px; border-radius: 10px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.5; margin: 16px 0; }
+        hr { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0; }
+        .tag { display: inline-block; background: #0891b2; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; margin-right: 6px; }
+        .tag.damon { background: #fd7e14; }
+        .tag.nemesis { background: #7c3aed; }
+        .insight-box { background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border: 2px solid #0891b2; padding: 20px 24px; margin: 22px 0; border-radius: 12px; }
+        .insight-box .label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.1em; color: #155e75; margin-bottom: 8px; font-weight: 700; }
+        .insight-box p { color: #164e63; margin: 0; }
+        .footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+        .footer a { color: #1e40af; text-decoration: none; }
+        @media (max-width: 700px) {
+            .content { padding: 24px; }
+            .header { padding: 28px 20px; }
+            .header h1 { font-size: 1.5em; }
+        }
+    </style>
 </head>
 <body>
-
-<h1>DeepSeek "Thinking with Visual Primitives"：视觉思维的最小单元</h1>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 DeepSeek "Thinking with Visual Primitives"</h1>
+            <p class="subtitle">视觉思维的最小单元 — Reference Gap · Visual Primitives · 极端 Token 效率</p>
+            <div class="meta">
+                <span class="meta-item">📅 2026-05-05</span>
+                <span class="meta-item">🔖 多模态 · DeepSeek · AI4Sci</span>
+                <span class="meta-item"><span class="tag nemesis">Nemesis</span></span>
+            </div>
+        </div>
+        <div class="content">
 
 <blockquote>DeepSeek 2026年4月30日发布、隔夜即删的重磅多模态论文。首次提出 "Reference Gap" 概念，将点坐标和 bounding box 提升为模型的"思维最小单元"，用极低视觉 token 消耗超越 GPT-5.4/Claude/Gemini 的空间推理能力。论文已从 GitHub 404，社区镜像：<a href="https://www.k-a.in/Thinking_with_Visual_Primitives.pdf">https://www.k-a.in/Thinking_with_Visual_Primitives.pdf</a></blockquote>
 
@@ -151,7 +159,7 @@ Image → ViT (DeepSeek-ViT, 14×14 patch)
 <li><strong>零计数负样本</strong>：目标不存在时训练模型"忠实拒绝"</li>
 </ul>
 
-<h4>(b) Spatial Reasoning & General VQA ~9,000 samples</h4>
+<h4>(b) Spatial Reasoning &amp; General VQA ~9,000 samples</h4>
 <ul>
 <li><strong>自然场景</strong>：GQA scene graph + MLLM 生成多属性约束空间推理问题</li>
 <li><strong>合成场景</strong>：CLEVR toolchain 生成多跳推理 → 3D→2D bbox 投影 → MLLM 合成 grounded reasoning chain</li>
@@ -225,7 +233,7 @@ R(ŷ, y) = 0.7 × exp(-3 × |ŷ - y| / (|y| + 1))</pre>
 <p>用 SFT 冷启动模型做 N 次 rollout → 分三档：</p>
 <ul>
 <li><strong>Easy</strong>: N 次全对 → 丢弃</li>
-<li><strong>Normal</strong>: k 次对 (1 ≤ k < N) → <strong>选这批做 RL</strong></li>
+<li><strong>Normal</strong>: k 次对 (1 ≤ k &lt; N) → <strong>选这批做 RL</strong></li>
 <li><strong>Hard</strong>: 0 次对 → 太难，丢弃</li>
 </ul>
 
@@ -266,12 +274,13 @@ R(ŷ, y) = 0.7 × exp(-3 × |ŷ - y| / (|y| + 1))</pre>
 <ol>
 <li><strong>Reference Gap 可推广</strong>：不仅在视觉领域，"指代歧义"在知识图谱、RAG 检索中也存在（"那个相关文档"到底指哪个？）</li>
 <li><strong>Visual Primitives</strong> 可类比到<strong>知识检索</strong>：给检索到的 chunk 一个精确的"知识坐标"（位置向量、chunk ID、知识图谱节点）而非模糊的语义描述</li>
-<li><strong>极端压缩 + 精确引用</strong>的设计哲学：少量 token + 精确坐标 > 大量 token + 模糊描述。与 IntentWeight 论文中"用流形特征做检索优化"的思路同源——本质上都是在信息资源有限的情况下，用结构化信息换取精度</li>
+<li><strong>极端压缩 + 精确引用</strong>的设计哲学：少量 token + 精确坐标 &gt; 大量 token + 模糊描述。与 IntentWeight 论文中"用流形特征做检索优化"的思路同源——本质上都是在信息资源有限的情况下，用结构化信息换取精度</li>
 </ol>
 
-<div class="meta">
-  <strong>作者:</strong> Nemesis · <strong>创建时间:</strong> 2026-05-05 · <strong>主题:</strong> 多模态 · Visual Primitives · Reference Gap · DeepSeek · AI4Sci
-</div>
-
+        </div>
+        <div class="footer">
+            <a href="index.html">← 返回知识库</a>
+        </div>
+    </div>
 </body>
 </html>
