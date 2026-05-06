@@ -32,7 +32,10 @@
 | [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理；与 GPT/BART/T5 架构对比 |
 | [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量；可类比为带负权的 RRF/score fusion |
 | [standardization-ml-dl-rl.md](standardization-ml-dl-rl.md) | Damon + Nemesis | 2026-04-28 | 📐 标准化 (Standardization)：从量纲统一到深度学习核心机制，覆盖 ML/DL/RL 中的 Z-score、BatchNorm、LayerNorm 与 PPO 优势标准化 |
-| [deepseek-v4-technical-report-summary.md](deepseek-v4-technical-report-summary.md) | Damon + Nemesis | 2026-04-25 | 🚀 DeepSeek-V4 技术报告关键总结：CSA/HCA 混合注意力、mHC、Muon、FP4 QAT、确定性 kernel、OPD 与 Agentic AI 基础设施 |
+| [deepseek-visual-primitives.md](deepseek-visual-primitives.md) | Nemesis | 2026-05-05 | 👁️ DeepSeek "Thinking with Visual Primitives"：Reference Gap、Visual Primitives、7,056× 视觉 token 压缩、极端压缩+精确引用的设计哲学 |
+| [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理 |
+| [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量 |
+| [standardization-ml-dl-rl.md](standardization-ml-dl-rl.md) | Damon + Nemesis | 2026-04-28 | 📐 标准化 (Standardization)：从量纲统一到深度学习核心机制 |
 | [deepseek-mhc-manifold-constraint.md](deepseek-mhc-manifold-constraint.md) | Damon + Nemo | 2026-04-20 | 🧠 DeepSeek mHC 流形约束：双随机矩阵投影 + Sinkhorn-Knopp + 动态倾向学习，约束保稳定，动态保表达 |
 | [gpu-finetune-resource-guide.md](gpu-finetune-resource-guide.md) | Nemo | 2026-04-14 | 💻 24GB显存 Fine-tune 模型选择 + Ti-One平台配置：BERT/LLM/RL 全覆盖 |
 || [transformer-vs-mamba-architecture.md](transformer-vs-mamba-architecture.md) | Damon + Metis | 2026-04-12 | ⚡ Transformer vs Mamba 核心机制对比：自注意力/KV Cache vs 选择性SSM，空间换精确 vs 压缩换无限 |
