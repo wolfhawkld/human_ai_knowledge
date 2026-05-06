@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DeepSeek Visual Primitives — 人机知识库</title>
 <style>
-body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #0d1117; color: #c9d1d9; line-height: 1.6; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #0d1117; color: #c9d1d9; line-height: 1.6; }
 h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
 h2 { color: #f0883e; margin-top: 2rem; }
 h3 { color: #d2a8ff; }
-blockquote { border-left: 3px solid #58a6ff; padding-left: 1rem; color: #8b949e; }
+blockquote { border-left: 3px solid #58a6ff; margin-left: 0; padding-left: 1rem; color: #8b949e; }
+code { background: #161b22; padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.9em; }
+pre { background: #161b22; padding: 1rem; border-radius: 6px; overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 th, td { border: 1px solid #30363d; padding: 0.5rem 0.75rem; text-align: left; }
 th { background: #161b22; }
-pre { background: #161b22; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.85em; }
+a { color: #58a6ff; }
+ul, ol { padding-left: 1.5rem; }
 .meta { color: #8b949e; font-size: 0.85rem; margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem; }
 </style>
 </head>
@@ -21,53 +24,242 @@ pre { background: #161b22; padding: 1rem; border-radius: 6px; overflow-x: auto; 
 
 <h1>DeepSeek "Thinking with Visual Primitives"：视觉思维的最小单元</h1>
 
-<blockquote>DeepSeek 2026年4月30日发布、隔夜即删的重磅多模态论文。首次提出 "Reference Gap" 概念，将点坐标和 bounding box 提升为模型的"思维最小单元"，用极低视觉 token 消耗超越 GPT-5.4/Claude/Gemini 的空间推理能力。论文已从 GitHub 404，社区镜像：https://www.k-a.in/Thinking_with_Visual_Primitives.pdf</blockquote>
+<blockquote>DeepSeek 2026年4月30日发布、隔夜即删的重磅多模态论文。首次提出 "Reference Gap" 概念，将点坐标和 bounding box 提升为模型的"思维最小单元"，用极低视觉 token 消耗超越 GPT-5.4/Claude/Gemini 的空间推理能力。论文已从 GitHub 404，社区镜像：<a href="https://www.k-a.in/Thinking_with_Visual_Primitives.pdf">https://www.k-a.in/Thinking_with_Visual_Primitives.pdf</a></blockquote>
 
-<h2>1. Reference Gap</h2>
-<p>当前多模态模型的根本缺陷不是"看不清"，而是"<strong>指不准</strong>"。CoT 推理用自然语言描述对象时，密集场景中无法精确定位，导致注意力漂移和推理崩溃。<strong>再强的感知能力也无法替代精确的指代能力。</strong></p>
+<h2>1. 核心问题：Reference Gap</h2>
 
-<h2>2. Visual Primitives 方案</h2>
-<p>把空间标记——<strong>点坐标</strong>和<strong>bounding box</strong>——提升为思维的最小单元。推理时每引用一个视觉对象就同时输出其精确坐标。类比：人计数时用手指一个个点过去。</p>
+<p>论文直击当前多模态模型的根本缺陷——不是"看不清"（Perception Gap），而是"<strong>指不准</strong>"（Reference Gap）。</p>
 
-<h2>3. 极端的 Token 效率</h2>
-<p>一张 756×756 图像经过三级压缩：571,536 像素 → 2,916 patch → 324 视觉 token → <strong>81</strong> KV cache 条目。总压缩比 <strong>7,056×</strong>。</p>
+<pre>
+现有方案：高分辨率裁剪/动态patching → 解决「看不清」
+    ↓ 但是...
+CoT 推理仍用自然语言描述 → "左边的那个大的""靠近中心的红色物体"
+    ↓
+在密集场景中自然语言无法精确定位 → 注意力漂移 → 推理崩溃
+</pre>
+
+<p>关键洞察：<strong>再强的感知能力也无法替代精确的指代能力</strong>。</p>
+
+<h2>2. 解决方案：Visual Primitives</h2>
+
+<p>把空间标记——<strong>点坐标</strong>和<strong>bounding box</strong>——提升为"<strong>思维的最小单元</strong>"（minimal units of thought）。模型在推理时，每引用一个视觉对象就同时输出其精确空间坐标。</p>
+
+<p>类比：<strong>人计数时用手指一个个点过去</strong>。模型也"指着想"。</p>
+
+<h3>两种 Visual Primitive</h3>
+
 <table>
-<tr><th>模型</th><th>KV Cache (800×800)</th></tr>
-<tr><td><strong>Ours</strong></td><td><strong>~90</strong></td></tr>
-<tr><td>GPT-5.4</td><td>~740</td></tr>
-<tr><td>Claude Sonnet 4.6</td><td>~870</td></tr>
-<tr><td>Gemini-3-Flash</td><td>~1,100</td></tr>
+<tr><th>Primitive</th><th>格式</th><th>最适合</th></tr>
+<tr><td><strong>Bounding Box</strong></td><td><code>&lt;|ref|&gt;TARGET&lt;|/ref|&gt;&lt;|box|&gt;[[x1,y1,x2,y2]]&lt;|/box|&gt;</code></td><td>精确位置+尺度，物体识别/计数</td></tr>
+<tr><td><strong>Point</strong></td><td><code>&lt;|point|&gt;[[x1,y1],[x2,y2]]&lt;|/point|&gt;</code></td><td>抽象空间引用，轨迹追踪/拓扑推理</td></tr>
 </table>
 
-<h2>4. 数据工程（核心护城河）</h2>
-<p>97,984 数据源 → MLLM 语义审查（排除机器码/私有实体/模糊标签）→ 几何质量审查（漏标/截断/Mega Box）→ <strong>31,701 保留</strong> → 类别平衡采样 → <strong>4,000万+</strong> 高质量样本。</p>
-<p>四项冷启动任务：Counting (10k)、Spatial Reasoning (9k)、<strong>Maze Navigation (460k)</strong>、Path Tracing (125k)。迷宫导航的奖励模型分解为五个组件：因果探索进度、探索完整性、撞墙惩罚、路径有效性、答案正确性。</p>
+<p>坐标归一化到 [0, 999] 的离散整数。Bounding Box 比 Point 更基础——训练了 box 后点格式可自然泛化，因为 box 本身由两个点定义。</p>
 
-<h2>5. 训练策略："先专项后统一"</h2>
+<h2>3. 架构与极端的 Token 效率</h2>
+
+<h3>基础架构</h3>
+
+<p>基于 <strong>DeepSeek-V4-Flash</strong>（284B MoE，13B 激活），标准 LLaVA 架构 + 多级压缩：</p>
+
 <pre>
-SFT 分训 → FTwG(box) + FTwP(point)
-GRPO 专项 RL → ETwG + ETwP
-Unified RFT → 统一模型 F
-On-Policy Distillation → 最终模型
+Image → ViT (DeepSeek-ViT, 14×14 patch)
+     → 3×3 Spatial Compression（每9个patch压缩为1个token）
+     → LLM (DeepSeek-V4-Flash, CSA enabled)
+     → KV Cache 再被 CSA 压缩 4×
 </pre>
-<p>三组并行 Reward Model：Format (规则)、Quality (LLM GRM)、Accuracy (任务特定，计数用指数衰减)。难度分层：只选 "Normal" 难度样本做 RL。</p>
+
+<h3>Token 效率拆解（756×756 图像）</h3>
+
+<table>
+<tr><th>阶段</th><th>Token 数</th><th>说明</th></tr>
+<tr><td>原始像素</td><td>571,536</td><td>输入</td></tr>
+<tr><td>Patch Embedding</td><td>2,916</td><td>14×14 patch</td></tr>
+<tr><td>3×3 空间压缩</td><td>324</td><td>ViT 输出</td></tr>
+<tr><td>CSA KV 缓存压缩</td><td><strong>81</strong></td><td>LLM 推理时 KV cache</td></tr>
+</table>
+
+<p><strong>总压缩比：7,056×</strong>（像素→KV cache）</p>
+
+<h3>跨模型对比（同为 800×800）</h3>
+
+<table>
+<tr><th>模型</th><th>KV Cache 条目</th></tr>
+<tr><td><strong>Ours (284B-A13B)</strong></td><td><strong>~90</strong></td></tr>
+<tr><td>Qwen3-VL (235B)</td><td>~289</td></tr>
+<tr><td>Gemma-4 (31B)</td><td>~361</td></tr>
+<tr><td>GPT-5.4</td><td>~660</td></tr>
+<tr><td>Claude Sonnet 4.6</td><td>~740</td></tr>
+<tr><td>Gemini-3-Flash</td><td>~870</td></tr>
+<tr><td>未压缩基线</td><td>~1,100</td></tr>
+</table>
+
+<p>论文核心论点：<strong>精确的空间引用可以补偿视觉 token 的不足</strong>——模型不需要"看更多像素"，需要"指得更精确"。</p>
+
+<h2>4. 数据工程（论文最核心的护城河）</h2>
+
+<h3>大规模 Web 数据构建：三级过滤</h3>
+
+<pre>
+爬取阶段: HuggingFace API → 筛选 "Object Detection"/"Grounding" 标签
+         → 97,984 个数据源
+           ↓
+语义审查 (MLLM 驱动): 排除三类致命缺陷
+  • 无意义机器码 ("0","1") → 缺人类可读语义
+  • 不可泛化私有实体 ("MyRoommate","ID_Card_1")
+  • 模糊缩写 ("OK","NG") → 缺乏跨场景视觉一致性
+         → 43,141 保留
+           ↓
+视觉-几何质量审查:
+  • 严重漏标 (>50% miss rate) → 直接丢弃
+  • 严重截断/偏移
+  • Mega Box (>90% 图像面积) → 分类数据误标为检测
+         → 31,701 保留
+           ↓
+类别平衡采样 (N=1,000 per category) + 全局去重
+         → 4,000万+ 高质量样本
+</pre>
+
+<h3>冷启动任务设计（四个维度）</h3>
+
+<h4>(a) Counting（计数）~10,000 samples</h4>
+
+<ul>
+<li><strong>粗粒度计数</strong>：聚合 COCO、Objects365、CrowdHuman 等密集检测数据集。MLLM 生成结构化 thinking chain：Intent Analysis → Batch Grounding → Statistical Summation</li>
+<li><strong>细粒度计数</strong>：基于 GQA scene graph 自动生成属性约束问题。Sequential scan：逐一识别+验证每个可能对象 vs 约束条件</li>
+<li><strong>零计数负样本</strong>：目标不存在时训练模型"忠实拒绝"</li>
+</ul>
+
+<h4>(b) Spatial Reasoning & General VQA ~9,000 samples</h4>
+
+<ul>
+<li><strong>自然场景</strong>：GQA scene graph + MLLM 生成多属性约束空间推理问题</li>
+<li><strong>合成场景</strong>：CLEVR toolchain 生成多跳推理 → 3D→2D bbox 投影 → MLLM 合成 grounded reasoning chain</li>
+<li><strong>负样本</strong>：目标/关系不存在时 → "faithful refusal"</li>
+</ul>
+
+<h4>(c) Maze Navigation（迷宫导航）~460,000 samples — 最创新的设计</h4>
+
+<p><strong>生成方法</strong>：DFS/Prim/Kruskal 算法生成三种拓扑：矩形网格、圆形（同心环+扇形）、六边形蜂窝。</p>
+
+<p><strong>难度控制</strong>：通过网格大小控制推理步数。Easy：几步局部连接检查。Nightmare：数百步持续性长程推理。</p>
+
+<p><strong>不可解迷宫</strong>：先生成可解路径 → 在路径中段放置墙壁 → 需要完整搜索才能确认无解。</p>
+
+<p><strong>奖励设计</strong>（RL 阶段，五个组件加权）：</p>
+
+<table>
+<tr><th>组件</th><th>机制</th><th>适用</th></tr>
+<tr><td>Causal exploration progress</td><td>遇墙违规后截断→计算已探索区域到终点最短距离</td><td>可解迷宫</td></tr>
+<tr><td>Exploration completeness</td><td>已探索可达区域 / 全部可达区域</td><td>不可解迷宫</td></tr>
+<tr><td>Wall violation penalty</td><td>独立扫描全部探索轨迹，每次撞墙扣分</td><td>全部</td></tr>
+<tr><td>Final path validity</td><td>路径连续性 + 无墙违规（二值）</td><td>可解迷宫</td></tr>
+<tr><td>Answer correctness</td><td>可解/不可解判断是否匹配 ground truth</td><td>全部</td></tr>
+</table>
+
+<h4>(d) Path Tracing（路径追踪）~125,000 samples</h4>
+
+<p>Bézier 曲线纠缠图 → 模型必须沿特定曲线找到对应端点。核心挑战在<strong>交叉点消除歧义</strong>：必须基于局部几何连续性判断分支。Uniform-style 模式强制依赖曲率而非颜色。双向轨迹评估防止模型"输出几个安全点+直接跳到猜的终点"。</p>
+
+<h2>5. 训练策略</h2>
+
+<h3>Post-Training Pipeline："先专项后统一"</h3>
+
+<pre>
+Pretrained Model
+    │
+    ├─ Specialized SFT (冷启动数据):
+    │     • FTwG: thinking with grounding (boxes)
+    │     • FTwP: thinking with pointing (points)
+    │     分开训练避免 mode conflict
+    │
+    ├─ Specialized RL (GRPO):
+    │     • ETwG: box expert
+    │     • ETwP: point expert
+    │     三组 RM: Format + Quality + Accuracy
+    │     只选 "Normal" 难度样本做 RL
+    │
+    ├─ Unified RFT:
+    │     • ETwG/ETwP rollout → 从 base 重新 SFT → Unified model F
+    │
+    └─ On-Policy Distillation:
+          L = Σ w_i · D_KL(π_θ || π_Ei)
+          → 最终统一模型
+</pre>
+
+<h3>RL 奖励模型（三组并行）</h3>
+
+<table>
+<tr><th>RM</th><th>类型</th><th>功能</th></tr>
+<tr><td><strong>Format RM</strong></td><td>规则</td><td>Visual primitive 格式正确性，去重（防 box 循环生成）</td></tr>
+<tr><td><strong>Quality RM</strong></td><td>LLM GRM</td><td>冗余检查、thinking/response 一致性、自相矛盾检测、reward hacking 检测</td></tr>
+<tr><td><strong>Accuracy RM</strong></td><td>规则/GRM</td><td>任务特定：计数用指数衰减、空间推理用 LLM 评分、迷宫用多组件加权</td></tr>
+</table>
+
+<h3>计数 Accuracy RM：平滑指数衰减而非二值匹配</h3>
+
+<pre>
+R(ŷ, y) = 0.7 × exp(-3 × |ŷ - y| / (|y| + 1))
+</pre>
+
+<p>"差一点点"比"差很远"惩罚轻，对大数量场景更宽容。</p>
+
+<h3>难度分层 RL</h3>
+
+<p>用 SFT 冷启动模型做 N 次 rollout → 分三档：</p>
+<ul>
+<li><strong>Easy</strong>: N 次全对 → 丢弃</li>
+<li><strong>Normal</strong>: k 次对 (1 ≤ k < N) → <strong>选这批做 RL</strong></li>
+<li><strong>Hard</strong>: 0 次对 → 太难，丢弃</li>
+</ul>
 
 <h2>6. 实验结果</h2>
+
+<h3>性能对比</h3>
+
 <table>
-<tr><th>任务</th><th>Ours</th><th>GPT-5.4</th><th>Gemini</th><th>Claude</th></tr>
-<tr><td>Pixmo-Count</td><td><strong>89.2</strong></td><td>76.6</td><td>88.2</td><td>68.7</td></tr>
-<tr><td>迷宫导航</td><td><strong>66.9</strong></td><td>50.6</td><td>49.4</td><td>48.9</td></tr>
-<tr><td>路径追踪</td><td><strong>56.7</strong></td><td>46.5</td><td>41.4</td><td>30.6</td></tr>
-<tr><td>空间推理</td><td><strong>98.7</strong></td><td>81.1</td><td>93.2</td><td>97.2</td></tr>
+<tr><th>任务</th><th>基准</th><th>Ours</th><th>GPT-5.4</th><th>Gemini-3</th><th>Claude 4.6</th></tr>
+<tr><td>计数</td><td>Pixmo-Count</td><td><strong>89.2</strong></td><td>76.6</td><td>88.2</td><td>68.7</td></tr>
+<tr><td>细粒度计数</td><td>DS_Finegrained</td><td><strong>88.7</strong></td><td>84.2</td><td>79.1</td><td>82.6</td></tr>
+<tr><td>迷宫导航</td><td>DS_Maze</td><td><strong>66.9</strong></td><td>50.6</td><td>49.4</td><td>48.9</td></tr>
+<tr><td>路径追踪</td><td>DS_Path</td><td><strong>56.7</strong></td><td>46.5</td><td>41.4</td><td>30.6</td></tr>
+<tr><td>空间推理</td><td>DS_Spatial</td><td><strong>98.7</strong></td><td>81.1</td><td>93.2</td><td>97.2</td></tr>
+<tr><td>通用 VQA</td><td>MIHBench</td><td><strong>85.3</strong></td><td>83.5</td><td>83.2</td><td>81.7</td></tr>
 </table>
-<p>所有 frontier model 在拓扑推理上均表现不佳——论文诚实指出。</p>
 
-<h2>7. 为什么被删</h2>
-<p>Chen Xiaokang 4月29日发帖 "Now, we can see you." 论文五一前夜发布后隔夜删除。DeepSeek 官方 V4 未包含多模态（外界以为训练暂停），实际进度远超预期。推测删除原因是<strong>透露了太多技术细节</strong>：完整训练 pipeline、任务设计方法论、数据筛选策略。</p>
+<p><strong>所有 frontier model 在拓扑推理上表现都很差</strong>——论文诚实指出。迷宫导航所有对手低于 51%，路径追踪低于 47%。</p>
 
-<h2>8. 设计哲学</h2>
-<p>极端压缩 + 精确引用：少量 token + 精确坐标 > 大量 token + 模糊描述。Reference Gap 不仅是视觉问题——知识图谱、RAG 检索中也存在同样的"指代歧义"。与流形特征优化检索的思路同源：在信息资源有限的情况下，用结构化信息换取精度。</p>
+<h3>定性发现</h3>
 
-<div class="meta">作者: Nemesis · 创建时间: 2026-05-05 · DeepSeek · Visual Primitives · 多模态 · AI4Sci</div>
+<ul>
+<li>模型可<strong>结合世界知识</strong>做 VQA（识别金门大桥 → 推断旧金山 → 回答 NBA 球队问题）</li>
+<li>可做<strong>中文理解和输出</strong>，尽管 visual primitive 训练数据全英文</li>
+<li>在 counter-commonsense 场景中表现良好</li>
+</ul>
+
+<h2>7. 局限</h2>
+
+<ol>
+<li><strong>输入分辨率限制</strong>：超精细场景下 visual primitive 定位不精确</li>
+<li><strong>触发词依赖</strong>：需显式触发词激活，未来应自主判断</li>
+<li><strong>跨场景泛化不足</strong>：point 格式的拓扑推理在全新场景中仍有退化</li>
+</ol>
+
+<h2>8. 为什么被删</h2>
+
+<p>论文于五一前夜（4月30日）发布后隔夜删除，GitHub 仓库 404。Chen Xiaokang 4月29日在 X 上发帖 "Now, we can see you."。DeepSeek 官方 V4 未包含多模态（外界以为训练暂停），实际进度远超预期。业内推测删除原因是<strong>透露了太多技术细节</strong>——完整的训练 pipeline、任务设计方法论、数据筛选策略。</p>
+
+<h2>9. 与 AI4Sci 的关联</h2>
+
+<ol>
+<li><strong>Reference Gap 可推广</strong>：不仅在视觉领域，"指代歧义"在知识图谱、RAG 检索中也存在（"那个相关文档"到底指哪个？）</li>
+<li><strong>Visual Primitives</strong> 可类比到<strong>知识检索</strong>：给检索到的 chunk 一个精确的"知识坐标"（位置向量、chunk ID、知识图谱节点）而非模糊的语义描述</li>
+<li><strong>极端压缩 + 精确引用</strong>的设计哲学：少量 token + 精确坐标 > 大量 token + 模糊描述。与 IntentWeight 论文中"用流形特征做检索优化"的思路同源——本质上都是在信息资源有限的情况下，用结构化信息换取精度</li>
+</ol>
+
+<div class="meta">
+  作者: Nemesis · 创建时间: 2026-05-05 · 主题: 多模态 · Visual Primitives · Reference Gap · DeepSeek · AI4Sci
+</div>
+
 </body>
 </html>
