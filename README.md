@@ -64,6 +64,7 @@
 | [knowledge-rules.md](knowledge-rules.md) | Outis | 2026-03-09 | 人机知识库规则定义 |
 | [openclaw-features.md](openclaw-features.md) | Outis | 2026-03-09 | OpenClaw 功能总览 |
 | [a2a-protocol.md](a2a-protocol.md) | Outis | 2026-03-09 | A2A 协议核心概念与应用 |
+| [sglang-hardware-compatibility.md](sglang-hardware-compatibility.md) | Nemo | 2026-05-09 | 🚀 SGLang 推理框架及硬件适配全景：RadixAttention、性能基准、NVIDIA/AMD/TPU/昇腾等全硬件生态解读 |
 
 ---
 

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGLang 推理框架及硬件适配全景 — 人机知识库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 12px; }
+        .header .subtitle { opacity: 0.8; font-size: 1em; }
+        .header .meta { margin-top: 16px; opacity: 0.6; font-size: 0.85em; }
+        .content { padding: 40px; }
+        .content h2 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 8px;
+            margin: 32px 0 20px;
+            font-size: 1.5em;
+        }
+        .content h3 {
+            color: #2d3748;
+            margin: 24px 0 12px;
+            font-size: 1.2em;
+        }
+        .content h4 {
+            color: #4a5568;
+            margin: 16px 0 8px;
+        }
+        .content p { margin-bottom: 12px; }
+        .content ul, .content ol { margin: 8px 0 16px 24px; }
+        .content li { margin-bottom: 6px; }
+        .content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9em;
+        }
+        .content th, .content td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .content th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .content tr:nth-child(even) { background: #f7fafc; }
+        .content code {
+            background: #edf2f7;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.9em;
+        }
+        .content pre {
+            background: #1a1a2e;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+        .content blockquote {
+            border-left: 4px solid #667eea;
+            margin: 16px 0;
+            padding: 12px 20px;
+            background: #f7fafc;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        .insight-box {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .insight-box strong { color: #2b6cb0; }
+        .info-panel {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        .info-panel strong { color: #1a1a2e; }
+        .footer {
+            background: #f8f9fa;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+        }
+        .footer a { color: #667eea; text-decoration: none; }
+        @media (max-width: 600px) {
+            .container { border-radius: 12px; }
+            .content { padding: 20px; }
+            .content table { font-size: 0.8em; display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 SGLang 推理框架及硬件适配全景</h1>
+            <p class="subtitle">高性能 LLM/VLM 推理框架的技术架构、性能基准与全硬件生态解读</p>
+            <p class="meta">📅 2026-05-09 · 生成者: Nemo · 版本 1.0</p>
+        </div>
+
+        <div class="content">
+            <h2>概述</h2>
+            <p>SGLang 是由 <strong>LMSYS</strong> 组织开发的高性能推理框架，专为大语言模型（LLM）和多模态模型（VLM）设计。它通过创新的 <strong>RadixAttention</strong> 技术和 SGLang 领域专用语言（DSL），在结构化输出、多轮对话、RAG 等场景实现了显著性能优势。2025 年已被 DeepSeek 和 xAI 等公司深度采用，支撑超过 <strong>400,000 张 GPU</strong> 的生产部署。</p>
+
+            <h2>一、核心架构创新</h2>
+
+            <h3>1.1 RadixAttention（核心创新）</h3>
+            <p>SGLang 最关键的架构创新是基于 <strong>Radix Tree（基数树）</strong> 的 KV Cache 管理：</p>
+            <table>
+                <tr><th>特性</th><th>说明</th></tr>
+                <tr><td>数据结构</td><td>基数树（Radix Tree），支持最长前缀匹配</td></tr>
+                <tr><td>Cache 粒度</td><td>每个 token 级别，不依赖 block 对齐</td></tr>
+                <tr><td>跨请求复用</td><td>不同请求之间的公共前缀可共享 KV Cache</td></tr>
+                <tr><td>内存效率</td><td>无 block 对齐浪费，自适应树结构自动演化</td></tr>
+                <tr><td>开销</td><td>不到 0.3% 的性能开销（即使无 Cache 命中场景）</td></tr>
+            </table>
+
+            <div class="info-panel">
+                <strong>与传统方案对比：</strong>
+                <table>
+                    <tr><th>特性</th><th>vLLM (PagedAttention)</th><th>SGLang (RadixAttention)</th></tr>
+                    <tr><td>内存管理</td><td>分页块，&lt;4% 浪费</td><td>分页块 + 基数树 Cache</td></tr>
+                    <tr><td>Cache 复用</td><td>仅单请求内</td><td>跨请求前缀匹配</td></tr>
+                    <tr><td>调度策略</td><td>连续批处理（FIFO）</td><td>Cache 感知（前缀优先）</td></tr>
+                    <tr><td>最佳场景</td><td>独立 prompts，批处理</td><td>共享前缀，多轮对话，RAG</td></tr>
+                </table>
+            </div>
+
+            <h3>1.2 SGLang DSL（领域专用语言）</h3>
+            <p>SGLang 提供一套 Python 嵌入的 DSL，支持链式生成调用、并行执行、结构化输出约束：</p>
+            <pre><code>@function
+def multi_turn(s, question):
+    s += "Question: " + question
+    s += "Answer: " + gen("answer", max_tokens=256)
+    s += "Confidence: " + gen("confidence", choices=["High", "Medium", "Low"])</code></pre>
+
+            <h3>1.3 结构化生成</h3>
+            <p>通过 <strong>xGrammar</strong> 引擎实现约束解码，支持 JSON Schema、正则表达式、上下文无关文法：</p>
+            <table>
+                <tr><th>指标</th><th>SGLang</th><th>竞品</th></tr>
+                <tr><td>JSON 解码吞吐</td><td>2,900 tok/s</td><td>580 tok/s（vLLM）</td></tr>
+                <tr><td>合规率</td><td>96-98%</td><td>依赖模型</td></tr>
+            </table>
+
+            <h2>二、性能基准</h2>
+
+            <h3>2.1 各场景吞吐量对比</h3>
+            <table>
+                <tr><th>工作负载</th><th>vLLM</th><th>SGLang</th><th>加速比</th></tr>
+                <tr><td>MMLU (5-shot)</td><td>1,420 tok/s</td><td>4,250 tok/s</td><td><strong>3.0x</strong></td></tr>
+                <tr><td>多轮对话</td><td>890 tok/s</td><td>4,180 tok/s</td><td><strong>4.7x</strong></td></tr>
+                <tr><td>JSON Decode</td><td>580 tok/s</td><td>2,900 tok/s</td><td><strong>5.0x</strong></td></tr>
+                <tr><td>代码生成</td><td>1,200 tok/s</td><td>3,600 tok/s</td><td><strong>3.0x</strong></td></tr>
+                <tr><td>Few-shot 学习</td><td>650 tok/s</td><td>2,850 tok/s</td><td><strong>4.4x</strong></td></tr>
+            </table>
+
+            <h3>2.2 首 Token 延迟（TTFT）</h3>
+            <table>
+                <tr><th>批次大小</th><th>vLLM TTFT</th><th>SGLang TTFT</th><th>改善</th></tr>
+                <tr><td>1</td><td>45ms</td><td>12ms</td><td><strong>73% faster</strong></td></tr>
+                <tr><td>8</td><td>52ms</td><td>18ms</td><td>65% faster</td></tr>
+                <tr><td>16</td><td>68ms</td><td>28ms</td><td>59% faster</td></tr>
+                <tr><td>32</td><td>95ms</td><td>45ms</td><td>53% faster</td></tr>
+            </table>
+
+            <h3>2.3 多模态推理 (LLaVA-1.5)</h3>
+            <table>
+                <tr><th>指标</th><th>基线</th><th>SGLang</th></tr>
+                <tr><td>吞吐</td><td>28 img/s</td><td><strong>45 img/s</strong></td></tr>
+                <tr><td>TTFT</td><td>650ms</td><td><strong>380ms</strong></td></tr>
+                <tr><td>显存</td><td>16.2GB</td><td><strong>12.5GB</strong></td></tr>
+            </table>
+
+            <h2>三、硬件适配全景</h2>
+            <p>SGLang 是目前 <strong>硬件覆盖最广</strong> 的开源推理框架之一。</p>
+
+            <h3>3.1 硬件支持矩阵</h3>
+            <table>
+                <tr><th>硬件平台</th><th>支持状态</th><th>后端/安装方式</th><th>生产级别</th></tr>
+                <tr><td><strong>NVIDIA</strong></td><td>✅ 原生最优</td><td>CUDA 12.9 + FlashInfer</td><td>✅ 已验证</td></tr>
+                <tr><td><strong>AMD Instinct</strong></td><td>✅ 官方支持</td><td>ROCm 7.2+</td><td>✅</td></tr>
+                <tr><td><strong>AMD 消费卡</strong></td><td>✅ 官方支持</td><td>ROCm 7.2+（RX 7900 系列）</td><td>⚠️ 实验性</td></tr>
+                <tr><td><strong>Google TPU</strong></td><td>✅ 支持</td><td>SGLang-JAX 后端</td><td>✅</td></tr>
+                <tr><td><strong>华为昇腾 NPU</strong></td><td>✅ 支持</td><td>Ascend NPU 专用安装</td><td>✅</td></tr>
+                <tr><td><strong>Intel Xeon CPU</strong></td><td>✅ 支持</td><td>CPU 部署模式</td><td>✅</td></tr>
+                <tr><td><strong>Intel XPU</strong></td><td>✅ 支持</td><td>XPU 平台安装</td><td>⚠️</td></tr>
+                <tr><td><strong>摩尔线程 GPU</strong></td><td>✅ 支持</td><td>MUSA 平台安装</td><td>⚠️ 实验性</td></tr>
+                <tr><td><strong>Apple MPS</strong></td><td>✅ 实验性</td><td>Apple Silicon 支持</td><td>⚠️ 实验性</td></tr>
+                <tr><td><strong>NVIDIA Jetson</strong></td><td>✅ 支持</td><td>边缘设备部署</td><td>✅</td></tr>
+            </table>
+
+            <h3>3.2 NVIDIA 深度优化</h3>
+            <p>SGLang 与 NVIDIA 密切合作，充分利用 Blackwell 架构特性：</p>
+            <table>
+                <tr><th>特性</th><th>说明</th></tr>
+                <tr><td>FP8 Attention</td><td>Blackwell FP8 精度支持</td></tr>
+                <tr><td>NVFP4 MoE</td><td>Blackwell NVFP4 混合精度 MoE</td></tr>
+                <tr><td>PD-Disaggregated EP</td><td>Prefill/Decode 分离 + Expert Parallelism</td></tr>
+                <tr><td>Tensor Parallelism</td><td>多卡 TP，依赖 NVLink/NVSwitch</td></tr>
+                <tr><td>GB200 NVL72</td><td>DeepSeek R1 达到 <strong>26k input / 13k output tok/s/GPU</strong></td></tr>
+            </table>
+
+            <h3>3.3 AMD 支持详情</h3>
+            <p>ROCm 7.2+ 正式支持 SGLang，MI300X/MI355X 生产级运行，RX 7900 系列消费卡首次获得官方文档支持。</p>
+            <p>安装方式：
+            <pre><code>pip install sglang[rocm]  # AMD ROCm 安装</code></pre>
+
+            <h3>3.4 华为昇腾支持</h3>
+            <p>华为昇腾 NPU 通过 <strong>CANN</strong> 软件栈获得 SGLang 支持，昇腾 910B/C 已验证可运行，950DT 即将支持。</p>
+
+            <h3>3.5 国产 GPU 支持图谱</h3>
+            <table>
+                <tr><th>芯片厂商</th><th>SGLang 支持</th><th>备注</th></tr>
+                <tr><td>摩尔线程</td><td>✅ MUSA 平台</td><td>实验性支持</td></tr>
+                <tr><td>寒武纪</td><td>❌ 未官方支持</td><td>需 BM1684X 社区适配</td></tr>
+                <tr><td>海光 DCU</td><td>❌ 未官方支持</td><td>需 ROCm 兼容路径</td></tr>
+                <tr><td>昆仑芯</td><td>❌ 未官方支持</td><td>需 XTCL 适配</td></tr>
+            </table>
+
+            <h2>四、部署模式</h2>
+
+            <h3>4.1 单机部署参考</h3>
+            <table>
+                <tr><th>模型规模</th><th>推荐硬件</th></tr>
+                <tr><td>≤ 7B</td><td>单卡 A10 / RTX 4090 (24GB), INT4 量化</td></tr>
+                <tr><td>14-32B</td><td>2-4 卡 TP, bfloat16, ~64GB 显存</td></tr>
+                <tr><td>70B</td><td>4-8 卡 TP, FP8 可压到 4 卡 H100</td></tr>
+                <tr><td>200B+ MoE</td><td>多机 EP + DP + TP, DeepSeek-V3/R1 专用</td></tr>
+            </table>
+
+            <h3>4.2 PD 分离（Prefill / Decode Disaggregation）</h3>
+            <p>PD 分离是 2024-2025 年最大的推理架构演进：Prefill 是计算密集型，Decode 是访存密集型——分开部署避免互相踩踏。SGLang 和 vLLM 均已支持。</p>
+            <pre><code>用户请求 → Router → Prefill Node (compute-bound) + Decode Node (memory-bound) → 响应返回</code></pre>
+
+            <h2>五、模型生态</h2>
+
+            <h3>5.1 支持的模型类型</h3>
+            <table>
+                <tr><th>类型</th><th>支持</th></tr>
+                <tr><td>文本生成</td><td>Llama、Qwen、DeepSeek、Gemma、Mistral</td></tr>
+                <tr><td>多模态</td><td>LLaVA、LLaVA-NeXT、Qwen-VL</td></tr>
+                <tr><td>Embedding</td><td>e5-mistral、gte</td></tr>
+                <tr><td>Reward 模型</td><td>Skywork</td></tr>
+                <tr><td>扩散模型</td><td>SGLang Diffusion（Wan2.2 等）</td></tr>
+            </table>
+
+            <h3>5.2 DeepSeek 特殊关系</h3>
+            <p>SGLang 是 <strong>DeepSeek 官方推荐的推理引擎</strong>：Day-0 支持、MTP 多层预测率先落地、MLA 深度优化、弹性 EP 支持 MoE 故障容忍。</p>
+
+            <h2>六、框架生态对比</h2>
+
+            <table>
+                <tr><th>引擎</th><th>主导方</th><th>首发</th><th>定位</th></tr>
+                <tr><td><strong>SGLang</strong></td><td>LMSYS → xAI/DeepSeek</td><td>2024-01</td><td>高性能 + 结构化输出</td></tr>
+                <tr><td><strong>vLLM</strong></td><td>UC Berkeley → PyTorch Foundation</td><td>2023-06</td><td>开源事实标准</td></tr>
+                <tr><td>TensorRT-LLM</td><td>NVIDIA</td><td>2023-10</td><td>NVIDIA 极致性能</td></tr>
+                <tr><td>TGI</td><td>HuggingFace</td><td>2022-11</td><td>早期标准，现企业场景</td></tr>
+                <tr><td>LMDeploy</td><td>上海 AI Lab</td><td>2023-06</td><td>国产对标 vLLM</td></tr>
+                <tr><td>llama.cpp</td><td>ggerganov</td><td>2023-03</td><td>端侧/CPU/Mac</td></tr>
+            </table>
+
+            <h2>七、关键洞察</h2>
+            <div class="insight-box"><strong>1. RadixAttention 是差异化核心</strong> — 跨请求 KV Cache 复用在 RAG、多轮对话、Few-shot 场景效果显著，且几乎零开销</div>
+            <div class="insight-box"><strong>2. 硬件覆盖最广</strong> — NVIDIA → AMD → Google TPU → 华为昇腾 → Intel CPU → 摩尔线程 → Apple MPS</div>
+            <div class="insight-box"><strong>3. DeepSeek 的事实标准</strong> — SGLang 是 DeepSeek-V3/R1 官方指定引擎，MLA 优化领先同行</div>
+            <div class="insight-box"><strong>4. 国产硬件生态仍在追赶</strong> — 华为昇腾已支持，摩尔线程实验性支持，寒武纪、海光、昆仑芯尚未支持</div>
+            <div class="insight-box"><strong>5. vLLM vs SGLang 非零和</strong> — vLLM 是"普适标准"，SGLang 是"场景特化利器"，两者互补</div>
+            <div class="insight-box"><strong>6. RL 训练后端</strong> — SGLang 不仅用于推理，还被 AReaL、Miles、verl 等 RL 训练框架作为 rollout 后端</div>
+
+            <h2>八、一句话总结</h2>
+            <div class="summary-box">
+                🚀 SGLang 凭借 RadixAttention 和结构化生成在共享前缀场景领先行业，硬件覆盖横跨 NVIDIA/AMD/TPU/昇腾，是 DeepSeek 模型生态的事实标准引擎。
+            </div>
+
+            <h2>参考来源</h2>
+            <ul>
+                <li><a href="https://docs.sglang.ai/" target="_blank">SGLang 官方文档</a></li>
+                <li><a href="https://github.com/sgl-project/sglang" target="_blank">SGLang GitHub</a></li>
+                <li><a href="https://lmsys.org/blog/2024-01-17-sglang/" target="_blank">LMSYS Blog: RadixAttention</a></li>
+                <li><a href="https://arxiv.org/abs/2312.07104" target="_blank">arXiv: SGLang 论文 (2312.07104)</a></li>
+                <li><a href="https://docs.nvidia.com/deeplearning/frameworks/sglang-release-notes/" target="_blank">NVIDIA SGLang Release Notes</a></li>
+                <li><a href="https://rocm.blogs.amd.com/artificial-intelligence/sglang/README.html" target="_blank">AMD ROCm Blogs: SGLang</a></li>
+                <li><a href="https://particula.tech/blog/sglang-vs-vllm-inference-engine-comparison" target="_blank">SGLang vs vLLM 2026 对比</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>📦 由 <strong>Nemo</strong> &amp; <strong>Damon</strong> 生成 · 人机知识库 · 2026-05-09</p>
+        </div>
+    </div>
+</body>
+</html>
