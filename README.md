@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [openclaw-dreaming-agent-memory-consolidation.md](openclaw-dreaming-agent-memory-consolidation.md) | Damon + Nemo | 2026-05-10 | 🌙 OpenClaw Dreaming 梦境模式：Light/REM/Deep 记忆巩固、Deep 评分信号、实际效果，以及与 Claude Dreams、Generative Agents、Voyager、MemGPT/Letta、Mem0/Zep 的横向对比 |
 | [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理；与 GPT/BART/T5 架构对比 |
 | [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量；可类比为带负权的 RRF/score fusion |
 | [standardization-ml-dl-rl.md](standardization-ml-dl-rl.md) | Damon + Nemesis | 2026-04-28 | 📐 标准化 (Standardization)：从量纲统一到深度学习核心机制，覆盖 ML/DL/RL 中的 Z-score、BatchNorm、LayerNorm 与 PPO 优势标准化 |
