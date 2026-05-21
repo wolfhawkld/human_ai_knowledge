@@ -8,128 +8,94 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
-  background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+  line-height: 1.8;
+  color: #333;
+  background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
   min-height: 100vh;
-  color: #c9d1d9;
-  line-height: 1.7;
-  padding: 2rem 1rem;
+  padding: 40px 20px;
 }
 .container {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  background: #161b22;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
   overflow: hidden;
 }
 .header {
-  background: linear-gradient(135deg, #1f2937 0%, #0d1117 100%);
-  padding: 2.5rem 2rem;
-  border-bottom: 1px solid #30363d;
+  background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%);
+  color: #fff;
+  padding: 44px 40px;
+  text-align: center;
 }
-.header h1 {
-  color: #58a6ff;
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-}
-.header .subtitle {
-  color: #8b949e;
-  font-size: 1rem;
-}
-.meta {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-.meta .tag {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-.tag.nemesis { background: #7c3aed; color: #fff; }
-.tag.date { background: #1f2937; color: #8b949e; border: 1px solid #30363d; }
-.tag.topic { background: #166534; color: #86efac; }
-.content {
-  padding: 2rem;
-}
+.header h1 { font-size: 2.05em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
 .content h2 {
-  color: #f0883e;
-  font-size: 1.4rem;
-  margin: 2rem 0 1rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid #30363d;
+  color: #1e1b4b;
+  border-bottom: 3px solid #6d28d9;
+  padding-bottom: 8px;
+  margin: 34px 0 18px;
+  font-size: 1.45em;
 }
 .content h3 {
-  color: #d2a8ff;
-  font-size: 1.1rem;
-  margin: 1.5rem 0 0.8rem;
+  color: #4338ca;
+  font-size: 1.15em;
+  margin: 22px 0 10px;
 }
-.content p {
-  margin: 0.8rem 0;
-}
-.content blockquote {
-  border-left: 3px solid #58a6ff;
-  padding: 0.5rem 1rem;
-  margin: 1rem 0;
-  color: #8b949e;
-  background: rgba(88,166,255,0.05);
-  border-radius: 0 6px 6px 0;
-}
+.content p { margin: 12px 0; }
 .content table {
   border-collapse: collapse;
   width: 100%;
-  margin: 1rem 0;
-  font-size: 0.9rem;
+  margin: 16px 0;
+  font-size: 0.93em;
 }
 .content th, .content td {
-  border: 1px solid #30363d;
-  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
   text-align: left;
 }
-.content th {
-  background: #1f2937;
-  color: #c9d1d9;
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.blockquote {
+  background: #f8fafc;
+  border-left: 4px solid #06b6d4;
+  padding: 18px 22px;
+  margin: 22px 0;
+  border-radius: 0 12px 12px 0;
   font-weight: 600;
+  color: #0f172a;
 }
-.content tr:nth-child(even) { background: rgba(255,255,255,0.02); }
 .content code {
-  background: #0d1117;
-  padding: 0.15em 0.4em;
-  border-radius: 3px;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 0.85em;
-  color: #f0883e;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9em;
 }
-.content pre {
-  background: #0d1117;
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 1rem 0;
-  border: 1px solid #30363d;
-}
-.content ul, .content ol {
-  margin: 0.8rem 0;
-  padding-left: 1.5rem;
-}
-.content li { margin: 0.4rem 0; }
-.content a { color: #58a6ff; text-decoration: none; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content a { color: #4f46e5; text-decoration: none; }
 .content a:hover { text-decoration: underline; }
-.strong { color: #58a6ff; font-weight: 600; }
+.content .highlight { color: #6d28d9; font-weight: 600; }
 .footer {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #30363d;
-  color: #8b949e;
-  font-size: 0.85rem;
+  background: #f8f9fa;
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
 }
-@media (max-width: 680px) {
-  body { padding: 1rem 0.5rem; }
-  .header, .content, .footer { padding-left: 1rem; padding-right: 1rem; }
-  .header h1 { font-size: 1.4rem; }
-  .content table { font-size: 0.78rem; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) {
+  body { padding: 20px 10px; }
+  .header, .content, .footer { padding-left: 20px; padding-right: 20px; }
+  .header h1 { font-size: 1.4em; }
+  .content table { font-size: 0.8em; }
 }
 </style>
 </head>
@@ -137,12 +103,12 @@ body {
 <div class="container">
   <div class="header">
     <h1>vLLM vs SGLang vs TileLang — LLM 推理框架对比</h1>
-    <div class="subtitle">三大推理引擎架构、性能、场景深度对比</div>
+    <p class="subtitle">三大推理引擎架构、性能基准、场景化推荐深度分析</p>
     <div class="meta">
-      <span class="tag nemesis">Nemesis</span>
-      <span class="tag date">2026-05-21</span>
-      <span class="tag topic">LLM 推理</span>
-      <span class="tag topic">模型服务</span>
+      <span class="meta-item agent">🤖 Nemesis</span>
+      <span class="meta-item">📅 2026-05-21</span>
+      <span class="meta-item">🔖 LLM 推理</span>
+      <span class="meta-item">🏷️ vLLM · SGLang · TileLang</span>
     </div>
   </div>
   <div class="content">
@@ -151,138 +117,131 @@ body {
 <p>三个项目处于不同技术栈层级：</p>
 <table>
   <tr><th>项目</th><th>定位</th><th>代表作</th></tr>
-  <tr><td class="strong">vLLM</td><td>完整的 LLM 服务/推理引擎</td><td>PagedAttention, Continuous Batching</td></tr>
-  <tr><td class="strong">SGLang</td><td>完整的 LLM 服务/推理引擎</td><td>RadixAttention, 结构化输出</td></tr>
-  <tr><td class="strong">TileLang</td><td>GPU 内核 DSL</td><td>DeepSeek TileKernels</td></tr>
+  <tr><td><strong>vLLM</strong></td><td>完整的 LLM 服务/推理引擎</td><td>PagedAttention, Continuous Batching</td></tr>
+  <tr><td><strong>SGLang</strong></td><td>完整的 LLM 服务/推理引擎</td><td>RadixAttention, 结构化输出</td></tr>
+  <tr><td><strong>TileLang</strong></td><td>GPU 内核 DSL</td><td>DeepSeek TileKernels</td></tr>
 </table>
-<p>vLLM 和 SGLang 是竞争关系——都提供完整的端到端服务能力。TileLang 是底层算子开发工具，可与二者组合使用。</p>
+<p>vLLM 和 SGLang 是<span class="highlight">竞争关系</span>——都提供完整的端到端服务能力。TileLang 是<span class="highlight">底层算子开发工具</span>，不直接替代二者，可组合使用。</p>
 
 <h2>二、核心架构</h2>
 
 <h3>vLLM</h3>
 <table>
   <tr><th>技术</th><th>说明</th></tr>
-  <tr><td>PagedAttention</td><td>核心创新。KV Cache 分页管理（类似虚拟内存），消除内存碎片</td></tr>
+  <tr><td><strong>PagedAttention</strong></td><td>核心创新。KV Cache 分页管理（类似 OS 虚拟内存），消除内存碎片</td></tr>
   <tr><td>Continuous Batching</td><td>请求到达即插入运行中批次，不等当前批次完全结束</td></tr>
   <tr><td>Prefix Caching</td><td>缓存公共前缀的 KV Cache</td></tr>
   <tr><td>Chunked Prefill</td><td>长 prompt 分块处理，避免独占 GPU 过久</td></tr>
-  <tr><td>CUDA Graph</td><td>支持 CUDA Graph 加速 decode 阶段</td></tr>
-  <tr><td>V1/V2 架构</td><td>MRV2 在 GB200 上带来 56% 吞吐提升</td></tr>
+  <tr><td>CUDA Graph / V1-V2</td><td>MRV2 在 GB200 上带来 <strong>56% 吞吐提升</strong></td></tr>
 </table>
 
 <h3>SGLang</h3>
 <table>
   <tr><th>技术</th><th>说明</th></tr>
-  <tr><td>RadixAttention</td><td>核心创新。基数树 KV Cache 复用，自动检测共享前缀。比 vLLM 的 prefix caching 更精细</td></tr>
-  <tr><td>Zero-overhead CPU Scheduler</td><td>CPU 端调度开销近乎为零</td></tr>
-  <tr><td>Prefill-Decode Disaggregation</td><td>预填充和解码分离，可独立扩展</td></tr>
-  <tr><td>Speculative Decoding</td><td>原生支持推测解码</td></tr>
-  <tr><td>结构化输出</td><td>原生支持 JSON Schema 约束解码</td></tr>
-  <tr><td>前端语言</td><td>prompt 中嵌入编程逻辑（控制流、多模态、并行调用）</td></tr>
+  <tr><td><strong>RadixAttention</strong></td><td>核心创新。基数树 KV Cache 复用，自动检测共享前缀。前缀复用场景<span class="highlight">可超 vLLM 数倍</span></td></tr>
+  <tr><td>Zero-overhead Scheduler</td><td>CPU 端调度开销近乎为零</td></tr>
+  <tr><td>Prefill-Decode 分离</td><td>预填充和解码分配到不同 GPU 独立扩展</td></tr>
+  <tr><td>结构化输出</td><td>原生 JSON Schema 约束解码，<span class="highlight">Agent 场景极有价值</span></td></tr>
+  <tr><td>SGLang 前端语言</td><td>prompt 中嵌入控制流、多模态、并行调用等编程逻辑</td></tr>
 </table>
 
 <h3>TileLang</h3>
 <ul>
   <li>基于 <strong>Apache TVM</strong> 编译器基础设施</li>
-  <li><strong>Pythonic DSL</strong>：用 Python 语法表达 GPU 内核，代码量减少 90%</li>
-  <li><strong>Auto Tiling</strong>：自动选择最优 tile 配置</li>
-  <li><strong>Auto TMA/WGMMA</strong>：自动利用 H100 硬件指令</li>
-  <li><strong>Auto Pipelining</strong>：自动生成多级流水线调度</li>
-  <li><strong>不提供</strong>模型加载、batching、caching、HTTP API——纯内核编写工具</li>
+  <li><strong>Pythonic DSL</strong>：80 行 Python 实现 FlashAttention，<span class="highlight">代码量减少 90%</span></li>
+  <li>Auto Tiling：自动选择最优 tile 配置</li>
+  <li>Auto TMA/WGMMA：自动利用 H100 硬件指令</li>
+  <li>Auto Pipelining：自动生成多级流水线调度</li>
+  <li><strong>不提供</strong>模型加载、batching、caching、HTTP API——是纯内核工具</li>
 </ul>
 
 <h2>三、模型支持</h2>
 <table>
   <tr><th>维度</th><th>vLLM</th><th>SGLang</th><th>TileLang</th></tr>
-  <tr><td>HF 模型</td><td>200+ 架构，最广</td><td>主流全覆盖</td><td>不直接加载</td></tr>
-  <tr><td>量化</td><td>AWQ, GPTQ, INT8, FP8, INT4</td><td>AWQ, GPTQ, INT4, FP8, FP4</td><td>可自定义</td></tr>
-  <tr><td>多模态</td><td>✅ LLaVA, Qwen-VL</td><td>✅ LLaVA, Qwen-VL</td><td>❌</td></tr>
-  <tr><td>MoE</td><td>原生支持</td><td>原生支持（含 Expert Par.)</td><td>可写路由内核</td></tr>
+  <tr><td>HF 模型</td><td><strong>200+ 架构</strong>，最广</td><td>主流全覆盖</td><td>不直接加载</td></tr>
+  <tr><td>量化</td><td>AWQ, GPTQ, INT8, FP8, INT4</td><td>AWQ, GPTQ, INT4, FP8, FP4</td><td>可自定义量化内核</td></tr>
+  <tr><td>多模态</td><td>✅ LLaVA, Qwen-VL</td><td>✅ LLaVA, Qwen-VL, GLM-4V</td><td>❌</td></tr>
+  <tr><td>MoE</td><td>原生支持</td><td>原生支持（含 Expert Par.）</td><td>可写路由内核</td></tr>
 </table>
 
 <h2>四、性能对比</h2>
-<p>基于 H100 80GB, Llama-3.3-70B-Instruct FP8, 输入 512 / 输出 256 tokens</p>
+<p>基于 H100 80GB, Llama-3.3-70B-Instruct FP8, 输入 512 / 输出 256 tokens：</p>
 
 <h3>吞吐量 (Output Tokens/sec)</h3>
 <table>
   <tr><th>并发数</th><th>vLLM</th><th>SGLang</th></tr>
-  <tr><td>1</td><td>120</td><td class="strong">125</td></tr>
-  <tr><td>10</td><td>650</td><td class="strong">680</td></tr>
-  <tr><td>50</td><td>1,850</td><td class="strong">1,920</td></tr>
-  <tr><td>100</td><td>2,400</td><td class="strong">2,460</td></tr>
+  <tr><td>1</td><td>120</td><td class="highlight">125</td></tr>
+  <tr><td>10</td><td>650</td><td class="highlight">680</td></tr>
+  <tr><td>50</td><td>1,850</td><td class="highlight">1,920</td></tr>
+  <tr><td>100</td><td>2,400</td><td class="highlight">2,460</td></tr>
 </table>
 
 <h3>首 Token 延迟 (TTFT p50, ms)</h3>
 <table>
   <tr><th>并发数</th><th>vLLM</th><th>SGLang</th></tr>
-  <tr><td>1</td><td>45</td><td class="strong">42</td></tr>
-  <tr><td>10</td><td>120</td><td class="strong">112</td></tr>
-  <tr><td>50</td><td>380</td><td class="strong">360</td></tr>
-  <tr><td>100</td><td>740</td><td class="strong">710</td></tr>
+  <tr><td>1</td><td>45</td><td class="highlight">42</td></tr>
+  <tr><td>10</td><td>120</td><td class="highlight">112</td></tr>
+  <tr><td>50</td><td>380</td><td class="highlight">360</td></tr>
+  <tr><td>100</td><td>740</td><td class="highlight">710</td></tr>
 </table>
 
-<h3>关键发现</h3>
-<ul>
-  <li>SGLang 在中高并发下略优于 vLLM（~3%）</li>
-  <li>SGLang 在<strong>前缀复用场景</strong>（系统提示词、RAG 模板）优势可达 <strong>2-5x</strong></li>
-  <li>显存占用差异小于 4GB——引擎选择不如 <code>max-model-len</code> 和 <code>gpu-memory-utilization</code> 设置重要</li>
-</ul>
+<div class="blockquote">
+关键发现：SGLang 在中高并发下略优于 vLLM（~3%），前缀复用场景优势可达 2-5x。显存占用差异 &lt; 4GB——引擎选择不如 max-model-len 和 gpu-memory-utilization 设置重要。
+</div>
 
 <h2>五、部署模式</h2>
 <table>
   <tr><th>维度</th><th>vLLM</th><th>SGLang</th></tr>
-  <tr><td>Tensor Parallelism</td><td>✅</td><td>✅</td></tr>
-  <tr><td>Pipeline Parallelism</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Tensor / Pipeline / Expert Parallelism</td><td>✅ 全支持</td><td>✅ 全支持</td></tr>
   <tr><td>Data Parallelism</td><td>✅</td><td>✅（优于 vLLM）</td></tr>
-  <tr><td>Expert Parallelism</td><td>✅</td><td>✅</td></tr>
-  <tr><td>GPU 类型</td><td>NVIDIA, AMD, TPU, Intel, AWS, Apple</td><td>NVIDIA, AMD, TPU, Ascend</td></tr>
-  <tr><td>冷启动时间</td><td>~62s</td><td class="strong">~58s</td></tr>
+  <tr><td>GPU 类型</td><td>NVIDIA, AMD, TPU, Intel, AWS, Apple</td><td>NVIDIA, AMD, TPU, Ascend NPU</td></tr>
+  <tr><td>冷启动时间</td><td>~62s</td><td class="highlight">~58s</td></tr>
 </table>
 
-<h2>六、独特特性</h2>
+<h2>六、独特优势</h2>
 
 <h3>vLLM</h3>
 <ul>
   <li>最广泛的模型架构支持（200+），社区首选测试平台</li>
   <li>PyTorch Foundation 成员，生态整合最深</li>
-  <li>多硬件后端最广（NVIDIA + AMD + TPU + Intel + AWS + Apple）</li>
-  <li>70K+ Stars，2000+ 贡献者</li>
+  <li>多硬件后端最广</li>
+  <li><strong>70K+ Stars</strong>，2000+ 贡献者，文档最完善</li>
 </ul>
 
 <h3>SGLang</h3>
 <ul>
   <li><strong>RadixAttention</strong>：前缀复用场景吞吐可超 vLLM 数倍</li>
-  <li><strong>Prefill-Decode Disaggregation</strong>：prefill 和 decode 分配到不同 GPU</li>
-  <li><strong>结构化输出</strong>：原生 JSON Schema 约束解码，Agent 场景极有价值</li>
+  <li><strong>Prefill-Decode Disaggregation</strong>：独立扩展 prefill 和 decode GPU</li>
+  <li><strong>结构化输出</strong>：原生 JSON Schema 约束解码</li>
   <li><strong>RL 训练集成</strong>：被 AReaL、verl、Miles 等 RL 框架作为 rollout 后端</li>
-  <li>宣称驱动全球 400,000+ GPU</li>
+  <li>宣称驱动全球 <strong>400,000+ GPU</strong></li>
 </ul>
 
 <h3>TileLang</h3>
 <ul>
-  <li>80 行 Python 代码实现 FlashAttention</li>
+  <li>80 行 Python 实现 FlashAttention，代码量减少 90%</li>
   <li>TVM 编译器后端：自动调度、内存布局、流水线优化</li>
-  <li>DeepSeek TileKernels：生产级内核库</li>
+  <li><strong>DeepSeek TileKernels</strong>：基于 TileLang 的生产级内核库（MoE 路由、FP4、FlashMLA）</li>
   <li>跨平台：同一代码编译到 CUDA、HIP、Metal</li>
-  <li>ICLR 2026 Oral 论文</li>
+  <li><strong>ICLR 2026 Oral</strong> 论文</li>
 </ul>
 
 <h2>七、场景化推荐</h2>
 <table>
   <tr><th>场景</th><th>推荐</th><th>理由</th></tr>
-  <tr><td>通用生产级 API 服务</td><td class="strong">vLLM</td><td>模型最广、文档最全、社区最大、部署简单</td></tr>
-  <tr><td>RAG/Agent/多轮对话</td><td class="strong">SGLang</td><td>RadixAttention 前缀复用，结构化输出</td></tr>
+  <tr><td>通用生产级 API 服务</td><td class="highlight"><strong>vLLM</strong></td><td>模型最广、文档最全、社区最大、部署简单</td></tr>
+  <tr><td>RAG / Agent / 多轮对话</td><td class="highlight"><strong>SGLang</strong></td><td>RadixAttention 前缀复用，原生结构化输出</td></tr>
   <tr><td>极致吞吐 + 稳定模型</td><td>vLLM</td><td>均衡性能，可选编译优化</td></tr>
-  <tr><td>RL 训练 rollout</td><td class="strong">SGLang</td><td>被主流 RL 框架原生支持</td></tr>
-  <tr><td>自定义 GPU 算子</td><td class="strong">TileLang</td><td>比手写 CUDA 高效 10x</td></tr>
-  <tr><td>非 NVIDIA 平台</td><td class="strong">vLLM</td><td>硬件后端最广</td></tr>
+  <tr><td>RL 训练 Rollout 后端</td><td class="highlight"><strong>SGLang</strong></td><td>被主流 RL 框架原生支持</td></tr>
+  <tr><td>自定义 GPU 算子开发</td><td class="highlight"><strong>TileLang</strong></td><td>比手写 CUDA 高效 10x</td></tr>
+  <tr><td>非 NVIDIA 平台</td><td class="highlight"><strong>vLLM</strong></td><td>硬件后端最广（AMD/TPU/Gaudi/Neuron/Silicon）</td></tr>
 </table>
 
 <h2>八、总结</h2>
 <ul>
   <li><strong>vLLM</strong> 是更安全的全能默认选择——模型广、文档好、社区大</li>
   <li><strong>SGLang</strong> 在特定场景（前缀复用、结构化输出、RL）有差异化优势</li>
-  <li><strong>TileLang</strong> 定位完全不同——编写高性能 GPU 内核的 Python DSL</li>
+  <li><strong>TileLang</strong> 定位完全不同——编写高性能 GPU 内核的 Python DSL，可与 vLLM/SGLang 组合使用</li>
   <li>vLLM 和 SGLang 都在快速迭代，性能差距在缩小</li>
 </ul>
 
@@ -296,7 +255,7 @@ body {
 
   </div>
   <div class="footer">
-    人机知识库 · Nemesis · 2026-05-21
+    人机知识库 · <a href="index.html">返回首页</a> · Nemesis · 2026-05-21
   </div>
 </div>
 </body>

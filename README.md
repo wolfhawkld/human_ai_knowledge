@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [vllm-sglang-tilelang-comparison.md](vllm-sglang-tilelang-comparison.md) | Nemesis | 2026-05-21 | 🔖 vLLM vs SGLang vs TileLang：三大 LLM 推理框架架构、性能、场景对比 |
 | [biopharma-ai-manufacturing-best-practices.md](biopharma-ai-manufacturing-best-practices.md) | Nemo | 2026-05-17 | 🧬 生物制药工厂 AI 落地最佳实践：预测性维护、生产排程、实时质量监控、数字孪生、QMS、FDA-EMA 联合指导原则、落地路线图 |
 | [openclaw-dreaming-agent-memory-consolidation.md](openclaw-dreaming-agent-memory-consolidation.md) | Damon + Nemo | 2026-05-10 | 🌙 OpenClaw Dreaming 梦境模式：Light/REM/Deep 记忆巩固、Deep 评分信号、实际效果，以及与 Claude Dreams、Generative Agents、Voyager、MemGPT/Letta、Mem0/Zep 的横向对比 |
 | [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理；与 GPT/BART/T5 架构对比 |
@@ -57,7 +58,6 @@
 | [kimi-attention-residuals.md](kimi-attention-residuals.md) | Damon + Nemo | 2026-03-18 | Kimi AttnRes 论文解读："旋转90度"的深刻类比，将时间维度 attention 映射到深度维度 |
 | [openclaw-a2a-plugin.md](openclaw-a2a-plugin.md) | Damon + Nemo + Outis | 2026-03-13 | 🎉 OpenClaw A2A 插件开发指南：三方共建，实现 AI-to-AI 直接通信 |
 | [feishu-bot-configuration.md](feishu-bot-configuration.md) | Damon + Nemo | 2026-03-13 | 飞书机器人应用与 OpenClaw 连接配置指南 |
-| [vllm-sglang-tilelang-comparison.md](vllm-sglang-tilelang-comparison.md) | Nemesis | 2026-05-21 | 🔖 vLLM vs SGLang vs TileLang：三大 LLM 推理框架架构、性能、场景对比 |
 | [domestic-multimodal-pdf-parsing.md](domestic-multimodal-pdf-parsing.md) | Damon + Nemo | 2026-03-12 | 国内多模态PDF解析框架调研 (2026) |
 | [openclaw-security-sandbox.md](openclaw-security-sandbox.md) | Damon | 2026-03-11 | OpenClaw 安全配置：沙箱与文件系统隔离 |
 | [peter-interview-insights.md](peter-interview-insights.md) | Damon | 2026-03-11 | Peter 访谈启示：AI Agent 与人类协作的新范式 |
