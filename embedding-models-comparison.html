@@ -130,6 +130,20 @@ body {
 </table>
 <p>域适应路径：TSDAE(无监督) → GPL(伪标签) → LoRA(3.6%参数) → 全参数微调。垂类域适应可提升 5-15% 检索性能。</p>
 
+<h3>Matryoshka 维度动态调整</h3>
+<p><strong>Matryoshka Embedding</strong> 一次推理产出可任意截断的向量——1024维截到256维无需重新推理，召回率仅轻微下降。训练时在多个维度级别同时施加对比损失，迫使重要信息优先编码到前几维。</p>
+<table>
+  <tr><th>模型</th><th>原生维度</th><th>可选维度</th></tr>
+  <tr><td>OpenAI text-embedding-3-large</td><td>3072</td><td>256, 512, 768, 1024, 1536</td></tr>
+  <tr><td>OpenAI text-embedding-3-small</td><td>1536</td><td>256, 512, 768, 1024</td></tr>
+  <tr><td>Nomic embed text v1.5</td><td>768</td><td>64, 128, 256, 512</td></tr>
+  <tr><td>Jina embeddings v3</td><td>1024</td><td>32, 64, 128, 256, 512, 768</td></tr>
+  <tr><td>Cohere embed-v4.0</td><td>1536</td><td>256, 512, 1024</td></tr>
+  <tr><td>BGE-M3</td><td>1024</td><td>通过独立推理</td></tr>
+  <tr><td>stella_en_1.5B_v5</td><td>1024</td><td>支持多维度</td></tr>
+</table>
+<p><strong>实践意义：</strong>向量存储成本与维度成正比，256维可达95%+ 全维度召回率，节省50-90%存储。粗召回128维快筛→精排原始维度重排序。</p>
+
 <h2>五、场景推荐</h2>
 <table>
   <tr><th>场景</th><th>推荐</th><th>说明</th></tr>
