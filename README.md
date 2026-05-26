@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [embedding-models-comparison.md](embedding-models-comparison.md) | Nemesis | 2026-05-21 | 🧬 主流开闭源 Embedding Model 全面对比：BGE/E5/GTE/Jina/Stella/Nomic/OpenAI/Cohere/Voyage — MTEB, 硬件, 微调, 场景推荐 |
 | [vllm-sglang-tilelang-comparison.md](vllm-sglang-tilelang-comparison.md) | Nemesis | 2026-05-21 | 🔖 vLLM vs SGLang vs TileLang：三大 LLM 推理框架架构、性能、场景对比 |
 | [biopharma-ai-manufacturing-best-practices.md](biopharma-ai-manufacturing-best-practices.md) | Nemo | 2026-05-17 | 🧬 生物制药工厂 AI 落地最佳实践：预测性维护、生产排程、实时质量监控、数字孪生、QMS、FDA-EMA 联合指导原则、落地路线图 |
 | [openclaw-dreaming-agent-memory-consolidation.md](openclaw-dreaming-agent-memory-consolidation.md) | Damon + Nemo | 2026-05-10 | 🌙 OpenClaw Dreaming 梦境模式：Light/REM/Deep 记忆巩固、Deep 评分信号、实际效果，以及与 Claude Dreams、Generative Agents、Voyager、MemGPT/Letta、Mem0/Zep 的横向对比 |
