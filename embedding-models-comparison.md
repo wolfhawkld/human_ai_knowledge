@@ -114,7 +114,9 @@ MiniLM 通过知识蒸馏从 BERT 压缩而来，是 HuggingFace 上下载量最
 
 | 模型 | 参数 | VRAM(FP16) | 推荐 GPU |
 |------|:----:|:----------:|---------|
+| MiniLM-L6 / MiniLM-L12 | 22-33M | 0.1-0.15GB | CPU / 任何 GPU |
 | BGE-small / nomic-embed | 33-137M | 0.2-0.5GB | CPU / T4 |
+| paraphrase-multilingual-MiniLM | 118M | 0.5GB | CPU / T4 |
 | BGE-large / gte-large | 335-434M | 1.3-1.7GB | T4 / RTX 3060 |
 | BGE-M3 / jina-v3 | 560-570M | 2.3GB | RTX 3060+ |
 | stella_en_1.5B | 1.5B | 6GB | RTX 3090/4090 |
@@ -127,9 +129,10 @@ MiniLM 通过知识蒸馏从 BERT 压缩而来，是 HuggingFace 上下载量最
 
 ## 五、开源模型微调适配性
 
-| 模型 | 全参数 | LoRA | 垂类适配难度 | 特点 |
-|------|:------:|:----:|:----------:|------|
-| BGE 系列 | ✅ | ✅ | **低** | BAAI 提供完整微调示例，M3 支持 dense+sparse+ColBERT 联合微调 |
+| 模型 | 全参数 | LoRA | 难度 | 特点 |
+|------|:------:|:----:|:----:|------|
+| MiniLM 系列 | ✅ | ✅ | **极低** | 22M 全参数微调成本可忽略，但 Token 限制 256 影响长文本适配 |
+| BGE 系列 | ✅ | ✅ | **低** | BAAI 提供完整微调示例，M3 支持联合微调 |
 | E5 系列 | ✅ | ✅ | 中 | 7B 全参数需 40GB+ |
 | GTE 系列 | ✅ | ✅ | 中 | 7B 全参数资源需求高 |
 | Jina系列 | — | ✅ | 低 | 原生 LoRA adapter 机制，不改 backbone |
@@ -144,8 +147,9 @@ MiniLM 通过知识蒸馏从 BERT 压缩而来，是 HuggingFace 上下载量最
 ### 通用英文检索
 1. **Voyage-4-large** ($0.12/1M, MTEB ~66.8) — API 精度最高
 2. **gte-large-en-v1.5** (自部署免费, MTEB 65.39) — 性价比首选
-3. **nomic-embed-text-v1.5** (137M, 62.28) — 极低成本
-4. **OpenAI v3-small** ($0.02/1M) — API 最便宜
+3. **nomic-embed-text-v1.5** (137M, 62.28) — 极低成本自部署
+4. **all-MiniLM-L6-v2** (22.7M, MTEB ~56) — 原型验证/CPU/超低延迟首选
+5. **OpenAI v3-small** ($0.02/1M) — API 最便宜
 
 ### 中文场景
 1. **gte-Qwen2-7B-instruct** — 最强精度（需 28GB VRAM）

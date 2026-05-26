@@ -109,7 +109,9 @@ body {
 <h2>三、硬件资源需求（自部署）</h2>
 <table>
   <tr><th>模型</th><th>参数</th><th>VRAM(FP16)</th><th>推荐 GPU</th></tr>
+  <tr><td><strong>MiniLM-L6 / MiniLM-L12</strong></td><td>22-33M</td><td>0.1-0.15GB</td><td>CPU / 任何 GPU</td></tr>
   <tr><td>BGE-small / nomic-embed</td><td>33-137M</td><td>0.2-0.5GB</td><td>CPU / T4</td></tr>
+  <tr><td>paraphrase-multilingual-MiniLM</td><td>118M</td><td>0.5GB</td><td>CPU / T4</td></tr>
   <tr><td>BGE-large / gte-large</td><td>335-434M</td><td>1.3-1.7GB</td><td>T4 / RTX 3060</td></tr>
   <tr><td>BGE-M3 / jina-v3</td><td>560-570M</td><td>2.3GB</td><td>RTX 3060+</td></tr>
   <tr><td>stella_en_1.5B</td><td>1.5B</td><td>6GB</td><td>RTX 3090/4090</td></tr>
@@ -120,6 +122,7 @@ body {
 <h2>四、微调适配性</h2>
 <table>
   <tr><th>模型</th><th>全参数</th><th>LoRA</th><th>难度</th><th>特点</th></tr>
+  <tr><td><strong>MiniLM 系列</strong></td><td>✅</td><td>✅</td><td><strong>极低</strong></td><td>22M 全参数微调成本可忽略，Token 限制 256</td></tr>
   <tr><td>BGE 系列</td><td>✅</td><td>✅</td><td><strong>低</strong></td><td>BAAI 完整微调示例，M3 支持联合微调</td></tr>
   <tr><td>E5 系列</td><td>✅</td><td>✅</td><td>中</td><td>7B 全参数需 40GB+</td></tr>
   <tr><td>Jina 系列</td><td>—</td><td>✅</td><td><strong>低</strong></td><td>原生 LoRA adapter，不改 backbone</td></tr>
@@ -135,7 +138,7 @@ body {
   <tr><td>多语言</td><td><strong>BGE-M3</strong> (自部署) 或 Cohere embed-v4 (API)</td><td>100+语言，支持混合检索</td></tr>
   <tr><td>代码搜索</td><td><strong>voyage-code-3</strong> (API) 或 gte-modernbert-base</td><td>领先通用模型 13-16%</td></tr>
   <tr><td>金融/法律</td><td>voyage-finance-2/law-2 或 BGE-M3 + 域适应微调</td><td>专用模型 + 域适应提升 5-15%</td></tr>
-  <tr><td>极致低成本</td><td><strong>nomic-embed-text-v1.5</strong> (137M) 或 Voyage-4-lite</td><td>CPU 可跑或 $0.02/1M</td></tr>
+  <tr><td>极致低成本</td><td><strong>MiniLM-L6-v2</strong> (22M, CPU) / nomic-embed (137M) / Voyage-4-lite ($0.02)</td><td>原型验证首选，HF 下载量最高</td></tr>
 </table>
 
 <h2>六、2026 关键趋势</h2>
