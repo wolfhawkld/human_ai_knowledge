@@ -81,6 +81,18 @@ body {
 </table>
 <p><strong>Nomic:</strong> 137M 极致轻量 + Apache 2.0 完全开源可审计，训练数据 235M pairs 公开。</p>
 
+<h3>MiniLM 系列 (Microsoft / sentence-transformers)</h3>
+<p>HuggingFace 下载量最高的 embedding 家族，知识蒸馏自 BERT，速度/体积比极高。</p>
+<table>
+  <tr><th>模型</th><th>参数</th><th>维度</th><th>Token</th><th>层</th><th>语言</th><th>用途</th></tr>
+  <tr><td><strong>all-MiniLM-L6-v2</strong></td><td>22.7M</td><td>384</td><td>256</td><td>6</td><td>EN</td><td>通用（速度优先）</td></tr>
+  <tr><td>all-MiniLM-L12-v2</td><td>33M</td><td>384</td><td>256</td><td>12</td><td>EN</td><td>通用（精度优先）</td></tr>
+  <tr><td>multi-qa-MiniLM-L6-cos-v1</td><td>22.7M</td><td>384</td><td>512</td><td>6</td><td>EN</td><td>问答/语义搜索</td></tr>
+  <tr><td>paraphrase-MiniLM-L6-v2</td><td>22.7M</td><td>384</td><td>128</td><td>6</td><td>EN</td><td>释义/相似度</td></tr>
+  <tr><td>paraphrase-multilingual-MiniLM-L12-v2</td><td>118M</td><td>384</td><td>128</td><td>12</td><td>50+</td><td>多语言释义</td></tr>
+</table>
+<p><strong>特点：</strong>all-MiniLM-L6-v2 比 all-mpnet-base-v2 快 5x，MTEB v1 ~56-59。Token 限制 256，原型验证/资源受限场景首选。⚠️ 商用注意：训练数据含 MS MARCO 等限制性条款。</p>
+
 <h2>二、闭源模型规格</h2>
 <table>
   <tr><th>模型</th><th>维度</th><th>Token</th><th>$/1M</th><th>MTEB v1</th><th>特点</th></tr>

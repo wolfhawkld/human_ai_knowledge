@@ -59,6 +59,26 @@
 
 **Nomic 特点：** 极小体量（137M）、Apache 2.0 完全开源可审计、训练数据 235M pairs 完全公开。
 
+### MiniLM 系列 (Microsoft / sentence-transformers)
+
+MiniLM 通过知识蒸馏从 BERT 压缩而来，是 HuggingFace 上下载量最高的 embedding 模型家族。
+
+| 模型 | 参数 | 维度 | Token | 层数 | 语言 | 归一化 | 用途 |
+|------|:----:|:----:|:-----:|:----:|------|:------:|------|
+| all-MiniLM-L6-v2 | 22.7M | 384 | 256 | 6 | EN | L2 | 通用（速度优先）|
+| all-MiniLM-L12-v2 | 33M | 384 | 256 | 12 | EN | L2 | 通用（精度优先）|
+| multi-qa-MiniLM-L6-cos-v1 | 22.7M | 384 | 512 | 6 | EN | L2 | 问答/语义搜索 |
+| multi-qa-MiniLM-L6-dot-v1 | 22.7M | 384 | 512 | 6 | EN | — | 问答/dot-product |
+| paraphrase-MiniLM-L6-v2 | 22.7M | 384 | 128 | 6 | EN | — | 释义/相似度评分 |
+| paraphrase-multilingual-MiniLM-L12-v2 | 118M | 384 | 128 | 12 | 50+ | — | 多语言释义 |
+
+**MiniLM 特点：**
+- **极度轻量**：22-118M 参数，`all-MiniLM-L6-v2` 比 `all-mpnet-base-v2` 快 5 倍
+- **MTEB v1 ~56-59**（2022 年中上水平，当前已落后，但速度/体积比极高）
+- **商用许可风险**：模型 Apache 2.0，但训练数据使用了 MS MARCO 等有限制数据集
+- **Token 限制**：256 tokens 上限（multi-qa 名义 512，实际训练仅用 250）
+- 适合原型验证、资源受限场景、高吞吐实时推理
+
 ---
 
 ## 二、闭源模型规格
