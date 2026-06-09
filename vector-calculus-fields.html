@@ -75,8 +75,26 @@ body {
 <p><strong>物理意义：</strong>矢量场在某点的旋转强度和轴方向。<strong>右手螺旋定则：</strong>拇指指向旋度矢量→四指即旋转方向。正=逆时针，负=顺时针。<strong>本质：</strong>每分量 ∂Fₖ/∂xⱼ − ∂Fⱼ/∂xₖ，两侧流速差越大旋转越强。<strong>类比：</strong>小叶轮放在流场中——转=非零旋度，不转=零旋度。龙卷风旋度大，直线水流旋度为零。</p>
 
 <h3>拉普拉斯算子 ∇²</h3>
-<p><code class="math">∇²f = ∂²f/∂x² + ∂²f/∂y² + ∂²f/∂z²</code></p>
-<p><strong>物理意义：</strong>某点值与周围平均值的差异。∇²f&gt;0局部凹陷，&lt;0凸起，=0调和函数。出现在热方程 ∂T/∂t = α∇²T。</p>
+<p><code class="math">∇²f = ∂²f/∂x² + ∂²f/∂y² + ∂²f/∂z² = ∇·(∇f)</code></p>
+
+<table>
+  <tr><th>视角</th><th>解释</th><th>一句话</th></tr>
+  <tr><td>微分</td><td>对梯度再求散度</td><td>梯度的散度</td></tr>
+  <tr><td>几何</td><td>海森矩阵的迹（Trace of Hessian），全方向曲率之和</td><td>曲率的总和</td></tr>
+  <tr><td>平均</td><td>该点值与周围无穷小球面平均值的偏差</td><td>局部凹还是凸</td></tr>
+  <tr><td>扩散</td><td>热方程 ∂T/∂t = α∇²T</td><td>温度不均的驱动力</td></tr>
+  <tr><td>滤波</td><td>图像 Laplacian 核 [[0,1,0],[1,-4,1],[0,1,0]] 检测边缘</td><td>边缘检测算子</td></tr>
+  <tr><td>波动</td><td>波方程 ∂²u/∂t² = c²∇²u</td><td>波动的空间曲率</td></tr>
+  <tr><td>量子</td><td>薛定谔方程 −ℏ²/2m·∇² 即动能算符</td><td>粒子的动能</td></tr>
+  <tr><td>调和</td><td>∇²f = 0 满足平均值定理</td><td>最光滑的函数</td></tr>
+</table>
+
+<p><strong>关键直觉：</strong>一阶导（梯度）告诉你「往哪走最陡」。二阶导（拉普拉斯）告诉你「这个最陡方向周围的变化趋势」——正=谷底（梯度指向你），负=山顶（梯度离开你），零=斜坡（梯度恒定）。</p>
+<pre style="background:#f1f5f9; padding:12px; border-radius:8px; font-family:monospace;">
+∇²f &lt; 0 = 山顶      ∇²f = 0 = 斜坡      ∇²f &gt; 0 = 谷底
+梯度远离该点          梯度恒定             梯度指向该点
+</pre>
+<p><strong>特征函数：</strong>−∇² e<sup>i𝐤·𝐱</sup> = |𝐤|² e<sup>i𝐤·𝐱</sup>，特征值 |𝐤|² 即为波数平方。高频→大特征值（快速变化），低频→小特征值（平缓变化）。Fourier 变换的本质就是把函数分解成拉普拉斯算子的特征函数。</p>
 
 <h2>三、核心恒等式</h2>
 <table>
