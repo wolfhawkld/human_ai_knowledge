@@ -108,6 +108,19 @@ tanh x：  ╭──╮     从 -1 到 1 的 S 形光滑过渡</pre>
 
 <h2>三、核心恒等式</h2>
 <p><strong>⚠️ 关键差异：</strong>cos²x+sin²x=1 vs <strong>cosh²x−sinh²x=1</strong>——三角加，双曲减。</p>
+
+<h3>指数形式恒等式</h3>
+<table>
+  <tr><th>公式</th><th>含义</th></tr>
+  <tr><td>sinh x = (e<sup>x</sup> − e<sup>−x</sup>)/2</td><td>奇分量（指数差）</td></tr>
+  <tr><td>cosh x = (e<sup>x</sup> + e<sup>−x</sup>)/2</td><td>偶分量（指数和）</td></tr>
+  <tr><td>tanh x = (e<sup>x</sup> − e<sup>−x</sup>)/(e<sup>x</sup> + e<sup>−x</sup>)</td><td>比值形式</td></tr>
+  <tr><td><strong>e<sup>x</sup> = cosh x + sinh x</strong></td><td>指数拆偶+奇（三角 e<sup>ix</sup>=cos x+i sin x 的实数类比）</td></tr>
+  <tr><td>e<sup>−x</sup> = cosh x − sinh x</td><td>反向分解</td></tr>
+  <tr><td>cosh²x − sinh²x = <strong>1</strong></td><td>用指数形式直接验证</td></tr>
+</table>
+<blockquote>三角 e<sup>ix</sup> 涉及复平面旋转；双曲 e<sup>x</sup> 是纯实数指数增长。双曲函数本质就是指数函数的偶/奇分量分解。</blockquote>
+
 <p><strong>Osborne's Rule：</strong>将 sin² 替换为 −sinh² 即可从三角恒等式得到双曲恒等式。</p>
 
 <table>
