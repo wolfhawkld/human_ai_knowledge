@@ -64,8 +64,9 @@ body {
   <tr><td>零点</td><td>x = nπ</td><td>x = 0（唯一）</td></tr>
 </table>
 
-<pre>sin x ：  ╱◯╲  转圈  →  有界震荡
-sinh x：  ╱──╲  沿双曲线 → 指数增长</pre>
+<pre>sin x ：  转圈 → 有界震荡（蓝色）
+sinh x：  沿双曲线 → 指数增长（红色）</pre>
+<img src="figures/sin_vs_sinh.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
 
 <h3>cos vs cosh</h3>
 <table>
@@ -87,30 +88,23 @@ sinh x：  ╱──╲  沿双曲线 → 指数增长</pre>
 <pre>tan x ：  ╱╲╱╲╱╲  垂直渐近线隔开
 tanh x：  ╭──╮     从 -1 到 1 的 S 形光滑过渡</pre>
 
-<h2>二、图形 ASCII 对比</h2>
-<pre>                    sin x
-    1 ───╱╲────╱╲───╱╲───
-    0 ──╱──╲──╱──╲──╱──╲──
-   -1 ─╱────╲╱────╲╱────╲─
-       -π    0     π    2π
-         有界震荡，周期 2π
+<h2>二、函数图形对比</h2>
+<p>蓝色 = 三角函数，红色 = 双曲函数</p>
 
-                    cosh x = 悬链线
-             ╱  │  ╲
-            ╱   │   ╲
-      ╭──╱    │    ╲──╮
-        │      1      │
-     没有零点，最小值=1
+<h3>sin x vs sinh x</h3>
+<img src="figures/sin_vs_sinh.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
 
-                    tanh x
-      1 ───────────────
-                     ╱
-                  ╱
-        ╱───────╱────────
-       ╱
-      ╱
-     -1
-  S 形曲线，y=±1 渐近线</pre>
+<h3>cos x vs cosh x</h3>
+<img src="figures/cos_vs_cosh.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
+
+<h3>tan x vs tanh x</h3>
+<img src="figures/tan_vs_tanh.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
+
+<h3>悬链线 — cosh 的物理图形</h3>
+<img src="figures/catenary.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
+
+<h3>圆周 vs 双曲线 — 欧拉公式对比</h3>
+<img src="figures/circle_vs_hyperbola.svg" style="width:100%;max-width:700px;display:block;margin:12px auto;border-radius:8px;border:1px solid #e2e8f0;">
 
 <h2>三、核心恒等式</h2>
 <p><strong>⚠️ 关键差异：</strong>cos²x+sin²x=1 vs <strong>cosh²x−sinh²x=1</strong>——三角加，双曲减。</p>
