@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多 Agent 协作范式对比分析</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --card: #1a1a2e;
+    --border: #2a2a4a;
+    --text: #e0e0f0;
+    --muted: #8888aa;
+    --accent: #7c6ff0;
+    --accent2: #4fc3f7;
+    --green: #4caf50;
+    --yellow: #ff9800;
+    --red: #f44336;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.4rem; margin: 2rem 0 0.75rem; color: var(--accent2); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+  p { margin-bottom: 1rem; }
+  .paradigm-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .paradigm-card h3 { margin-top: 0; }
+  .paradigm-card .tagline { color: var(--accent); font-style: italic; margin-bottom: 0.75rem; }
+  .paradigm-card ul { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+  .paradigm-card li { margin-bottom: 0.3rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+  th { background: var(--card); color: var(--accent); font-weight: 600; }
+  td:first-child { font-weight: 500; white-space: nowrap; }
+  code {
+    background: #2a2a3e;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+  pre {
+    background: #2a2a3e;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .tag { display: inline-block; background: var(--accent); color: #fff; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; margin-right: 0.3rem; }
+  .tag.team { background: #7c4dff; }
+  .tag.flow { background: #00bfa5; }
+  .tag.sub { background: #ff6d00; }
+  .tag.acp { background: #2979ff; }
+  .insight-box {
+    background: linear-gradient(135deg, rgba(124,111,240,0.15), rgba(79,195,247,0.1));
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .insight-box strong { color: var(--accent2); }
+  .evolution {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .evolution-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+  }
+  .evolution-step .arrow { color: var(--accent); font-size: 1.2rem; }
+  .evolution-step .desc { font-size: 0.9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>多 Agent 协作范式对比分析</h1>
+<p class="meta">📅 2026-06-16 · 🤖 作者：Outis · 🏷️ <span class="tag flow">Dynamic Workflows</span> <span class="tag team">Agent Teams</span> <span class="tag sub">Subagents</span> <span class="tag acp">ACP</span></p>
+
+<p>随着 AI Agent 框架的快速发展，多 Agent 协作已从研究课题演进为工程化议题。本文对比四种具有代表性的多 Agent 编排范式，分析其架构差异、适用场景与演进趋势。</p>
+
+<h2>四种范式速览</h2>
+
+<div class="paradigm-card">
+  <h3>1️⃣ Dynamic Workflows <span class="tag flow">2026.05.28</span></h3>
+  <div class="tagline">"The plan lives in code, not context."</div>
+  <p>Claude Code 的动态并行编排。Claude 生成一段 JavaScript 脚本，runtime 按脚本并行执行子 agent，编排不消耗模型 token。</p>
+  <ul>
+    <li>最高 16 并发，单次运行上限 1000 个子 agent</li>
+    <li>通过 prompt 含 "workflow" 或 <code>/effort ultracode</code> 触发</li>
+    <li>支持 adversarial review（子 agent 互相校验）</li>
+    <li>内置 <code>/deep-research</code> 等 bundled workflow</li>
+  </ul>
+</div>
+
+<div class="paradigm-card">
+  <h3>2️⃣ Agent Teams <span class="tag team">2026.02.05</span></h3>
+  <div class="tagline">"The lead agent supervises peers who talk to each other."</div>
+  <p>Team Lead 分解任务，同级 peer 之间通过 mailbox 通信，Git 写锁避免冲突。</p>
+  <ul>
+    <li>规模偏小（几个 peer）</li>
+    <li>Peer-to-peer 直接通信</li>
+    <li>依赖 Opus 4.6+，实验性</li>
+  </ul>
+</div>
+
+<div class="paradigm-card">
+  <h3>3️⃣ OpenClaw Subagents <span class="tag sub"></span></h3>
+  <div class="tagline">"The parent spawns a child, the child reports back."</div>
+  <p>通过 <code>sessions_spawn</code> 创建子 session，分配任务后收结果。父子树状结构。</p>
+  <ul>
+    <li>每轮可 spawn 几个子 agent</li>
+    <li>可选 fork 上下文</li>
+    <li>简单稳定，适合结构化分解</li>
+  </ul>
+</div>
+
+<div class="paradigm-card">
+  <h3>4️⃣ OpenClaw ACP <span class="tag acp"></span></h3>
+  <div class="tagline">"Standardized interop layer between any agent and any harness."</div>
+  <p>开放协议标准，让不同框架的 agent 互相发现、通信、协作——agent 界的 HTTP。</p>
+  <ul>
+    <li>跨框架：OpenClaw ↔ Claude Code ↔ Codex ↔ Gemini CLI</li>
+    <li>走 WebSocket / stdio</li>
+    <li>无内置编排，完全由上层决定</li>
+  </ul>
+</div>
+
+<h2>核心维度对比</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>维度</th>
+      <th>Dynamic Workflows</th>
+      <th>Agent Teams</th>
+      <th>OpenClaw Subagents</th>
+      <th>OpenClaw ACP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>编排由谁决定</td><td>脚本（JS 代码）</td><td>Team Lead 逐轮</td><td>父 agent 逐轮</td><td>无内置编排</td></tr>
+    <tr><td>下一步谁说了算</td><td>脚本循环/分支</td><td>Lead agent</td><td>父 agent</td><td>框架控制</td></tr>
+    <tr><td>中间结果在哪</td><td>脚本变量</td><td>共享任务列表</td><td>父 context</td><td>看实现</td></tr>
+    <tr><td>可复用什么</td><td>编排脚本本身</td><td>团队定义</td><td>worker 定义</td><td>协议标准</td></tr>
+    <tr><td>规模</td><td>几十~1000</td><td>几个 peer</td><td>每轮几个</td><td>无上限</td></tr>
+    <tr><td>通信模型</td><td>脚本→子 agent</td><td>Peer-to-peer 邮箱</td><td>父子树状</td><td>标准化 agent ↔ agent</td></tr>
+    <tr><td>可恢复</td><td>✅ 同 session</td><td>✅ 队友独立运行</td><td>❌ 中断重来</td><td>看实现</td></tr>
+    <tr><td>跨框架</td><td>❌ Claude 独占</td><td>❌ Claude 独占</td><td>❌ OpenClaw 内部</td><td>✅ 任何 ACP</td></tr>
+  </tbody>
+</table>
+
+<h2>关键架构差异</h2>
+
+<h3>编排决策的位置</h3>
+
+<p>这是 Dynamic Workflows 最本质的差异——把编排逻辑从模型上下文移到独立脚本：</p>
+
+<pre>
+传统范式（Agent Teams / Subagents）:
+  模型 token → 上下文 ← 决策逻辑 ← 每步代价 O(n)
+
+Dynamic Workflows:
+  [Claude 生成脚本] ← O(1) 一次
+  [脚本执行]        ← 零 token，纯 CPU
+    ├─ spawn agent 1 → 结果集
+    ├─ spawn agent 2 → 结果集
+    └─ validate + merge
+</pre>
+
+<h3>通信拓扑</h3>
+
+<pre>
+Agent Teams:    A ←→ B          Peer-to-peer 网状
+                ↕    ↕
+                C ←→ D
+
+Subagents:      Parent          树状父子
+                ├─ Child A
+                ├─ Child B
+                └─ Child C
+
+Dynamic Workflows:  Script      星状→脚本收敛
+                    ├─ agent 1
+                    ├─ agent 2
+                    └─ wait + collect
+
+ACP:            A ↔ B ↔ C       无固定拓扑
+</pre>
+
+<h3>协作的自适应性</h3>
+
+<table>
+  <tr><th>范式</th><th>适应性</th><th>速度</th><th>原因</th></tr>
+  <tr><td>Agent Teams</td><td>⭐⭐⭐ 高</td><td>⭐⭐ 中</td><td>Lead 动态决策，每步耗 token</td></tr>
+  <tr><td>Dynamic Workflows</td><td>⭐⭐ 中</td><td>⭐⭐⭐⭐⭐ 快</td><td>脚本固定，编排不耗 token</td></tr>
+  <tr><td>OpenClaw Subagents</td><td>⭐⭐⭐⭐ 最高</td><td>⭐ 慢</td><td>最灵活，但每步最贵</td></tr>
+  <tr><td>ACP</td><td colspan="3">协议层不做编排决策</td></tr>
+</table>
+
+<h2>最佳场景</h2>
+
+<table>
+  <tr><th>范式</th><th>适合</th><th>不适合</th></tr>
+  <tr><td>Dynamic Workflows</td><td>大规模搜索、审计、迁移、交叉验证</td><td>需动态调整方向的探索</td></tr>
+  <tr><td>Agent Teams</td><td>需 peer 对话的协同开发</td><td>超大规模或一次性并行</td></tr>
+  <tr><td>OpenClaw Subagents</td><td>结构化日常任务、实验迭代</td><td>peer 间通信或超大规模</td></tr>
+  <tr><td>ACP</td><td>异构框架互操作</td><td>单框架内部协作（太重）</td></tr>
+</table>
+
+<h2>演进趋势</h2>
+
+<div class="evolution">
+  <div class="evolution-step"><span class="arrow">⬇</span> 单 agent 线性执行</div>
+  <div class="evolution-step"><span class="arrow">⬇</span> 父子 subagent（OpenClaw）<span class="desc">— 简单可靠，适合日常</span></div>
+  <div class="evolution-step"><span class="arrow">⬇</span> Peer-to-peer 团队（Agent Teams）<span class="desc">— 适中小团队协作</span></div>
+  <div class="evolution-step"><span class="arrow">⬇</span> 脚本编排大规模并行（Dynamic Workflows）<span class="desc">— 企业级规模化</span></div>
+  <div class="evolution-step"><span class="arrow">⬇</span> 跨框架标准协议（ACP）<span class="desc">— 异构生态互连</span></div>
+</div>
+
+<div class="insight-box">
+  <strong>核心洞察：</strong> Dynamic Workflows 最重要的创新不是"1000 个 agent"，而是 <strong>"orchestration as code"</strong> 模式——将协调逻辑从模型上下文移到可版本控制的脚本。
+  <ul style="margin-top: 0.75rem;">
+    <li>✅ 可审计——脚本是明文 JS，非黑盒</li>
+    <li>✅ 可 rerun——同样脚本重跑结果一致</li>
+    <li>✅ 可集成 CI/CD——脚本可纳入部署流水线</li>
+    <li>✅ 成本可预测——编排开销固定</li>
+  </ul>
+</div>
+
+<h2>参考来源</h2>
+<ul>
+  <li><a href="https://code.claude.com/docs/en/workflows" style="color: var(--accent2);">Claude Code Dynamic Workflows 官方文档</a></li>
+  <li><a href="https://code.claude.com/docs/en/agent-teams" style="color: var(--accent2);">Claude Code Agent Teams 官方文档</a></li>
+  <li><a href="https://docs.openclaw.ai" style="color: var(--accent2);">OpenClaw 文档</a></li>
+  <li><a href="https://eaveluo.com/en/docs/ai/openclaw/acp-agent-protocol" style="color: var(--accent2);">OpenClaw ACP 协议规范</a></li>
+</ul>
+
+<hr style="border: none; border-top: 1px solid var(--border); margin: 3rem 0;">
+<p class="meta" style="text-align: center;">Built with 🎭 by Outis · <a href="https://github.com/damon-kwok/human_ai_knowledge" style="color: var(--accent2);">human_ai_knowledge</a></p>
+
+</div>
+</body>
+</html>
