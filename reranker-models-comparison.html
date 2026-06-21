@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reranker 模型对比：从 MS-MARCO Cross-Encoder 到 LLM-based Reranker — 人机知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  line-height: 1.8; color: #333;
+  background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+  min-height: 100vh; padding: 40px 20px;
+}
+.container { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+.header h1 { font-size: 2.05em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
+.content h2 { color: #1e1b4b; border-bottom: 3px solid #6d28d9; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.45em; }
+.content h3 { color: #3730a3; margin: 22px 0 10px; font-size: 1.2em; }
+.content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.93em; }
+.content th, .content td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; vertical-align: top; }
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.content code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+.content pre { background: #1e1b4b; color: #e0e7ff; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 14px 0; font-size: 0.88em; line-height: 1.55; }
+.content pre code { background: transparent; color: inherit; padding: 0; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content blockquote { border-left: 4px solid #6d28d9; background: #f5f3ff; padding: 10px 18px; margin: 14px 0; color: #4c1d95; font-style: italic; }
+.content a { color: #4f46e5; text-decoration: none; }
+.content a:hover { text-decoration: underline; }
+.koujue { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #d97706; padding: 18px 24px; margin: 18px 0; border-radius: 8px; font-size: 1.05em; }
+.koujue strong { color: #92400e; }
+.footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) { body { padding: 20px 10px; } .header, .content, .footer { padding-left: 20px; padding-right: 20px; } .header h1 { font-size: 1.4em; } .content table { font-size: 0.8em; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Reranker 模型对比</h1>
+    <p class="subtitle">从 MS-MARCO Cross-Encoder 到 LLM-based Reranker — 范式演进、benchmark、选型决策</p>
+    <div class="meta">
+      <span class="meta-item agent">🤖 Damon + Metis</span>
+      <span class="meta-item">📅 2026-06-21</span>
+      <span class="meta-item">🔖 Reranker · BGE · BEIR · RAG</span>
+    </div>
+  </div>
+  <div class="content">
+
+<h2>一、范式定位</h2>
+<p>Reranker（精排器）位于现代两阶段检索管线的第二级：</p>
+<pre><code>query ──► [一阶召回 bi-encoder / BM25] ──► Top-N ──► [二阶精排 reranker] ──► Top-K
+              N ~ 100-1000                                  K ~ 5-10</code></pre>
+
+<p><strong>与 embedding（bi-encoder）的根本差异：</strong></p>
+<ul>
+  <li><strong>bi-encoder</strong> 把 query 和 doc <strong>独立</strong> 编码为向量，相似度通过点积/余弦得到，可预先离线索引 → 适合大规模召回</li>
+  <li><strong>cross-encoder（reranker）</strong> 把 (query, doc) <strong>拼接</strong> 后整体过 Transformer，输出一个标量相关性分数 → 表达力强但必须在线对每个候选跑完整推理，复杂度 O(N) 每对</li>
+</ul>
+
+<blockquote>三句话总结：embedding 用<strong>空间换时间</strong>，reranker 用<strong>时间换精度</strong>，两者组合 = RAG 检索的事实标准（Reimers & Gurevych, 2019; Khattab & Zaharia, 2020）。</blockquote>
+
+<h2>二、三个代表性 reranker</h2>
+<p>为讲清楚 reranker 范式演进，本文聚焦三个具有代表性的开源模型：</p>
+<table>
+  <tr><th>模型</th><th>范式</th><th>代表年份</th></tr>
+  <tr><td><code>cross-encoder/ms-marco-MiniLM-L-6-v2</code></td><td>经典 BERT 蒸馏 cross-encoder</td><td>2020 baseline</td></tr>
+  <tr><td><code>BAAI/bge-reranker-v2-m3</code></td><td>多语言 cross-encoder SOTA</td><td>2024</td></tr>
+  <tr><td><code>BAAI/bge-reranker-v2-gemma</code></td><td>LLM-based reranker（decoder-only）</td><td>2024</td></tr>
+</table>
+
+<h2>三、模型规格对比</h2>
+<table>
+  <tr><th>维度</th><th>ms-marco-MiniLM-L-6-v2</th><th>bge-reranker-v2-m3</th><th>bge-reranker-v2-gemma</th></tr>
+  <tr><td><strong>架构</strong></td><td>encoder-only cross-encoder</td><td>encoder-only cross-encoder</td><td>decoder-only（LLM-based）</td></tr>
+  <tr><td><strong>Backbone</strong></td><td>MiniLM-L6-H384</td><td>bge-m3 (XLM-RoBERTa-Large)</td><td>Gemma-2B</td></tr>
+  <tr><td><strong>参数量</strong></td><td>~22M</td><td>~568M / 0.6B</td><td>~2.51B</td></tr>
+  <tr><td><strong>最大输入</strong></td><td>512 tokens</td><td>8192 tokens（继承 bge-m3）</td><td>1024 tokens（HF 默认）</td></tr>
+  <tr><td><strong>训练数据</strong></td><td>MS MARCO（英文）</td><td>多语言混合（MIRACL/FEVER/MLDR）</td><td>多语言混合</td></tr>
+  <tr><td><strong>语言</strong></td><td>英文为主</td><td>100+ 多语言</td><td>多语言（英文与多语言均强）</td></tr>
+  <tr><td><strong>输出形式</strong></td><td>标量 logit（可 sigmoid）</td><td>标量 logit（可 sigmoid）</td><td>"Yes" token logit</td></tr>
+  <tr><td><strong>许可证</strong></td><td>Apache-2.0</td><td>Apache-2.0</td><td>Gemma License + Apache-2.0</td></tr>
+  <tr><td><strong>推理库</strong></td><td>sentence-transformers</td><td>FlagEmbedding (FlagReranker)</td><td>FlagEmbedding (FlagLLMReranker)</td></tr>
+</table>
+<p>数据来源：sbert.net 官方文档、HuggingFace 模型卡（BAAI/bge-reranker-v2-m3、BAAI/bge-reranker-v2-gemma）、BGE 官方文档（bge-model.com）。</p>
+
+<h2>四、公开 benchmark 数据</h2>
+
+<h3>4.1 MS MARCO Cross-Encoder 官方表（来源：sbert.net）</h3>
+<p>硬件：V100 GPU + HuggingFace Transformers v4。</p>
+<table>
+  <tr><th>模型</th><th>NDCG@10 (TREC DL 19)</th><th>MRR@10 (MS Marco Dev)</th><th>Docs/Sec</th></tr>
+  <tr><td>ms-marco-TinyBERT-L2-v2</td><td>69.84</td><td>32.56</td><td>9000</td></tr>
+  <tr><td>ms-marco-MiniLM-L2-v2</td><td>71.01</td><td>34.85</td><td>4100</td></tr>
+  <tr><td>ms-marco-MiniLM-L4-v2</td><td>73.04</td><td>37.70</td><td>2500</td></tr>
+  <tr><td><strong>ms-marco-MiniLM-L6-v2</strong></td><td><strong>74.30</strong></td><td><strong>39.01</strong></td><td><strong>1800</strong></td></tr>
+  <tr><td>ms-marco-MiniLM-L12-v2</td><td>74.31</td><td>39.02</td><td>960</td></tr>
+  <tr><td>ms-marco-electra-base</td><td>71.99</td><td>36.41</td><td>340</td></tr>
+  <tr><td>nboost/pt-bert-large-msmarco</td><td>73.36</td><td>36.48</td><td>100</td></tr>
+</table>
+<p><strong>关键观察：</strong>从 L6 到 L12，<strong>精度几乎没提升</strong>（74.30 → 74.31），但<strong>速度减半</strong>（1800 → 960 docs/sec）→ L6-v2 是甜点。该表只测英文 TREC DL 2019 + MS Marco Dev，未覆盖多语言或域外（BEIR 全套）评测。</p>
+
+<h3>4.2 BGE Reranker v2 系列（来源：bge-model.com 官方文档）</h3>
+<table>
+  <tr><th>模型</th><th>参数</th><th>优势场景</th></tr>
+  <tr><td>bge-reranker-base</td><td>278M</td><td>中英双语，轻量快速</td></tr>
+  <tr><td>bge-reranker-large</td><td>560M</td><td>中英双语，精度更高</td></tr>
+  <tr><td><strong>bge-reranker-v2-m3</strong></td><td><strong>568M</strong></td><td><strong>多语言（100+）+ 长上下文 + 轻量</strong></td></tr>
+  <tr><td><strong>bge-reranker-v2-gemma</strong></td><td><strong>2.51B</strong></td><td><strong>英文 + 多语言双优，质量最高的轻量级 LLM-based</strong></td></tr>
+  <tr><td>bge-reranker-v2-minicpm-layerwise</td><td>2.72B</td><td>层数可裁剪（8-40 层），动态加速</td></tr>
+  <tr><td>bge-reranker-v2.5-gemma2-lightweight</td><td>9.24B</td><td>层 + token 压缩，2026 系列最强</td></tr>
+</table>
+
+<p><strong>评测基准</strong>（BGE 官方仓库 <code>FlagEmbedding/research/llm_reranker/evaluation</code>）：</p>
+<ul>
+  <li><strong>llama-index</strong> benchmark</li>
+  <li><strong>BEIR</strong>（rerank top-100，召回器分别为 bge-en-v1.5-large 和 e5-mistral-7b-instruct）</li>
+  <li><strong>CMTEB retrieval</strong>（中文，召回器 bge-zh-v1.5）</li>
+  <li><strong>MIRACL</strong>（多语言，召回器 bge-m3）</li>
+</ul>
+<blockquote>⚠️ BGE 论文（Chen et al., 2024）和 HF 模型卡提供了 BEIR / MIRACL 上的对比图，但<strong>未在文本中给出完整数值表</strong>。如需引用具体数值，请直接参考论文表格或自行复现。</blockquote>
+
+<h3>4.3 官方定性排序结论</h3>
+<p><strong>精度（多语言场景）：</strong></p>
+<pre><code>bge-reranker-v2.5-gemma2-lightweight ≥ bge-reranker-v2-minicpm-layerwise ≥
+bge-reranker-v2-gemma > bge-reranker-v2-m3 > bge-reranker-large > bge-reranker-base</code></pre>
+<p><strong>效率（推理速度）：</strong></p>
+<pre><code>ms-marco-MiniLM-L6-v2 > bge-reranker-base > bge-reranker-large >
+bge-reranker-v2-m3 > bge-reranker-v2-gemma > bge-reranker-v2-minicpm-layerwise</code></pre>
+
+<h2>五、关键技术差异（论文写作可用）</h2>
+
+<h3>5.1 Encoder-only vs Decoder-only reranker</h3>
+<table>
+  <tr><th>维度</th><th>Encoder-only</th><th>Decoder-only / LLM-based</th></tr>
+  <tr><td>代表</td><td>ms-marco-MiniLM, bge-reranker-base/large/v2-m3</td><td>bge-reranker-v2-gemma, RankGPT, RankLLaMA, RankZephyr</td></tr>
+  <tr><td>输入</td><td><code>[CLS] query [SEP] passage [SEP]</code></td><td><code>Given query A and passage B, judge whether B answers A. Yes/No</code></td></tr>
+  <tr><td>输出</td><td><code>[CLS]</code> 位置 logit 经线性头</td><td><code>P(Yes)</code> 或 <code>P(Yes) - P(No)</code></td></tr>
+  <tr><td>训练</td><td>pointwise/pairwise 排序损失</td><td>指令微调（SFT），把"判断相关性"做成生成任务</td></tr>
+  <tr><td>优势</td><td>参数少、推理快、易部署</td><td>表达力强、可借力 LLM 世界知识</td></tr>
+  <tr><td>劣势</td><td>能力上限受 backbone 容量限制</td><td>延迟高一个数量级，显存占用更高</td></tr>
+</table>
+<p><strong>参考文献：</strong>Sun et al. (2023) <em>Is ChatGPT Good at Search?</em>（RankGPT）；Li et al. (2024) <em>Making Large Language Models A Better Foundation For Dense Retrieval</em>（arxiv:2312.15503，bge-reranker-v2-gemma 训练论文）。</p>
+
+<h3>5.2 三大演进趋势</h3>
+<ol>
+  <li><strong>LLM-based reranker 崛起：</strong>从千万-亿参 BERT → 1B-7B 参 LLM（bge-reranker-v2-gemma, gte-Qwen2-7B-reranker, RankZephyr）。精度跃升，但延迟 +5~10×。</li>
+  <li><strong>多模态 reranker：</strong>jina-reranker-m0、bge-vl-reranker 支持 (query, image) 打分。</li>
+  <li><strong>层选 / token 压缩：</strong>bge-reranker-v2-minicpm-layerwise（8-40 层可选）、bge-reranker-v2.5-gemma2-lightweight（层 + token 压缩），实现"质量-延迟"动态权衡。</li>
+</ol>
+
+<h2>六、应用代码示例</h2>
+
+<h3>6.1 ms-marco-MiniLM-L-6-v2</h3>
+<pre><code>from sentence_transformers import CrossEncoder
+
+model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
+scores = model.predict([
+    ('What is the capital of France?', 'Paris is the capital of France.'),
+    ('What is the capital of France?', 'Berlin is the capital of Germany.'),
+])
+print(scores)  # 例如 [10.7, -8.5]，正值表示相关</code></pre>
+
+<h3>6.2 bge-reranker-v2-m3</h3>
+<pre><code>from FlagEmbedding import FlagReranker
+
+reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True)
+score = reranker.compute_score(
+    ['熊猫是什么？', '大熊猫是中国特有的熊科动物。'],
+    normalize=True  # sigmoid 到 [0,1]
+)
+print(score)  # 例如 0.994</code></pre>
+
+<h3>6.3 bge-reranker-v2-gemma（LLM-based）</h3>
+<pre><code>from FlagEmbedding import FlagLLMReranker
+
+reranker = FlagLLMReranker('BAAI/bge-reranker-v2-gemma', use_fp16=True)
+score = reranker.compute_score(
+    ['熊猫是什么？', '大熊猫是中国特有的熊科动物。']
+)
+print(score)  # 1.97  (P(Yes) 的 logit)</code></pre>
+
+<h3>6.4 完整两阶段管线</h3>
+<pre><code>from FlagEmbedding import FlagModel, FlagReranker
+
+embedder = FlagModel('BAAI/bge-m3', use_fp16=True)
+reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True)
+
+# 阶段 1：bi-encoder 召回 Top-100
+q_vec = embedder.encode([query])
+doc_vecs = embedder.encode(corpus)
+top100_idx = (q_vec @ doc_vecs.T).argsort()[-100:][::-1]
+
+# 阶段 2：cross-encoder 精排 Top-10
+pairs = [[query, corpus[i]] for i in top100_idx]
+rerank_scores = reranker.compute_score(pairs, normalize=True)
+top10 = sorted(zip(top100_idx, rerank_scores), key=lambda x: -x[1])[:10]</code></pre>
+
+<h2>七、选型决策表（论文写作可用）</h2>
+<table>
+  <tr><th>场景</th><th>推荐模型</th><th>理由</th></tr>
+  <tr><td>学术对照 baseline</td><td>ms-marco-MiniLM-L-6-v2</td><td>经典、轻量、引用安全</td></tr>
+  <tr><td>中英双语低延迟</td><td>bge-reranker-large</td><td>560M，BERT 派系，部署容易</td></tr>
+  <tr><td>多语言生产环境</td><td>bge-reranker-v2-m3</td><td>100+ 语言、长上下文、推理快</td></tr>
+  <tr><td>高精度英文检索</td><td>bge-reranker-v2-gemma</td><td>LLM-based，质量上限高</td></tr>
+  <tr><td>质量-延迟可调</td><td>bge-reranker-v2-minicpm-layerwise</td><td>8-40 层动态选择</td></tr>
+  <tr><td>极致精度</td><td>bge-reranker-v2.5-gemma2-lightweight / RankZephyr</td><td>9B+，NDCG 上限最高</td></tr>
+</table>
+
+<h2>八、关键参考文献</h2>
+<ol>
+  <li><strong>Reimers & Gurevych (2019).</strong> <em>Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.</em> EMNLP. — bi-encoder/cross-encoder 范式奠基</li>
+  <li><strong>Wang et al. (2020).</strong> <em>MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression of Pre-Trained Transformers.</em> arXiv:2002.10957.</li>
+  <li><strong>Bajaj et al. (2016).</strong> <em>MS MARCO: A Human Generated MAchine Reading COmprehension Dataset.</em> arXiv:1611.09268.</li>
+  <li><strong>Khattab & Zaharia (2020).</strong> <em>ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.</em> SIGIR.</li>
+  <li><strong>Thakur et al. (2021).</strong> <em>BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models.</em> NeurIPS.</li>
+  <li><strong>Zhang et al. (2023).</strong> <em>MIRACL: A Multilingual Retrieval Dataset Covering 18 Diverse Languages.</em> TACL.</li>
+  <li><strong>Chen et al. (2024).</strong> <em>BGE M3-Embedding.</em> arXiv:2402.03216. — bge-reranker-v2-m3 论文</li>
+  <li><strong>Li et al. (2024).</strong> <em>Making Large Language Models A Better Foundation For Dense Retrieval.</em> arXiv:2312.15503. — bge-reranker-v2-gemma 训练方法</li>
+  <li><strong>Sun et al. (2023).</strong> <em>Is ChatGPT Good at Search? Investigating Large Language Models as Re-Ranking Agent.</em> EMNLP. — RankGPT，LLM-as-reranker 开山</li>
+  <li><strong>Pradeep et al. (2023).</strong> <em>RankZephyr.</em> arXiv:2312.02724. — listwise LLM reranker</li>
+</ol>
+
+<h2>九、口诀</h2>
+<div class="koujue">
+  <strong>召回求广，精排求准。</strong><br>
+  Bi-encoder 离线建索，Cross-encoder 在线打分。<br>
+  BERT 派吃精度上限，LLM 派吃质量天花板。<br>
+  L6 顶 L12，参数减半精度不掉；M3 顶 large，多语言长文都能扛。<br>
+  <strong>Gemma 是质量王，MiniLM 是速度王，M3 是工程甜点。</strong>
+</div>
+
+<h2>十、相关文档</h2>
+<ul>
+  <li><a href="embedding-models-comparison.md">embedding-models-comparison.md</a> — 主流 embedding 模型对比（<strong>本文姊妹篇</strong>）</li>
+  <li><a href="rag-intent-bidirectional-alignment.md">rag-intent-bidirectional-alignment.md</a> — RAG 意图对齐双向融合</li>
+  <li><a href="rag-content-intent-mapping.md">rag-content-intent-mapping.md</a> — RAG 内容-意图反向映射</li>
+  <li><a href="contrastive-decoding.md">contrastive-decoding.md</a> — Contrastive Decoding</li>
+  <li><a href="bert-cross-domain-generalization.md">bert-cross-domain-generalization.md</a> — BERT 跨领域泛化</li>
+</ul>
+
+  </div>
+  <div class="footer">
+    人机知识库 · Damon + Metis · 2026-06-21 · <a href="README.md">返回索引</a>
+  </div>
+</div>
+</body>
+</html>
