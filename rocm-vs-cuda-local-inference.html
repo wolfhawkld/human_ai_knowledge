@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROCm vs CUDA 本地推理对比 — 人机知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0f172a 0%, #312e81 100%); min-height: 100vh; padding: 40px 20px; }
+.container { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+.header h1 { font-size: 2.05em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
+.content h1 { display: none; }
+.content h2 { color: #1e1b4b; border-bottom: 3px solid #6d28d9; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.45em; }
+.content h3 { color: #3730a3; margin: 22px 0 10px; font-size: 1.2em; }
+.content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.91em; }
+.content th, .content td { border: 1px solid #e2e8f0; padding: 9px 12px; text-align: left; vertical-align: top; }
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.content code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+.content pre { background: #1e1b4b; color: #e0e7ff; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 14px 0; font-size: 0.86em; line-height: 1.55; }
+.content pre code { background: transparent; color: inherit; padding: 0; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content blockquote { border-left: 4px solid #6d28d9; background: #f5f3ff; padding: 10px 18px; margin: 14px 0; color: #4c1d95; }
+.content blockquote.koujue { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #d97706; padding: 18px 24px; margin: 18px 0; border-radius: 8px; font-size: 1.05em; color: #92400e; font-style: normal; }
+.content a { color: #4f46e5; text-decoration: none; }
+.content a:hover { text-decoration: underline; }
+.content hr { border: none; border-top: 1px dashed #c7d2fe; margin: 26px 0; }
+.footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) { body { padding: 20px 10px; } .header, .content, .footer { padding-left: 20px; padding-right: 20px; } .header h1 { font-size: 1.4em; } .content table { font-size: 0.78em; } .content th, .content td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>ROCm vs CUDA 本地推理对比</h1>
+    <p class="subtitle">库栈、流程、代码、痛点 — AMD 与 NVIDIA 全维度对照</p>
+    <div class="meta">
+      <span class="meta-item agent">🤖 Damon + Metis</span>
+      <span class="meta-item">📅 2026-06-21</span>
+      <span class="meta-item">🔖 ROCm · CUDA · PyTorch · 9070 XT</span>
+    </div>
+  </div>
+  <div class="content">
+<h1>ROCm vs CUDA 本地推理：库栈、流程、代码全维度对比</h1>
+<blockquote>
+<p>2026-06-21 · Damon + Metis · 分类：MLOps / 本地推理 · 标签：ROCm, CUDA, AMD, NVIDIA, PyTorch, vLLM, 部署</p>
+</blockquote>
+<hr />
+<h2>一、核心心智模型</h2>
+<pre><code>应用层      [你的代码 / sentence-transformers / FlagEmbedding]
+               │
+           [PyTorch / Transformers]      ← 这一层 API 完全相同
+               │
+       ┌───────┴────────┐
+       │                │
+   torch+cuda      torch+rocm        ← wheel 二选一，不能共存
+       │                │
+   [CUDA Runtime]  [HIP Runtime]    ← HIP 是 CUDA 的&quot;双胞胎兄弟&quot;
+       │                │
+   [cuBLAS/cuDNN]  [rocBLAS/MIOpen] ← 数学库一一对应
+       │                │
+   [NVIDIA Driver] [amdgpu Driver]  ← 内核驱动
+       │                │
+   [NVIDIA GPU]    [AMD GPU]
+</code></pre>
+<p><strong>核心洞察</strong>：<br />
+- HIP（Heterogeneous Interface for Portability）= 让 CUDA 代码"零修改"跑在 AMD 上的兼容层<br />
+- PyTorch 源码层做了 CUDA→HIP 的翻译，<strong>你写的 <code>torch.cuda.xxx</code> 在两边都能跑</strong><br />
+- 真正的差别在 wheel + 底层库 + 部分高级特性</p>
+<hr />
+<h2>二、库栈一一对应表</h2>
+<h3>2.1 底层库映射</h3>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>CUDA 生态</th>
+<th>ROCm 生态</th>
+<th>兼容性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GPU 编程模型</strong></td>
+<td>CUDA</td>
+<td>HIP（API 名同 CUDA）</td>
+<td>源码可移植</td>
+</tr>
+<tr>
+<td><strong>运行时</strong></td>
+<td>CUDA Runtime (<code>libcudart</code>)</td>
+<td>HIP Runtime (<code>libamdhip64</code>)</td>
+<td>API 同名</td>
+</tr>
+<tr>
+<td><strong>驱动 API</strong></td>
+<td>CUDA Driver API</td>
+<td>HSA Runtime</td>
+<td>抽象层不同</td>
+</tr>
+<tr>
+<td><strong>BLAS</strong></td>
+<td>cuBLAS</td>
+<td>rocBLAS / hipBLAS</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>DNN 算子</strong></td>
+<td>cuDNN</td>
+<td>MIOpen</td>
+<td>API 不同，PyTorch 屏蔽</td>
+</tr>
+<tr>
+<td><strong>FFT</strong></td>
+<td>cuFFT</td>
+<td>rocFFT / hipFFT</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>稀疏矩阵</strong></td>
+<td>cuSPARSE</td>
+<td>rocSPARSE / hipSPARSE</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>求解器</strong></td>
+<td>cuSOLVER</td>
+<td>rocSOLVER / hipSOLVER</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>集合通信</strong></td>
+<td>NCCL</td>
+<td>RCCL（同名 API）</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>图像/视频</strong></td>
+<td>NPP / NVDEC</td>
+<td>rocAL / rocDecode</td>
+<td>部分对应</td>
+</tr>
+<tr>
+<td><strong>JIT 编译器</strong></td>
+<td>NVRTC</td>
+<td>hipRTC / Composable Kernel</td>
+<td>API 兼容</td>
+</tr>
+<tr>
+<td><strong>GPU 监控</strong></td>
+<td><code>nvidia-smi</code></td>
+<td><code>rocm-smi</code></td>
+<td>命令类似</td>
+</tr>
+<tr>
+<td><strong>性能分析</strong></td>
+<td>Nsight Systems/Compute</td>
+<td>rocprof / Omnitrace</td>
+<td>工具不同</td>
+</tr>
+<tr>
+<td><strong>调试器</strong></td>
+<td>cuda-gdb</td>
+<td>rocgdb</td>
+<td>命令类似</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 上层 ML 框架支持</h3>
+<table>
+<thead>
+<tr>
+<th>框架 / 库</th>
+<th>CUDA</th>
+<th>ROCm</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PyTorch</strong></td>
+<td>✅ 原生</td>
+<td>✅ 官方 wheel</td>
+<td><code>torch+rocm</code> 包名仍叫 <code>torch</code></td>
+</tr>
+<tr>
+<td><strong>TensorFlow</strong></td>
+<td>✅ 原生</td>
+<td>✅ 官方支持</td>
+<td>滞后于 PyTorch</td>
+</tr>
+<tr>
+<td><strong>JAX</strong></td>
+<td>✅ 原生</td>
+<td>⚠️ 实验性</td>
+<td>ROCm 后端尚不完善</td>
+</tr>
+<tr>
+<td><strong>Transformers (HF)</strong></td>
+<td>✅ 原生</td>
+<td>✅ 透明兼容</td>
+<td>用 PyTorch 后端，自动适配</td>
+</tr>
+<tr>
+<td><strong>sentence-transformers</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>无任何代码差异</td>
+</tr>
+<tr>
+<td><strong>FlagEmbedding</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>无任何代码差异</td>
+</tr>
+<tr>
+<td><strong>vLLM</strong></td>
+<td>✅ 一等公民</td>
+<td>✅ 官方支持</td>
+<td>ROCm 路径文档完整</td>
+</tr>
+<tr>
+<td><strong>llama.cpp</strong></td>
+<td>✅ (cuBLAS)</td>
+<td>✅ (HIP/hipBLAS)</td>
+<td>编译时 <code>-DGGML_HIP=ON</code></td>
+</tr>
+<tr>
+<td><strong>TGI (HF)</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>官方 ROCm 镜像</td>
+</tr>
+<tr>
+<td><strong>Ollama</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>自带 ROCm 二进制</td>
+</tr>
+<tr>
+<td><strong>TensorRT-LLM</strong></td>
+<td>✅</td>
+<td>❌</td>
+<td>NVIDIA 独家</td>
+</tr>
+<tr>
+<td><strong>flash-attention</strong></td>
+<td>✅ 主线</td>
+<td>⚠️ <code>flash-attn-rocm</code> fork</td>
+<td>主线 v3 仅 H100</td>
+</tr>
+<tr>
+<td><strong>xformers</strong></td>
+<td>✅</td>
+<td>⚠️ 部分算子</td>
+<td>推荐用 PyTorch SDPA 代替</td>
+</tr>
+<tr>
+<td><strong>bitsandbytes</strong> (4/8bit)</td>
+<td>✅ 完善</td>
+<td>⚠️ 实验性 ROCm fork</td>
+<td>量化训练受限</td>
+</tr>
+<tr>
+<td><strong>unsloth</strong> (高速微调)</td>
+<td>✅</td>
+<td>⚠️ 社区 fork</td>
+<td>主线只支持 NVIDIA</td>
+</tr>
+<tr>
+<td><strong>DeepSpeed</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>ZeRO 全支持</td>
+</tr>
+<tr>
+<td><strong>Triton</strong> (GPU kernel DSL)</td>
+<td>✅</td>
+<td>✅</td>
+<td>ROCm 后端已 GA</td>
+</tr>
+<tr>
+<td><strong>TorchAO</strong> (新一代量化)</td>
+<td>✅</td>
+<td>✅</td>
+<td>跨平台首选</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>三、安装流程对比（Ubuntu 24.04）</h2>
+<h3>3.1 CUDA 安装流程</h3>
+<pre><code class="language-bash"># 1. 装 NVIDIA 驱动（推荐用 ubuntu-drivers 自动选）
+sudo ubuntu-drivers autoinstall
+sudo reboot
+
+# 2. 验证驱动
+nvidia-smi   # 看到卡名 + CUDA 版本（这是驱动支持的最高版本）
+
+# 3. 装 PyTorch（自带 CUDA runtime，不需单独装 CUDA Toolkit）
+python -m venv ~/.venv/cuda-rag
+source ~/.venv/cuda-rag/bin/activate
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+# 4. 验证
+python -c &quot;import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))&quot;
+</code></pre>
+<p><strong>步骤数</strong>：4 步<br />
+<strong>时间</strong>：~15-30 分钟<br />
+<strong>痛点</strong>：驱动版本要和 CUDA Toolkit 兼容（PyTorch wheel 自带 runtime，省了大半麻烦）</p>
+<h3>3.2 ROCm 安装流程</h3>
+<pre><code class="language-bash"># 1. 装 ROCm 仓库（去 repo.radeon.com 找最新版）
+wget https://repo.radeon.com/amdgpu-install/7.2.1/ubuntu/noble/amdgpu-install_7.2.60201-1_all.deb
+sudo apt install ./amdgpu-install_7.2.60201-1_all.deb
+
+# 2. 装 ROCm 运行时（5-10 GB）
+sudo amdgpu-install --usecase=rocm --no-dkms
+
+# 3. 用户加组（关键步骤，CUDA 不需要）
+sudo usermod -aG render,video $USER
+sudo reboot
+
+# 4. 验证 ROCm
+rocminfo | grep -E &quot;Name|gfx&quot;
+rocm-smi
+
+# 5. 装 PyTorch（注意 index-url 不一样）
+python -m venv ~/.venv/rocm-rag
+source ~/.venv/rocm-rag/bin/activate
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
+
+# 6. 验证（注意：仍是 torch.cuda.xxx）
+python -c &quot;import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))&quot;
+# 期望输出: True AMD Radeon RX 9070 XT
+</code></pre>
+<p><strong>步骤数</strong>：6 步<br />
+<strong>时间</strong>：~1-2 小时（包含 5GB 下载）<br />
+<strong>痛点</strong>：硬件白名单（GPU 是否被支持）、用户组权限、ROCm 与 PyTorch wheel 版本对齐</p>
+<h3>3.3 关键差异</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>CUDA</th>
+<th>ROCm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>驱动包</strong></td>
+<td>一个 <code>.deb</code>，自动</td>
+<td>DKMS 或 in-tree，需选择</td>
+</tr>
+<tr>
+<td><strong>运行时下载量</strong></td>
+<td>0（PyTorch wheel 自带）</td>
+<td>5-10 GB（独立 apt 包）</td>
+</tr>
+<tr>
+<td><strong>用户组要求</strong></td>
+<td>无</td>
+<td>必须加入 <code>render</code>+<code>video</code></td>
+</tr>
+<tr>
+<td><strong>硬件支持</strong></td>
+<td>RTX 20 系起几乎全支持</td>
+<td>白名单（7900/9070/MI 系列等）</td>
+</tr>
+<tr>
+<td><strong>OS 支持</strong></td>
+<td>Ubuntu/RHEL/Debian/Arch 广泛</td>
+<td>Ubuntu/RHEL/SLES 官方；其他需折腾</td>
+</tr>
+<tr>
+<td><strong>WSL2 支持</strong></td>
+<td>✅ 一级公民</td>
+<td>⚠️ 实验性，性能折损</td>
+</tr>
+<tr>
+<td><strong>多卡</strong></td>
+<td>NVLink + NCCL 稳定</td>
+<td>Infinity Fabric + RCCL（消费卡多卡差）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>四、代码层对比（精彩之处：几乎无差别）</h2>
+<h3>4.1 设备检测</h3>
+<pre><code class="language-python"># ✅ 两边完全相同
+import torch
+
+print(torch.cuda.is_available())          # CUDA: True / ROCm: True
+print(torch.cuda.device_count())          # 一致
+print(torch.cuda.get_device_name(0))      # NVIDIA: &quot;RTX 4090&quot; / AMD: &quot;Radeon RX 9070 XT&quot;
+print(torch.version.cuda)                 # NVIDIA: &quot;12.4&quot; / AMD: None
+print(torch.version.hip)                  # NVIDIA: None / AMD: &quot;6.2.41134-...&quot;
+</code></pre>
+<p><strong>唯一可以区分的方法</strong>：<code>torch.version.hip</code> 是否为 None。</p>
+<h3>4.2 张量运算</h3>
+<pre><code class="language-python"># ✅ 完全相同
+device = 'cuda'  # 在 AMD 上也是 'cuda'，HIP 兼容层让这个字符串都不用改
+x = torch.randn(1024, 1024, device=device, dtype=torch.float16)
+y = torch.matmul(x, x.T)
+</code></pre>
+<h3>4.3 BGE 模型推理</h3>
+<pre><code class="language-python"># ✅ 完全相同
+from FlagEmbedding import FlagModel, FlagReranker
+
+embedder = FlagModel('BAAI/bge-m3', use_fp16=True, devices='cuda:0')
+vecs = embedder.encode(['hello', '你好'])
+
+reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True, devices='cuda:0')
+scores = reranker.compute_score([['熊猫', '大熊猫是中国动物']])
+</code></pre>
+<blockquote>
+<p>💡 <strong>要点</strong>：FlagEmbedding / sentence-transformers / transformers 这些库，AMD 上<strong>字面意义零修改</strong>。</p>
+</blockquote>
+<h3>4.4 vLLM 部署</h3>
+<pre><code class="language-bash"># CUDA 路径
+pip install vllm
+python -m vllm.entrypoints.openai.api_server --model BAAI/bge-m3
+
+# ROCm 路径
+# 用官方 ROCm 镜像（强烈推荐，避免编译）
+docker run --device=/dev/kfd --device=/dev/dri --group-add video \
+  -p 8000:8000 \
+  rocm/vllm:latest \
+  --model BAAI/bge-m3
+</code></pre>
+<p><strong>差别</strong>：vLLM 在 ROCm 上推荐用 Docker 镜像（避免编译依赖），CUDA 直接 <code>pip install</code>。</p>
+<h3>4.5 llama.cpp 编译</h3>
+<pre><code class="language-bash"># CUDA
+cmake -B build -DGGML_CUDA=ON
+cmake --build build -j
+
+# ROCm
+cmake -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=gfx1201
+cmake --build build -j
+</code></pre>
+<p><strong>差别</strong>：ROCm 要指定 GPU 架构（<code>gfx1100</code> for 7900 XTX, <code>gfx1201</code> for 9070 XT, <code>gfx942</code> for MI300）。</p>
+<hr />
+<h2>五、推理框架完整对比</h2>
+<h3>5.1 主流推理框架支持矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>CUDA</th>
+<th>ROCm</th>
+<th>推荐场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transformers 直接 .generate()</strong></td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>原型验证</td>
+</tr>
+<tr>
+<td><strong>vLLM</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>高吞吐 LLM 服务</td>
+</tr>
+<tr>
+<td><strong>SGLang</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>RadixAttention KV 共享</td>
+</tr>
+<tr>
+<td><strong>TGI</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>HF 全家桶集成</td>
+</tr>
+<tr>
+<td><strong>llama.cpp / Ollama</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>消费卡/CPU 量化推理</td>
+</tr>
+<tr>
+<td><strong>TensorRT-LLM</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>❌</td>
+<td>NVIDIA 独家最优</td>
+</tr>
+<tr>
+<td><strong>MLC-LLM</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>跨平台编译</td>
+</tr>
+<tr>
+<td><strong>Triton Inference Server</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>企业级多模型</td>
+</tr>
+<tr>
+<td><strong>TorchServe</strong></td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>PyTorch 原生</td>
+</tr>
+</tbody>
+</table>
+<h3>5.2 vLLM ROCm vs CUDA 实测差异（社区报告）</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>CUDA (A100 80GB)</th>
+<th>ROCm (MI300X 192GB)</th>
+<th>ROCm (RX 7900 XTX)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama-3.1-8B</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐ (大显存赢)</td>
+<td>⭐⭐⭐ (24GB 受限)</td>
+</tr>
+<tr>
+<td>Llama-3.1-70B</td>
+<td>⭐⭐⭐⭐ (多卡)</td>
+<td>⭐⭐⭐⭐⭐ (单卡)</td>
+<td>❌ (显存不够)</td>
+</tr>
+<tr>
+<td>Mixtral-8x7B</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td>Embedding (bge-m3)</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论</strong>：embedding/reranker 这种"小模型 + 高吞吐"场景，AMD 卡（哪怕消费卡）和 NVIDIA 几乎无差别。</p>
+<hr />
+<h2>六、量化与高级特性对比</h2>
+<h3>6.1 量化方案支持</h3>
+<table>
+<thead>
+<tr>
+<th>量化方法</th>
+<th>CUDA</th>
+<th>ROCm</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GGUF</strong> (llama.cpp)</td>
+<td>✅</td>
+<td>✅</td>
+<td>跨平台最稳，CPU+GPU 混合推理</td>
+</tr>
+<tr>
+<td><strong>AWQ</strong></td>
+<td>✅</td>
+<td>✅ (vLLM/AutoAWQ)</td>
+<td>推理优化</td>
+</tr>
+<tr>
+<td><strong>GPTQ</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>老牌方案</td>
+</tr>
+<tr>
+<td><strong>bitsandbytes 8bit</strong></td>
+<td>✅ 完善</td>
+<td>⚠️ fork 实验性</td>
+<td>训练用</td>
+</tr>
+<tr>
+<td><strong>bitsandbytes 4bit (QLoRA)</strong></td>
+<td>✅ 完善</td>
+<td>⚠️ fork 不稳定</td>
+<td>QLoRA 微调</td>
+</tr>
+<tr>
+<td><strong>TorchAO</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>PyTorch 官方，跨平台</td>
+</tr>
+<tr>
+<td><strong>FP8 (H100/MI300)</strong></td>
+<td>✅ Hopper</td>
+<td>✅ MI300</td>
+<td>消费卡都不支持</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论</strong>：<br />
+- <strong>推理量化</strong>：CUDA/ROCm 基本对等（GGUF/AWQ/GPTQ 都能用）<br />
+- <strong>量化训练（QLoRA）</strong>：CUDA 优势明显，AMD 需要折腾</p>
+<h3>6.2 Attention 实现</h3>
+<table>
+<thead>
+<tr>
+<th>实现</th>
+<th>CUDA</th>
+<th>ROCm</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PyTorch SDPA</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>默认，跨平台首选</td>
+</tr>
+<tr>
+<td><strong>Flash Attention v2</strong></td>
+<td>✅ 主线</td>
+<td>⚠️ <code>flash-attn-rocm</code> fork</td>
+<td>RDNA3+ 可用</td>
+</tr>
+<tr>
+<td><strong>Flash Attention v3</strong></td>
+<td>✅ H100 only</td>
+<td>❌</td>
+<td>NVIDIA Hopper 独家</td>
+</tr>
+<tr>
+<td><strong>xFormers memory-efficient</strong></td>
+<td>✅</td>
+<td>⚠️ 部分</td>
+<td>推荐用 SDPA 代替</td>
+</tr>
+<tr>
+<td><strong>Triton flash attention</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>跨平台首选（如果不嫌慢）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>实用建议</strong>：对 BGE/Reranker 这种 ≤1B 模型，<strong>用默认 SDPA 即可</strong>，无需 flash-attn。</p>
+<hr />
+<h2>七、监控与调试工具对比</h2>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>CUDA</th>
+<th>ROCm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>看 GPU 利用率</strong></td>
+<td><code>nvidia-smi</code> / <code>nvtop</code></td>
+<td><code>rocm-smi</code> / <code>nvtop</code>（支持 AMD）/ <code>radeontop</code></td>
+</tr>
+<tr>
+<td><strong>持续监控</strong></td>
+<td><code>watch -n 1 nvidia-smi</code></td>
+<td><code>watch -n 1 rocm-smi</code></td>
+</tr>
+<tr>
+<td><strong>显存详情</strong></td>
+<td><code>nvidia-smi --query-gpu=memory.used --format=csv</code></td>
+<td><code>rocm-smi --showmeminfo vram</code></td>
+</tr>
+<tr>
+<td><strong>进程级 GPU 占用</strong></td>
+<td><code>nvidia-smi pmon</code></td>
+<td><code>rocm-smi --showpids</code></td>
+</tr>
+<tr>
+<td><strong>性能分析</strong></td>
+<td>Nsight Systems / Compute</td>
+<td>rocprof / Omnitrace</td>
+</tr>
+<tr>
+<td><strong>调试器</strong></td>
+<td>cuda-gdb</td>
+<td>rocgdb</td>
+</tr>
+<tr>
+<td><strong>内存检查</strong></td>
+<td>compute-sanitizer</td>
+<td>rocm-sanitizer</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 <code>nvtop</code> <strong>两边都支持</strong>，是跨平台 GPU 监控的瑞士军刀。</p>
+</blockquote>
+<hr />
+<h2>八、Docker / 容器化对比</h2>
+<h3>8.1 启动命令</h3>
+<pre><code class="language-bash"># CUDA（需 nvidia-container-toolkit）
+docker run --gpus all -it nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+# ROCm（不需要特殊 runtime，靠 device passthrough）
+docker run --device=/dev/kfd --device=/dev/dri \
+           --group-add video \
+           -it rocm/rocm-terminal:latest
+</code></pre>
+<h3>8.2 官方镜像</h3>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>CUDA 镜像</th>
+<th>ROCm 镜像</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>基础运行时</strong></td>
+<td><code>nvidia/cuda:12.4-runtime</code></td>
+<td><code>rocm/dev-ubuntu-24.04</code></td>
+</tr>
+<tr>
+<td><strong>PyTorch</strong></td>
+<td><code>pytorch/pytorch:2.5-cuda12.4</code></td>
+<td><code>rocm/pytorch:latest</code></td>
+</tr>
+<tr>
+<td><strong>vLLM</strong></td>
+<td><code>vllm/vllm-openai:latest</code></td>
+<td><code>rocm/vllm:latest</code></td>
+</tr>
+<tr>
+<td><strong>TGI</strong></td>
+<td><code>ghcr.io/huggingface/text-generation-inference:latest</code></td>
+<td><code>ghcr.io/huggingface/text-generation-inference:latest-rocm</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>九、典型痛点对照</h2>
+<table>
+<thead>
+<tr>
+<th>痛点</th>
+<th>CUDA</th>
+<th>ROCm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>驱动版本不匹配</strong></td>
+<td>用户态 CUDA Toolkit &gt; 驱动支持 → 报错</td>
+<td>ROCm 版本要严格匹配硬件代际</td>
+</tr>
+<tr>
+<td><strong>wheel 不存在</strong></td>
+<td>极少（NVIDIA 全代际支持）</td>
+<td>较常见（特别是新卡刚发售时）</td>
+</tr>
+<tr>
+<td><strong>没权限访问 GPU</strong></td>
+<td>罕见（自动配置）</td>
+<td>常见（忘加 render/video 组）</td>
+</tr>
+<tr>
+<td><strong>某个库不支持</strong></td>
+<td>几乎不会</td>
+<td>flash-attn 主线、bitsandbytes、xformers</td>
+</tr>
+<tr>
+<td><strong>OS 不支持</strong></td>
+<td>几乎不会</td>
+<td>Arch/Gentoo/Fedora 需要折腾</td>
+</tr>
+<tr>
+<td><strong>WSL 性能</strong></td>
+<td>✅ 接近原生</td>
+<td>⚠️ 折损 20-40%</td>
+</tr>
+<tr>
+<td><strong>多卡互联</strong></td>
+<td>NVLink 稳定</td>
+<td>消费卡跨卡通信慢</td>
+</tr>
+<tr>
+<td><strong>冷启动慢</strong></td>
+<td>cuDNN benchmark</td>
+<td>MIOpen kernel 编译（首次特别慢）</td>
+</tr>
+<tr>
+<td><strong>生态文档</strong></td>
+<td>★★★★★</td>
+<td>★★★</td>
+</tr>
+<tr>
+<td><strong>Stack Overflow 答案密度</strong></td>
+<td>★★★★★</td>
+<td>★★</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>十、典型流程对比图</h2>
+<h3>10.1 CUDA 部署 embedding 服务（happy path）</h3>
+<pre><code>[买 NVIDIA 卡] → [装驱动] → [pip install torch+cu] → [pip install FlagEmbedding]
+                                                              ↓
+                                                       [跑 BGE 推理] ✅
+                                                       ~ 30 分钟
+</code></pre>
+<h3>10.2 ROCm 部署 embedding 服务（happy path）</h3>
+<pre><code>[确认 GPU 在白名单] → [装 ROCm 7.2.1] → [加 render/video 组]
+                                              ↓
+[rocminfo 验证] → [pip install torch+rocm6.2] → [pip install FlagEmbedding]
+                                                          ↓
+                                                   [跑 BGE 推理] ✅
+                                                   ~ 90 分钟
+</code></pre>
+<h3>10.3 ROCm 不顺利路径（消费卡 + 新硬件 + 特殊库）</h3>
+<pre><code>[ROCm 装好] → [PyTorch wheel 索引 403] → [挂代理/换镜像]
+                                              ↓
+[需要 bitsandbytes] → [主线不支持] → [找 ROCm fork] → [编译失败] → [改用 GGUF]
+                                              ↓
+[需要 flash-attn] → [主线不支持] → [用 flash-attn-rocm fork] → 或回退 SDPA
+                                              ↓
+                                       [终于跑起来] ✅
+                                       ~ 半天到 1 天
+</code></pre>
+<hr />
+<h2>十一、决策树：你该选哪条路？</h2>
+<pre><code>你要做什么？
+│
+├── 纯推理（embedding / reranker / LLM inference）
+│   ├── 已有 NVIDIA 卡 → CUDA ✅ 最省心
+│   ├── 已有 AMD 7900/9070/MI300 → ROCm ✅ 完全可行
+│   ├── 准备新购 → 看预算：
+│   │   ├── 单卡 ≤ 16GB → 价格优先选 AMD (9070 XT)
+│   │   ├── 单卡 24GB → 7900 XTX (AMD) vs 4090 (NVIDIA) 性价比相当
+│   │   └── 数据中心 → MI300X 192GB vs H100/H200，AMD 显存优势大
+│   └── 多卡训练/推理 → CUDA + NVLink 仍是首选
+│
+├── 微调（PEFT / LoRA / 全参）
+│   ├── LoRA / 全参微调（不用 4bit） → 两边都行
+│   ├── QLoRA（4bit 量化训练） → CUDA ✅ 强烈推荐
+│   └── RLHF / DPO / GRPO → CUDA ✅ 生态更完善
+│
+├── 研究 / 论文复现
+│   ├── 大多数 GitHub 仓库默认 CUDA → CUDA ✅
+│   └── 复现工作量小 → ROCm 也行，但常踩坑
+│
+└── 企业生产部署
+    ├── 已有 NVIDIA 基建 → CUDA
+    ├── 成本敏感 + 推理为主 → ROCm + MI300 性价比赢
+    └── 需 TensorRT 极致优化 → CUDA only
+</code></pre>
+<hr />
+<h2>十二、给 Damon 的最终建议（基于你的研究方向）</h2>
+<h3>你的画像</h3>
+<ul>
+<li><strong>研究方向</strong>：Agentic AI 企业工程化 + 自然语言语义聚类</li>
+<li><strong>典型任务</strong>：跑 BGE/Reranker、做语义聚类、构建 RAG、写论文</li>
+<li><strong>硬件</strong>：Radeon RX 9070 XT（16GB, RDNA 4, gfx1201）</li>
+<li><strong>OS</strong>：WSL 或 Linux</li>
+</ul>
+<h3>推荐策略</h3>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>推荐方案</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>embedding / reranker 推理</strong></td>
+<td>✅ ROCm + 9070 XT 物理 Linux</td>
+<td>100% 适用，零踩坑</td>
+</tr>
+<tr>
+<td><strong>本地 7B LLM 推理</strong></td>
+<td>✅ ROCm + vLLM/llama.cpp</td>
+<td>16GB 紧但够，GGUF 是甜点</td>
+</tr>
+<tr>
+<td><strong>语义聚类 (HDBSCAN/UMAP)</strong></td>
+<td>✅ 任意（CPU 为主）</td>
+<td>算法跑 CPU，GPU 只算 embedding</td>
+</tr>
+<tr>
+<td><strong>PEFT 微调 BGE</strong></td>
+<td>✅ ROCm 可跑（无 bitsandbytes）</td>
+<td>不需要 4bit 量化训练</td>
+</tr>
+<tr>
+<td><strong>QLoRA 微调 7B</strong></td>
+<td>❌ ROCm 受限</td>
+<td>建议租云端 NVIDIA 卡</td>
+</tr>
+<tr>
+<td><strong>论文 baseline 复现</strong></td>
+<td>⚠️ 看仓库</td>
+<td>多数仓库 CUDA-only，ROCm 可能要改代码</td>
+</tr>
+</tbody>
+</table>
+<h3>一句话总结你的情况</h3>
+<blockquote>
+<p><strong>9070 XT + ROCm 7.2 + Linux 物理机 = embedding/reranker 推理的甜点配置</strong>。需要 QLoRA / flash-attn-v3 时再租云端 NVIDIA，<strong>完全没必要为这两个特例放弃 AMD</strong>。</p>
+</blockquote>
+<hr />
+<h2>十三、关键命令速查表</h2>
+<h3>CUDA 速查</h3>
+<pre><code class="language-bash">nvidia-smi                          # 看卡 + 显存 + 进程
+nvidia-smi --query-gpu=name --format=csv  # 只看卡名
+nvtop                               # 持续监控
+nvcc --version                      # CUDA Toolkit 版本
+python -c &quot;import torch; print(torch.version.cuda)&quot;  # PyTorch 用的 CUDA 版本
+</code></pre>
+<h3>ROCm 速查</h3>
+<pre><code class="language-bash">rocminfo | grep &quot;Marketing Name&quot;   # 看卡名
+rocminfo | grep gfx                 # 看架构（gfx1201 = RDNA 4）
+rocm-smi                            # 持续监控
+rocm-smi --showmeminfo vram        # 看显存
+rocm-smi --showtopo                # 看多卡拓扑
+nvtop                               # 同样支持 AMD
+hipcc --version                     # HIP 编译器版本
+python -c &quot;import torch; print(torch.version.hip)&quot;   # PyTorch 用的 HIP 版本
+</code></pre>
+<h3>通用速查</h3>
+<pre><code class="language-bash"># 看 GPU 进程占用（两边都用）
+fuser -v /dev/nvidia*       # NVIDIA
+fuser -v /dev/kfd /dev/dri/* # AMD
+
+# PyTorch 设备信息
+python -c &quot;
+import torch
+print('Available:', torch.cuda.is_available())
+print('Count:', torch.cuda.device_count())
+print('Name:', torch.cuda.get_device_name(0))
+print('CUDA:', torch.version.cuda)
+print('HIP:', torch.version.hip)
+print('VRAM:', torch.cuda.get_device_properties(0).total_memory / 1e9, 'GB')
+&quot;
+</code></pre>
+<hr />
+<h2>十四、口诀（速记）</h2>
+<blockquote class="koujue">
+<p><strong>API 一样，wheel 不同。</strong> （<code>torch.cuda.*</code> 在 AMD 上也是合法的）<br />
+<strong>HIP 翻译 CUDA，编译产物原生 AMD。</strong> （不经过 CUDA runtime）<br />
+<strong>推理跨平台一致，训练 NVIDIA 仍王。</strong><br />
+<strong>bitsandbytes / flash-attn 是 ROCm 痛点，GGUF / AWQ / SDPA 是 ROCm 甜点。</strong><br />
+<strong>白名单 + 用户组 + 版本对齐 = ROCm 三大坑。</strong><br />
+<strong>物理 Linux &gt; Docker &gt; WSL2，性能依次递减。</strong></p>
+</blockquote>
+<hr />
+<h2>十五、参考链接</h2>
+<ol>
+<li><strong>ROCm 官方兼容矩阵</strong>：https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html</li>
+<li><strong>ROCm on Radeon 支持矩阵</strong>：https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/native_linux/native_linux_compatibility.html</li>
+<li><strong>PyTorch ROCm 安装</strong>：https://pytorch.org/get-started/locally/</li>
+<li><strong>vLLM ROCm 部署文档</strong>：https://docs.vllm.ai/en/latest/getting_started/amd-installation.html</li>
+<li><strong>HIP Programming Guide</strong>：https://rocm.docs.amd.com/projects/HIP/en/latest/</li>
+<li><strong>9070 XT ROCm 实测</strong>：kaeru.my/notes/local-ai-with-amd-radeon-9070-xt-on-ubuntu-linux-25-04-with-rocm-6-4.1</li>
+<li><strong>AMD ROCm 7.2 Consumer GPUs</strong>：dev.to/kunal_d6a8fea2309e1571ee7/amd-rocm-on-consumer-gpus-1cn5</li>
+</ol>
+<hr />
+<h2>十六、相关文档</h2>
+<ul>
+<li><a href="reranker-models-comparison.md">reranker-models-comparison.md</a> — Reranker 模型对比</li>
+<li><a href="embedding-models-comparison.md">embedding-models-comparison.md</a> — Embedding 模型对比</li>
+<li><a href="vllm-sglang-tilelang-comparison.md">vllm-sglang-tilelang-comparison.md</a> — vLLM/SGLang/TileLang 推理框架对比</li>
+</ul>
+  </div>
+  <div class="footer">
+    <a href="index.html">← 返回知识库首页</a> · 
+    <a href="reranker-models-comparison.html">Reranker 对比</a> · 
+    <a href="embedding-models-comparison.html">Embedding 对比</a>
+  </div>
+</div>
+</body>
+</html>

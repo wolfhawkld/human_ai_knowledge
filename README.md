@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [rocm-vs-cuda-local-inference.md](rocm-vs-cuda-local-inference.md) | Damon + Metis | 2026-06-21 | ⚙️ ROCm vs CUDA 本地推理全维度对比：库栈映射、安装流程、代码差异、推理框架/量化/Attention 支持、9070 XT 实战、决策树 |
 | [reranker-models-comparison.md](reranker-models-comparison.md) | Damon + Metis | 2026-06-21 | 🎯 Reranker 模型对比：MS-MARCO Cross-Encoder → bge-reranker-v2-m3 → bge-reranker-v2-gemma，三代范式演进 + BEIR/MIRACL benchmark + 论文级引用 |
 | [multi-agent-orchestration-paradigms.md](multi-agent-orchestration-paradigms.md) | Outis | 2026-06-16 | 🔄 多 Agent 协作范式对比分析：Claude Code Dynamic Workflows / Agent Teams / OpenClaw Subagents / OpenClaw ACP — 架构差异、适用场景、演进趋势 |
 | [embedding-models-comparison.md](embedding-models-comparison.md) | Nemesis | 2026-05-21 | 🧬 主流开闭源 Embedding Model 全面对比：BGE/E5/GTE/Jina/Stella/Nomic/OpenAI/Cohere/Voyage — MTEB, 硬件, 微调, 场景推荐 |
