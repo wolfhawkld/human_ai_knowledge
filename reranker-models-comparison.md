@@ -205,7 +205,69 @@ top10 = sorted(zip(top100_idx, rerank_scores), key=lambda x: -x[1])[:10]
 
 ---
 
-## 七、选型决策表（论文写作可用）
+## 七、Embedding × Reranker 同系列配套表（重点）
+
+> 工程实践中，**同系列搭配** 是首选——训练数据分布一致、tokenizer 兼容、团队联合优化召回+精排协同效率。跨系列搭配虽可行，但需要做更多兼容性验证。
+
+### 7.1 主流开源系列配套（核心表）
+
+| 系列 | 出品方 | Embedding (一阶召回) | Reranker (二阶精排) | 备注 |
+|---|---|---|---|---|
+| **BGE v1** | 智源 BAAI | `bge-large-en-v1.5` (335M)<br>`bge-large-zh-v1.5` (326M) | `bge-reranker-base` (278M)<br>`bge-reranker-large` (560M) | 经典中英双语组合，BERT 派 |
+| **BGE v2 (M3)** ⭐ | 智源 BAAI | `bge-m3` (568M, 100+ 语言, 8192 token) | `bge-reranker-v2-m3` (568M) | **多语言生产首选**，同 backbone (XLM-R-Large) |
+| **BGE v2 (LLM)** | 智源 BAAI | `bge-m3` 或 `e5-mistral-7b` | `bge-reranker-v2-gemma` (2.51B)<br>`bge-reranker-v2-minicpm-layerwise` (2.72B) | LLM-based 高精度档 |
+| **GTE** | 阿里达摩院 | `gte-large-en-v1.5` (434M)<br>`gte-Qwen2-7B-instruct` (7B) | `gte-reranker-modernbert-base` (149M)<br>`gte-multilingual-reranker-base` | 7B embedding 是 MTEB 2024 开源 No.1 |
+| **Jina v3** | Jina AI | `jina-embeddings-v3` (570M, 多语言) | `jina-reranker-v2-base-multilingual` (278M) | embedding 内置 5 个 task-LoRA |
+| **Jina v4 多模态** | Jina AI | `jina-embeddings-v4` (3.8B, 文+图) | `jina-reranker-m0` (多模态) | **唯一多模态完整组合** |
+| **E5** | 微软 | `multilingual-e5-large` (560M)<br>`e5-mistral-7b-instruct` (7.11B) | ❌ 官方无配套 reranker | 实践常配 `bge-reranker-v2-m3` |
+| **Cohere** (闭源 API) | Cohere | `embed-english-v3.0` (1024 dim) | `rerank-english-v3.0`<br>`rerank-multilingual-v3.0` | 企业级 API，按 token 计费 |
+| **Voyage** (闭源 API) | Voyage AI | `voyage-3` / `voyage-3-large` | `rerank-2` / `rerank-2-lite` | 法律/金融领域专精 |
+| **Snowflake** | Snowflake | `snowflake-arctic-embed-l` (335M) | `snowflake-arctic-rerank-medium-v1` | 企业数据仓库场景 |
+| **MiniLM** (经典) | 微软 / sbert | `all-MiniLM-L6-v2` (22M, 英文) | `cross-encoder/ms-marco-MiniLM-L-6-v2` (22M) | 学术 baseline 经典组合 |
+| **Nomic** | Nomic AI | `nomic-embed-text-v1.5` (137M) | ❌ 无官方，常配 `bge-reranker-v2-m3` | 训练数据完全公开可审计 |
+| **Stella** | 阿里 | `stella_en_1.5B_v5` (1.5B) | ❌ 无官方，常配 `bge-reranker-v2-gemma` | 1.5B 量级 MTEB 顶级 |
+
+### 7.2 同系列搭配 vs 跨系列搭配
+
+| 维度 | 同系列搭配 | 跨系列搭配 |
+|---|---|---|
+| **训练数据分布** | 一致（同团队同数据） | 可能错配（不同数据偏好） |
+| **Tokenizer** | 兼容（多数同 backbone） | 可能不同（中文分词差异） |
+| **联合优化** | 团队针对召回+精排做协同训练 | 各自独立训练 |
+| **工程兼容性** | 同框架（FlagEmbedding / sentence-transformers） | 需自行适配 |
+| **性能上限** | 协同最优 | 可能错过 1-3% NDCG |
+| **灵活性** | 受系列绑定 | 可自由组合"召回快+精排强" |
+
+### 7.3 论文常引用的典型组合
+
+| 场景 | 召回 (Embedding) | 精排 (Reranker) | 引用基准 |
+|---|---|---|---|
+| **学术 baseline (英文)** | `all-MiniLM-L6-v2` | `ms-marco-MiniLM-L-6-v2` | MS MARCO, TREC DL |
+| **学术 SOTA (英文)** | `e5-mistral-7b-instruct` | `bge-reranker-v2-gemma` | BEIR |
+| **多语言生产** ⭐ | `bge-m3` (dense+sparse 混合) | `bge-reranker-v2-m3` | MIRACL, MLDR |
+| **中文检索** | `bge-large-zh-v1.5` | `bge-reranker-large` | C-MTEB, T2Reranking |
+| **极致精度** | `gte-Qwen2-7B-instruct` | `bge-reranker-v2.5-gemma2-lightweight` | BEIR + MIRACL |
+| **多模态 (文+图)** | `jina-embeddings-v4` | `jina-reranker-m0` | M-BEIR |
+| **闭源企业 API** | Cohere `embed-english-v3.0` | Cohere `rerank-english-v3.0` | 自建评测 |
+| **跨系列经典** | `e5-mistral-7b` (强召回) | `bge-reranker-v2-m3` (轻精排) | BEIR (BGE 论文报告) |
+
+> ⚠️ **跨系列引用注意**：BGE 论文（Chen et al., 2024）公开了在 `bge-large-en-v1.5` 和 `e5-mistral-7b-instruct` 召回结果上 rerank 的对比图，是论文中 **跨系列搭配** 的标准引用方法。
+
+### 7.4 选型决策树
+
+```
+你的检索任务是？
+├── 纯英文学术评测 → MiniLM 系列 (baseline) 或 BGE-en + bge-reranker-v2-gemma (SOTA)
+├── 多语言/中文为主 → bge-m3 + bge-reranker-v2-m3 ⭐ (工程甜点)
+├── 极致精度（不计算力） → gte-Qwen2-7B + bge-reranker-v2.5-gemma2-lightweight
+├── 多模态（文+图） → jina-embeddings-v4 + jina-reranker-m0
+├── 闭源 SaaS 企业 → Cohere / Voyage 全套 API
+└── 资源极受限 → all-MiniLM-L6-v2 + ms-marco-MiniLM-L-6-v2
+```
+
+---
+
+## 八、选型决策表（论文写作可用）
 
 | 场景 | 推荐模型 | 理由 |
 |---|---|---|
@@ -218,7 +280,7 @@ top10 = sorted(zip(top100_idx, rerank_scores), key=lambda x: -x[1])[:10]
 
 ---
 
-## 八、关键参考文献（论文引用）
+## 九、关键参考文献（论文引用）
 
 1. **Reimers & Gurevych (2019).** *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.* EMNLP. — bi-encoder/cross-encoder 范式奠基
 2. **Wang et al. (2020).** *MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression of Pre-Trained Transformers.* arXiv:2002.10957. — MiniLM backbone
@@ -233,7 +295,7 @@ top10 = sorted(zip(top100_idx, rerank_scores), key=lambda x: -x[1])[:10]
 
 ---
 
-## 九、口诀（速记）
+## 十、口诀（速记）
 
 > **召回求广，精排求准。**
 > **Bi-encoder 离线建索，Cross-encoder 在线打分。**
@@ -243,7 +305,7 @@ top10 = sorted(zip(top100_idx, rerank_scores), key=lambda x: -x[1])[:10]
 
 ---
 
-## 十、相关文档
+## 十一、相关文档
 
 - [embedding-models-comparison.md](embedding-models-comparison.md) — 主流 embedding 模型对比（**本文姊妹篇**）
 - [rag-intent-bidirectional-alignment.md](rag-intent-bidirectional-alignment.md) — RAG 意图对齐双向融合
