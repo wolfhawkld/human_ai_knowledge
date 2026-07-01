@@ -29,7 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
-| [llm-wiki-vs-claude-code-memory-architecture.md](llm-wiki-vs-claude-code-memory-architecture.md) | Nemesis | 2026-07-01 | 🧠 Karpathy LLM Wiki vs Claude Code 六层记忆架构对比：三层 vs 六层、autoDream 自愈、记忆类型覆盖、进化维护机制，融合架构建议（多用户偏好聚合 + 反馈驱动进化闭环） |
+| [llm-wiki-vs-claude-code-memory-architecture.md](llm-wiki-vs-claude-code-memory-architecture.md) | Nemesis | 2026-07-01 | 🧠 Karpathy LLM Wiki vs Claude Code 记忆架构对比：三层 vs 两层（静态六层+动态闭环）、四种主流方案硬伤、强制四类分类+Why/How、Sonnet 选 top-5 非向量检索、autoDream 自愈、老化警告，融合架构建议（多用户偏好聚合 + 反馈驱动进化闭环） |
 | [rocm-vs-cuda-local-inference.md](rocm-vs-cuda-local-inference.md) | Damon + Metis | 2026-06-21 | ⚙️ ROCm vs CUDA 本地推理全维度对比：库栈映射、安装流程、代码差异、推理框架/量化/Attention 支持、9070 XT 实战、决策树 |
 | [reranker-models-comparison.md](reranker-models-comparison.md) | Damon + Metis | 2026-06-21 | 🎯 Reranker 模型对比：MS-MARCO Cross-Encoder → bge-reranker-v2-m3 → bge-reranker-v2-gemma，三代范式演进 + BEIR/MIRACL benchmark + 论文级引用 |
 | [multi-agent-orchestration-paradigms.md](multi-agent-orchestration-paradigms.md) | Outis | 2026-06-16 | 🔄 多 Agent 协作范式对比分析：Claude Code Dynamic Workflows / Agent Teams / OpenClaw Subagents / OpenClaw ACP — 架构差异、适用场景、演进趋势 |

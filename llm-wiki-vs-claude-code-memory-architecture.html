@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karpathy LLM Wiki vs Claude Code 六层记忆架构 — 人机知识库</title>
+<title>Karpathy LLM Wiki vs Claude Code 记忆架构 — 人机知识库</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -47,7 +47,7 @@ body {
 <body>
 <div class="container">
   <div class="header">
-    <h1>Karpathy LLM Wiki vs Claude Code 六层记忆架构</h1>
+    <h1>Karpathy LLM Wiki vs Claude Code 记忆架构</h1>
     <p class="subtitle">两种 Agent 记忆范式的设计哲学、架构拆解、逐维度对比与融合架构建议</p>
     <div class="meta">
       <span class="meta-item agent">🤖 Nemesis</span>
@@ -56,56 +56,89 @@ body {
     </div>
   </div>
   <div class="content">
-<h1>Karpathy LLM Wiki vs Claude Code 六层记忆架构：动态记忆 Agent 的工程化对比</h1>
-<blockquote>
-<p>两种 Agent 记忆范式的设计哲学、架构拆解、逐维度对比，以及面向"可动态记忆、适配用户偏好、聚合多用户共性、按反馈进化"的 Agent 的工程化价值分析与融合架构建议。</p>
-</blockquote>
-<hr/>
-
 <h2>1. 背景：为什么需要对比这两个系统</h2>
 <p>构建一个能够<strong>动态记忆</strong>、<strong>适配用户日常工作偏好</strong>、<strong>聚合多用户共同偏好</strong>、并<strong>根据使用场景与反馈自动进化</strong>的 Agent，其核心挑战不在模型能力，而在<strong>记忆架构的工程化设计</strong>。</p>
 <p>2026 年出现了两个极具参考价值的记忆架构实践：</p>
 <ul>
 <li><strong>Karpathy LLM Wiki</strong>（2026-04-04 发布）：一种"反 RAG"的知识管理范式，主张 LLM 增量构建和维护持久化 wiki，而非每次查询从原始文档重新检索。</li>
-<li><strong>Claude Code 六层记忆架构</strong>（2026-03-31 源码泄露）：一个经过大规模生产验证的记忆系统，以 <code>MEMORY.md</code> 指针索引为核心，配合 autoDream 后台整理和分级压缩管线。</li>
+<li><strong>Claude Code 记忆架构</strong>（2026-03-31 源码泄露 + 微信深度分析）：一个经过大规模生产验证的记忆系统，采用静态 CLAUDE.md 六层体系 + 动态自动记忆系统的双轨设计，核心纪律是"只记代码推不出来的东西"。</li>
 </ul>
 <p>两者出发点不同——一个是个人知识库范式，一个是生产级编码 Agent 的记忆系统——但在"如何让 Agent 的记忆随时间变好而非变差"这个问题上，给出了互补的答案。</p>
-
+<hr/>
 <h2>2. Karpathy LLM Wiki 架构详解</h2>
-
 <h3>2.1 核心思想</h3>
 <blockquote><p>"Instead of just retrieving from raw documents at query time, the LLM <strong>incrementally builds and maintains a persistent wiki</strong> — a structured, interlinked collection of markdown files that sits between you and the raw sources."</p></blockquote>
 <p>传统 RAG 每次查询都从原始文档重新检索、重新合成。LLM Wiki 的核心洞察是：<strong>知识应该被编译一次，而非每次重新推导</strong>。交叉引用已经建好，矛盾已经标记，综合分析已经反映了所有已读内容。</p>
 <p>经典比喻：<strong>"Obsidian is the IDE; the LLM is the programmer; the wiki is the codebase."</strong></p>
-
 <h3>2.2 三层架构</h3>
 <table>
-<tr><th>层</th><th>名称</th><th>职责</th><th>可变性</th></tr>
-<tr><td>Layer 1</td><td><strong>Raw Sources</strong></td><td>原始文档（文章、论文、图片、数据）</td><td>不可变（LLM 只读不写）</td></tr>
-<tr><td>Layer 2</td><td><strong>Wiki</strong></td><td>LLM 生成的 markdown 文件（摘要、实体页、概念页、对比页）</td><td>LLM 完全拥有，持续更新</td></tr>
-<tr><td>Layer 3</td><td><strong>Schema</strong></td><td><code>CLAUDE.md</code>/<code>AGENTS.md</code>，定义 wiki 结构、约定、工作流</td><td>人机共同演进</td></tr>
+<tr>
+<th>层</th>
+<th>名称</th>
+<th>职责</th>
+<th>可变性</th>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td><strong>Raw Sources</strong></td>
+<td>原始文档（文章、论文、图片、数据）</td>
+<td>不可变（LLM 只读不写）</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td><strong>Wiki</strong></td>
+<td>LLM 生成的 markdown 文件（摘要、实体页、概念页、对比页）</td>
+<td>LLM 完全拥有，持续更新</td>
+</tr>
+<tr>
+<td>Layer 3</td>
+<td><strong>Schema</strong></td>
+<td><code>CLAUDE.md</code>/<code>AGENTS.md</code>，定义 wiki 结构、约定、工作流</td>
+<td>人机共同演进</td>
+</tr>
 </table>
-
 <h3>2.3 三大核心操作</h3>
 <ol>
 <li><strong>Ingest（摄取）</strong>：投入新源 → LLM 阅读 → 讨论要点 → 写摘要页 → 更新 index → 更新相关实体/概念页 → 追加日志。单个源可能触及 10-15 个 wiki 页面。</li>
 <li><strong>Query（查询）</strong>：LLM 先读 index → 定位相关页面 → 阅读并合成答案 → 有价值的答案回填为新页面。</li>
 <li><strong>Lint（健康检查）</strong>：定期检查矛盾、过时信息、孤儿页、缺失交叉引用、数据缺口。</li>
 </ol>
-
 <h3>2.4 记忆类型映射</h3>
 <p>AAIF 的分析将 LLM Wiki 映射到经典 Agent 记忆分类：</p>
 <table>
-<tr><th>记忆类型</th><th>Wiki 中的体现</th></tr>
-<tr><td>Entity（实体）</td><td>人/组织/产品/模型的实体页</td></tr>
-<tr><td>Semantic（语义）</td><td>趋势页——从多源中提取的模式和含义</td></tr>
-<tr><td>Episodic（情景）</td><td><code>log.md</code>——时间线记录</td></tr>
-<tr><td>Summary（摘要）</td><td>源文件的压缩摘要页</td></tr>
-<tr><td>Procedural（程序）</td><td>Schema 层——知识如何被合并、更新、纠正</td></tr>
-<tr><td>Conversational（对话）</td><td>❌ 未覆盖（短期、会话内）</td></tr>
-<tr><td>Working（工作）</td><td>❌ 未覆盖（短期、会话内）</td></tr>
+<tr>
+<th>记忆类型</th>
+<th>Wiki 中的体现</th>
+</tr>
+<tr>
+<td>Entity（实体）</td>
+<td>人/组织/产品/模型的实体页</td>
+</tr>
+<tr>
+<td>Semantic（语义）</td>
+<td>趋势页——从多源中提取的模式和含义</td>
+</tr>
+<tr>
+<td>Episodic（情景）</td>
+<td><code>log.md</code>——时间线记录</td>
+</tr>
+<tr>
+<td>Summary（摘要）</td>
+<td>源文件的压缩摘要页</td>
+</tr>
+<tr>
+<td>Procedural（程序）</td>
+<td>Schema 层——知识如何被合并、更新、纠正</td>
+</tr>
+<tr>
+<td>Conversational（对话）</td>
+<td>❌ 未覆盖（短期、会话内）</td>
+</tr>
+<tr>
+<td>Working（工作）</td>
+<td>❌ 未覆盖（短期、会话内）</td>
+</tr>
 </table>
-
 <h3>2.5 关键设计原则</h3>
 <ul>
 <li><strong>人机分工</strong>：人类策展源、指引分析；LLM 做所有重活（摘要、交叉引用、归档、簿记）</li>
@@ -114,136 +147,444 @@ body {
 <li><strong>规模限制</strong>：~100 源、数百页面时 index 足够导航；更大规模需要搜索工具</li>
 <li><strong>矛盾处理</strong>：不静默覆盖——记录两种说法、标注日期和来源、标记冲突</li>
 </ul>
-
-<h2>3. Claude Code 六层记忆架构详解</h2>
-
+<hr/>
+<h2>3. Claude Code 记忆架构详解</h2>
 <h3>3.1 背景</h3>
-<p>2026-03-31，因 Bun 构建工具的 source map bug，Claude Code v2.1.88 的 59.8MB TypeScript 源码通过 npm 包泄露。社区分析了 512K 行代码，发现了一个高度工程化的记忆系统。</p>
-
-<h3>3.2 核心原则</h3>
-<blockquote><p><strong>Memory = index, not storage.</strong></p></blockquote>
-<p><code>MEMORY.md</code> 是每个会话加载的唯一文件，但它<strong>不包含任何知识</strong>——只包含指针：ID、时间戳、主题键、置信度分数，每条不超过 ~150 字符。实际知识存在于独立的主题文件中，仅按需加载。</p>
-
-<h3>3.3 六层记忆层级</h3>
-<table>
-<tr><th>层</th><th>名称</th><th>角色</th><th>加载策略</th></tr>
-<tr><td><strong>1</strong></td><td><code>MEMORY.md</code>（指针索引）</td><td>每轮加载，始终在上下文中。微小条目，无原始内容</td><td>Always</td></tr>
-<tr><td><strong>2</strong></td><td>Topic files（主题文件）</td><td>结构化知识块，模型需要时按需获取</td><td>On-demand</td></tr>
-<tr><td><strong>3</strong></td><td>Transcripts（会话记录）</td><td><strong>永远不</strong>完整重新摄入。只追加日志，按 ID 搜索溯源</td><td>Never (grep only)</td></tr>
-<tr><td><strong>4-5</strong></td><td>Snip / Microcompact</td><td>摘要和修剪策略，在<strong>隔离的 fork 子 agent</strong> 中运行</td><td>Triggered</td></tr>
-<tr><td><strong>6</strong></td><td>autoDream output</td><td>定期后台重写产生的合并、去重、消矛盾的记忆</td><td>Background</td></tr>
-<tr><td><strong>+</strong></td><td><code>CLAUDE.md</code>（项目结构记忆）</td><td>项目级稳定"宪法"——目标、约束、约定</td><td>Session start</td></tr>
-</table>
-
-<h3>3.4 关键设计决策</h3>
-
-<h3>写纪律（Write Discipline）</h3>
+<p>2026-03-31，因 Bun 构建工具的 source map bug，Claude Code v2.1.88 的 59.8MB TypeScript 源码通过 npm 包泄露。社区分析了 512K 行代码。微信深度分析文章进一步梳理了完整的记忆机制设计。</p>
+<h3>3.2 核心问题：LLM 是无状态的</h3>
+<blockquote><p>LLM 本身根本「记不住」任何东西，它是彻头彻尾<strong>无状态</strong>的。每次按下回车，对它来说都是「从头看一遍」：把系统提示词、所有历史对话、当前问题，全部塞进去，然后输出一个回复。</p></blockquote>
+<p>Agent 真正需要记住的四类信息：</p>
 <ul>
-<li>先写文件 → 再更新索引</li>
-<li>永远不向索引倾倒内容</li>
-<li>防止熵增和上下文污染</li>
+<li><strong>用户画像</strong>（你是谁）</li>
+<li><strong>行为偏好</strong>（你不喜欢什么/确认有效的做法）</li>
+<li><strong>项目动态</strong>（当前项目要干啥、有什么截止日期）</li>
+<li><strong>外部指针</strong>（去哪查什么信息）</li>
 </ul>
+<h3>3.3 业界四种主流方案及其硬伤</h3>
+<p>Claude Code 的设计是在看到以下四种方案的硬伤后才定型的：</p>
+<table>
+<tr>
+<th>方案</th>
+<th>原理</th>
+<th>硬伤</th>
+</tr>
+<tr>
+<td><strong>滑动窗口</strong></td>
+<td>保留最近 N 轮对话</td>
+<td>关键信息和无关信息混在一起被丢</td>
+</tr>
+<tr>
+<td><strong>对话摘要</strong></td>
+<td>定期用 LLM 总结旧对话</td>
+<td>重要细节被压糊；摘要本身耗 token</td>
+</tr>
+<tr>
+<td><strong>向量检索</strong>（Mem0/Letta/Zep）</td>
+<td>embedding + 向量数据库 + 相似度召回</td>
+<td>相似≠相关；召回不稳定；维护成本高；用户没法看</td>
+</tr>
+<tr>
+<td><strong>分层存储</strong>（MemGPT/Letta）</td>
+<td>core/recall/archival 三层 + LLM 主动搬数据</td>
+<td>概念多、迁移成本大；搬数据依据仍是 embedding</td>
+</tr>
+</table>
+<p><strong>四类方案的共同病根：</strong></p>
+<ol>
+<li>自由文本无约束 → 记忆库膨胀成垃圾堆</li>
+<li>不区分类型 → 全部一锅炖，查不准</li>
+<li>没有老化机制 → 过时记忆变成"权威的错误"</li>
+<li>重检索、轻写入 → 垃圾进、垃圾出</li>
+</ol>
+<h3>3.4 Claude Code 的两层记忆架构</h3>
+<p>Claude Code 走了一条"土到反直觉"的路——没用向量数据库，没用 embedding，用的是<strong>磁盘上的 markdown 文件</strong>。</p>
+<table>
+<tr>
+<th>层</th>
+<th>本质</th>
+<th>解决的问题</th>
+<th>比喻</th>
+</tr>
+<tr>
+<td><strong>静态层（CLAUDE.md 体系）</strong></td>
+<td>声明式指令</td>
+<td>"我们怎么协作""项目遵守什么规则"</td>
+<td>公司员工手册</td>
+</tr>
+<tr>
+<td><strong>动态层（自动记忆系统）</strong></td>
+<td>学习式偏好</td>
+<td>"我从互动中学到了什么"</td>
+<td>自己的工作笔记</td>
+</tr>
+</table>
+<h3>3.5 静态层：CLAUDE.md 的六个层级</h3>
+<p>六种来源的规则可见范围不同、谁能改也不同，硬塞进一个文件会打架或混乱。六层按加载顺序从低到高叠加，启动时全部拼接进 system prompt。</p>
+<table>
+<tr>
+<th>层级</th>
+<th>位置</th>
+<th>用途</th>
+<th>文件</th>
+</tr>
+<tr>
+<td><strong>Managed</strong></td>
+<td>系统级路径</td>
+<td>公司级强制策略（仅管理员可改）</td>
+<td>CLAUDE.md</td>
+</tr>
+<tr>
+<td><strong>User</strong></td>
+<td>用户家目录</td>
+<td>个人全局偏好（跨所有项目）</td>
+<td>CLAUDE.md</td>
+</tr>
+<tr>
+<td><strong>Project</strong></td>
+<td>项目根目录/<code>.claude/</code></td>
+<td>项目层规则（签入 git 共享）</td>
+<td>CLAUDE.md</td>
+</tr>
+<tr>
+<td><strong>Local</strong></td>
+<td>项目根目录</td>
+<td>本地调试约定（不签入 git）</td>
+<td>CLAUDE.local.md</td>
+</tr>
+<tr>
+<td><strong>Auto</strong>（AutoMem）</td>
+<td>项目级自动记忆目录</td>
+<td>Claude Code 自动写入的偏好</td>
+<td>MEMORY.md</td>
+</tr>
+<tr>
+<td><strong>Team</strong>（TeamMem）</td>
+<td>Auto 目录下 <code>team/</code> 子目录</td>
+<td>团队共享的 AI 学到的偏好（需 feature flag）</td>
+<td>MEMORY.md</td>
+</tr>
+</table>
+<p><strong>关键机制：</strong></p>
+<ul>
+<li><strong>@include 指令</strong>：<code>@~/company/security-rules.md</code> 自动读取引用文件内容拼入，类似 C 语言 <code>#include</code>，防循环引用、防路径遍历</li>
+<li><strong>条件规则</strong>（<code>.claude/rules/</code>）：按当前编辑文件路径匹配，只有相关规则才拼入 system prompt——按需注入，省 token</li>
+<li><strong>截断双保险</strong>：<code>MAX_ENTRYPOINT_LINES = 200</code> + <code>MAX_ENTRYPOINT_BYTES = 25_000</code>，两个限制任意一个先触发就截断，防御长行索引炸弹</li>
+</ul>
+<h3>3.6 动态层：自动记忆系统的完整闭环</h3>
+<h3>四种记忆类型（强制分类）</h3>
+<pre><code>export const MEMORY_TYPES = [
+  'user',       // 你是谁
+  'feedback',   // 你不喜欢什么/确认有效的做法
+  'project',    // 项目正在发生什么
+  'reference',  // 去哪查什么
+] as const</code></pre>
+<p><strong>feedback 和 project 的强制结构：</strong></p>
+<pre><code>规则本身
 
-<h3>autoDream：自愈循环</h3>
+**Why:** 用户为什么这么要求（往往是踩过的坑）
+**How to apply:** 什么情况下生效</code></pre>
+<p>只记规则不记原因，遇到边界情况就抓瞎。加上 Why，agent 在边界情况下能<strong>自己判断该不该破例</strong>。</p>
+<p><strong>project 类型的特殊要求</strong>：必须把相对日期转成绝对日期（"周四之前冻结" → "2026-03-05 之前冻结"）</p>
+<h3>不该存什么（禁令清单）</h3>
+<ul>
+<li>代码模式、架构、文件路径、项目结构（grep/CLAUDE.md 可得）</li>
+<li>Git 历史和最近改动（git log/git blame 是权威）</li>
+<li>调试方案和修复方法（fix 已在代码里）</li>
+<li>CLAUDE.md 里已写过的内容</li>
+<li>临时任务状态和当前对话上下文</li>
+</ul>
+<blockquote><p><strong>核心纪律：只记代码推不出来的东西。</strong> 代码是「活的」，记忆是「死的」。</p></blockquote>
+<h3>存储设计：单文件 + 索引</h3>
+<p>每条记忆是独立 <code>.md</code> 文件，带 YAML frontmatter。<code>MEMORY.md</code> 是索引——只塞「目录」（name + description），不塞「正文」。</p>
+<pre><code>MEMORY.md 索引 → 始终加载进 system prompt（~150 字符/条）
+独立记忆文件 → 按需加载</code></pre>
+<p>类似翻工具书：不需要背全书，但得知道目录。</p>
+<h3>写入：Extract Memories 代理</h3>
+<ul>
+<li><strong>触发时机</strong>：每轮 query loop 完整结束（无 tool call），通过 <code>stopHook</code> 钩子触发</li>
+<li><strong>核心设计</strong>：fork 主对话，复用 prompt cache——不重新加载 system prompt，只看着对话历史决定"有没有值得记的"</li>
+<li><strong>逻辑</strong>：扫描用户反馈/纠正 → 与现有记忆比对去重 → 按四种类型分类写文件</li>
+<li>检测 <code>hasMemoryWritesSince</code>，避免对同一件事反复写记忆</li>
+</ul>
+<h3>检索：用 Sonnet 选 top-5（非向量检索）</h3>
+<p>三步流程（<code>findRelevantMemories</code>）：</p>
+<ol>
+<li><strong>扫描所有记忆文件头部</strong>：只读前 30 行（提取 frontmatter）</li>
+<li><strong>拼成标题清单发给 Sonnet</strong>：Query + Available memories 列表</li>
+<li><strong>Sonnet 用 JSON schema 返回 top-5 文件名</strong></li>
+</ol>
+<blockquote><p>"Only include memories that you are certain will be helpful based on their name and description. Be selective and discerning."</p></blockquote>
+<p><strong>为什么用 Sonnet 不用 Haiku</strong>：记忆相关性判错的代价远大于多花的钱，容错率极低。</p>
+<p><strong>两个过滤细节</strong>：</p>
+<ul>
+<li><code>alreadySurfaced</code>：上一轮已露脸的记忆直接排除</li>
+<li><code>recentTools</code>：最近用过工具的"用法参考文档"不选，但"警告、坑点、已知问题"记忆要保留</li>
+</ul>
+<h3>注入：system-reminder 包裹 + 老化警告</h3>
+<pre><code>&lt;system-reminder&gt;
+This memory was saved 5 days ago. Verify it's still accurate before acting on it.
+[记忆内容]
+&lt;/system-reminder&gt;</code></pre>
+<p><strong>老化机制</strong>：今天/昨天 → 不警告；2 天以前 → 主动加 stale 警告。</p>
+<blockquote><p>记忆是提示，不是真相。模型必须在使用前验证。</p></blockquote>
+<h3>autoDream：后台自愈循环</h3>
 <ul>
 <li>后台定期运行（~24h 或空闲时）</li>
-<li>合并重复条目</li>
-<li>解决矛盾</li>
-<li>将模糊/对冲语句转为确定事实</li>
-<li>激进修剪低置信度和过时数据</li>
-<li>结果：记忆系统是<strong>持续编辑的，而非只追加的</strong>——与大多数不断累积噪声的 Agent 截然相反</li>
+<li>合并重复条目、解决矛盾、将模糊/对冲语句转为确定事实、激进修剪低置信度和过时数据</li>
+<li>在<strong>隔离的 fork 子 agent</strong> 中运行，限制工具集 → 防止损坏主上下文</li>
+<li>结果：记忆系统是<strong>持续编辑的，而非只追加的</strong></li>
 </ul>
-
-<h3>过时是一等公民（Staleness is First-Class）</h3>
-<blockquote><p>"If memory ≠ reality, memory is wrong."</p></blockquote>
-<ul>
-<li>可从代码推导的事实<strong>永不持久化</strong>（如果可推导，就不存储）</li>
-<li>索引被强制截断</li>
-</ul>
-
-<h3>隔离维护（Isolation）</h3>
-<ul>
-<li>整理任务在 fork 的子 agent 中运行</li>
-<li>限制工具集 → 防止损坏主上下文</li>
-</ul>
-
-<h3>怀疑式检索（Skeptical Retrieval）</h3>
-<ul>
-<li>记忆是提示，不是真相</li>
-<li>模型必须在使用前验证</li>
-</ul>
-
-<h3>压缩管线（Compaction Pipeline）</h3>
-<ul>
-<li>API 返回 413 时静默拦截 → 压缩 → 重试</li>
-<li>最多 5 文件、5K tokens/文件、~50K 总预算</li>
-<li>在隔离 fork agent 中运行，不触碰主上下文</li>
-</ul>
-
-<h3>3.5 设计哲学总结</h3>
+<h3>3.7 设计哲学总结</h3>
 <blockquote><p>"Give routing and high-level orchestration to the <strong>prompt</strong> (plain English instructions); give safety, memory management, and execution hygiene to <strong>deterministic code</strong>."</p></blockquote>
 <blockquote><p>"The longer it runs, the smarter it gets. That's not a model capability. <strong>That's an engineering decision.</strong>"</p></blockquote>
 <blockquote><p>Claude Code 的记忆系统是一个"<strong>活的、自编辑的上下文操作系统</strong>"。它把上下文当作昂贵的 RAM，把过时当作一等错误，把整理当作守护进程——而非事后补充。</p></blockquote>
-
+<hr/>
 <h2>4. 逐维度对比</h2>
-
 <h3>4.1 设计哲学</h3>
 <table>
-<tr><th>维度</th><th>Karpathy LLM Wiki</th><th>Claude Code 六层记忆</th></tr>
-<tr><td><strong>出发点</strong></td><td>个人知识库：知识复利</td><td>生产 Agent：上下文卫生</td></tr>
-<tr><td><strong>核心隐喻</strong></td><td>Wiki = 代码库，LLM = 程序员</td><td>Memory = 操作系统，上下文 = RAM</td></tr>
-<tr><td><strong>对 RAG 的态度</strong></td><td>反 RAG：编译一次，持续维护</td><td>不替代 RAG，但用指针索引替代全量加载</td></tr>
-<tr><td><strong>增长方向</strong></td><td>只追加 + lint 修剪</td><td>持续编辑（追加 + 合并 + 删除）</td></tr>
-<tr><td><strong>人类角色</strong></td><td>策展者：选源、指引、审阅</td><td>几乎不参与记忆维护</td></tr>
+<tr>
+<th>维度</th>
+<th>Karpathy LLM Wiki</th>
+<th>Claude Code 记忆架构</th>
+</tr>
+<tr>
+<td><strong>出发点</strong></td>
+<td>个人知识库：知识复利</td>
+<td>生产 Agent：上下文卫生</td>
+</tr>
+<tr>
+<td><strong>核心隐喻</strong></td>
+<td>Wiki = 代码库，LLM = 程序员</td>
+<td>Memory = 操作系统，上下文 = RAM</td>
+</tr>
+<tr>
+<td><strong>对 RAG 的态度</strong></td>
+<td>反 RAG：编译一次，持续维护</td>
+<td>反向量检索：用 LLM 选 top-5，不用 embedding</td>
+</tr>
+<tr>
+<td><strong>增长方向</strong></td>
+<td>只追加 + lint 修剪</td>
+<td>持续编辑（追加 + 合并 + 删除）</td>
+</tr>
+<tr>
+<td><strong>人类角色</strong></td>
+<td>策展者：选源、指引、审阅</td>
+<td>几乎不参与记忆维护</td>
+</tr>
+<tr>
+<td><strong>对业界方案的态度</strong></td>
+<td>不提，但隐含反 RAG</td>
+<td>明确否定四种主流方案后另起炉灶</td>
+</tr>
 </table>
-
 <h3>4.2 架构对比</h3>
 <table>
-<tr><th>维度</th><th>Karpathy LLM Wiki</th><th>Claude Code 六层记忆</th></tr>
-<tr><td><strong>层数</strong></td><td>3 层（raw → wiki → schema）</td><td>6 层 + CLAUDE.md</td></tr>
-<tr><td><strong>索引机制</strong></td><td><code>index.md</code>（内容目录，全文）</td><td><code>MEMORY.md</code>（纯指针，~150 字符/条）</td></tr>
-<tr><td><strong>知识存储</strong></td><td>Wiki 页面本身即知识</td><td>主题文件（按需加载）</td></tr>
-<tr><td><strong>会话历史</strong></td><td>不显式管理</td><td>Layer 3：只追加、只 grep</td></tr>
-<tr><td><strong>压缩/摘要</strong></td><td>手动 lint</td><td>Layer 4-5：自动、隔离 fork</td></tr>
-<tr><td><strong>后台整理</strong></td><td>❌ 无</td><td>autoDream：~24h 自动</td></tr>
-<tr><td><strong>项目级记忆</strong></td><td>Schema（AGENTS.md）</td><td>CLAUDE.md（稳定宪法）</td></tr>
+<tr>
+<th>维度</th>
+<th>Karpathy LLM Wiki</th>
+<th>Claude Code 记忆架构</th>
+</tr>
+<tr>
+<td><strong>整体架构</strong></td>
+<td>3 层（raw → wiki → schema）</td>
+<td>2 层（静态 CLAUDE.md 六级 + 动态自动记忆闭环）</td>
+</tr>
+<tr>
+<td><strong>静态/稳定层</strong></td>
+<td>Schema（AGENTS.md）一层</td>
+<td>CLAUDE.md 六层叠加（Managed→User→Project→Local→Auto→Team）</td>
+</tr>
+<tr>
+<td><strong>索引机制</strong></td>
+<td><code>index.md</code>（内容目录，全文）</td>
+<td><code>MEMORY.md</code>（纯指针，~150 字符/条）</td>
+</tr>
+<tr>
+<td><strong>知识存储</strong></td>
+<td>Wiki 页面本身即知识</td>
+<td>独立记忆 .md 文件（按需加载）</td>
+</tr>
+<tr>
+<td><strong>记忆分类</strong></td>
+<td>按页面类型（实体/概念/对比/查询）</td>
+<td>强制四种类型（user/feedback/project/reference）</td>
+</tr>
+<tr>
+<td><strong>结构约束</strong></td>
+<td>Schema 定义页面结构</td>
+<td>feedback/project 强制 Why + How to apply 结构</td>
+</tr>
+<tr>
+<td><strong>后台整理</strong></td>
+<td>❌ 无</td>
+<td>autoDream：~24h 自动，隔离 fork</td>
+</tr>
+<tr>
+<td><strong>条件注入</strong></td>
+<td>❌ 无</td>
+<td><code>.claude/rules/</code> 按文件路径匹配按需注入</td>
+</tr>
 </table>
-
 <h3>4.3 记忆类型覆盖</h3>
 <table>
-<tr><th>记忆类型</th><th>LLM Wiki</th><th>Claude Code</th></tr>
-<tr><td>Entity</td><td>✅ 实体页</td><td>✅ 主题文件</td></tr>
-<tr><td>Semantic</td><td>✅ 趋势页</td><td>✅ 主题文件</td></tr>
-<tr><td>Episodic</td><td>✅ log.md</td><td>✅ Transcripts (Layer 3)</td></tr>
-<tr><td>Summary</td><td>✅ 源摘要页</td><td>✅ Snip/Microcompact (Layer 4-5)</td></tr>
-<tr><td>Procedural</td><td>✅ Schema</td><td>✅ CLAUDE.md</td></tr>
-<tr><td>Conversational</td><td>❌</td><td>✅ Layer 1-2 动态管理</td></tr>
-<tr><td>Working</td><td>❌</td><td>✅ In-context (Layer 1)</td></tr>
+<tr>
+<th>记忆类型</th>
+<th>LLM Wiki</th>
+<th>Claude Code</th>
+</tr>
+<tr>
+<td>Entity（实体）</td>
+<td>✅ 实体页</td>
+<td>✅ user 类型</td>
+</tr>
+<tr>
+<td>Semantic（语义）</td>
+<td>✅ 趋势页</td>
+<td>✅ reference 类型</td>
+</tr>
+<tr>
+<td>Episodic（情景）</td>
+<td>✅ log.md</td>
+<td>✅ project 类型（带绝对日期）</td>
+</tr>
+<tr>
+<td>Summary（摘要）</td>
+<td>✅ 源摘要页</td>
+<td>✅ autoDream 合并输出</td>
+</tr>
+<tr>
+<td>Procedural（程序）</td>
+<td>✅ Schema</td>
+<td>✅ CLAUDE.md 六层体系</td>
+</tr>
+<tr>
+<td>Feedback（反馈）</td>
+<td>❌</td>
+<td>✅ feedback 类型（Why + How）</td>
+</tr>
+<tr>
+<td>Conversational（对话）</td>
+<td>❌</td>
+<td>✅ 短期上下文 + compaction</td>
+</tr>
+<tr>
+<td>Working（工作）</td>
+<td>❌</td>
+<td>✅ In-context</td>
+</tr>
 </table>
-
-<h3>4.4 进化与维护</h3>
+<h3>4.4 写入与检索</h3>
 <table>
-<tr><th>维度</th><th>Karpathy LLM Wiki</th><th>Claude Code 六层记忆</th></tr>
-<tr><td><strong>触发方式</strong></td><td>人工触发 ingest/lint</td><td>自动触发（413 压缩 / 24h autoDream）</td></tr>
-<tr><td><strong>矛盾处理</strong></td><td>标注两种说法，人工审阅</td><td>autoDream 自动消解</td></tr>
-<tr><td><strong>过时检测</strong></td><td>lint 时发现（被动）</td><td>一等公民：memory ≠ reality → wrong</td></tr>
-<tr><td><strong>可推导事实</strong></td><td>可存储（wiki 页面）</td><td><strong>永不存储</strong>（if derivable, don't persist）</td></tr>
-<tr><td><strong>修剪策略</strong></td><td>保守：归档而非删除</td><td>激进：autoDream 主动删除低置信度</td></tr>
-<tr><td><strong>隔离性</strong></td><td>无（LLM 直接操作 wiki）</td><td>fork 子 agent + 限制工具集</td></tr>
+<tr>
+<th>维度</th>
+<th>Karpathy LLM Wiki</th>
+<th>Claude Code 记忆架构</th>
+</tr>
+<tr>
+<td><strong>写入触发</strong></td>
+<td>人工 ingest</td>
+<td>stopHook 自动触发（每轮结束）</td>
+</tr>
+<tr>
+<td><strong>写入方式</strong></td>
+<td>LLM 直接写 wiki 页面</td>
+<td>fork 主对话 + 复用 prompt cache，去重后分类写入</td>
+</tr>
+<tr>
+<td><strong>检索方式</strong></td>
+<td>index 导航 → 钻取页面</td>
+<td>Sonnet 读标题清单选 top-5（非向量）</td>
+</tr>
+<tr>
+<td><strong>检索精度</strong></td>
+<td>依赖 LLM 自己导航</td>
+<td>用 Sonnet（非 Haiku）确保准确性</td>
+</tr>
+<tr>
+<td><strong>检索态度</strong></td>
+<td>信任 wiki 内容</td>
+<td><strong>怀疑式</strong>：记忆是提示，用前验证 + 老化警告</td>
+</tr>
+<tr>
+<td><strong>去重</strong></td>
+<td>人工 lint 时发现</td>
+<td>自动 <code>hasMemoryWritesSince</code> 检测</td>
+</tr>
 </table>
-
-<h3>4.5 检索与透明性</h3>
+<h3>4.5 进化与维护</h3>
 <table>
-<tr><th>维度</th><th>Karpathy LLM Wiki</th><th>Claude Code 六层记忆</th></tr>
-<tr><td><strong>检索方式</strong></td><td>index 导航 → 钻取页面</td><td>指针索引 → 按需加载主题文件</td></tr>
-<tr><td><strong>检索态度</strong></td><td>信任 wiki 内容</td><td><strong>怀疑式</strong>：记忆是提示，用前验证</td></tr>
-<tr><td><strong>透明性</strong></td><td>✅ 纯文本 markdown</td><td>✅ 纯文本 markdown</td></tr>
-<tr><td><strong>可审计</strong></td><td>✅ Git 版本控制</td><td>✅ 文件可读可编辑</td></tr>
-<tr><td><strong>语义检索</strong></td><td>大规模时可选配</td><td>❌ 无（仅指针，无 embedding）</td></tr>
+<tr>
+<th>维度</th>
+<th>Karpathy LLM Wiki</th>
+<th>Claude Code 记忆架构</th>
+</tr>
+<tr>
+<td><strong>触发方式</strong></td>
+<td>人工触发 ingest/lint</td>
+<td>自动触发（stopHook / 413 压缩 / 24h autoDream）</td>
+</tr>
+<tr>
+<td><strong>矛盾处理</strong></td>
+<td>标注两种说法，人工审阅</td>
+<td>autoDream 自动消解</td>
+</tr>
+<tr>
+<td><strong>过时检测</strong></td>
+<td>lint 时发现（被动）</td>
+<td>一等公民：2 天后加 stale 警告；memory ≠ reality → wrong</td>
+</tr>
+<tr>
+<td><strong>可推导事实</strong></td>
+<td>可存储（wiki 页面）</td>
+<td><strong>永不存储</strong>（if derivable, don't persist）</td>
+</tr>
+<tr>
+<td><strong>修剪策略</strong></td>
+<td>保守：归档而非删除</td>
+<td>激进：autoDream 主动删除低置信度</td>
+</tr>
+<tr>
+<td><strong>隔离性</strong></td>
+<td>无（LLM 直接操作 wiki）</td>
+<td>fork 子 agent + 限制工具集</td>
+</tr>
 </table>
-
+<h3>4.6 透明性与可审计</h3>
+<table>
+<tr>
+<th>维度</th>
+<th>Karpathy LLM Wiki</th>
+<th>Claude Code 记忆架构</th>
+</tr>
+<tr>
+<td><strong>透明性</strong></td>
+<td>✅ 纯文本 markdown</td>
+<td>✅ 纯文本 markdown + YAML frontmatter</td>
+</tr>
+<tr>
+<td><strong>可审计</strong></td>
+<td>✅ Git 版本控制</td>
+<td>✅ 文件可读可编辑</td>
+</tr>
+<tr>
+<td><strong>人机协作</strong></td>
+<td>✅ 人类策展 + LLM 维护</td>
+<td>✅ 静态层人工写 + 动态层自动学</td>
+</tr>
+<tr>
+<td><strong>语义检索</strong></td>
+<td>大规模时可选配</td>
+<td>❌ 无 embedding，纯 LLM 标题选择</td>
+</tr>
+<tr>
+<td><strong>Obsidian 兼容</strong></td>
+<td>✅ wikilink + 图谱视图</td>
+<td>❌ 无 wikilink 网络</td>
+</tr>
+</table>
+<hr/>
 <h2>5. 面向动态记忆 Agent 的工程化价值分析</h2>
-
 <h3>5.1 目标 Agent 的需求拆解</h3>
 <p>我们要构建的 Agent 需要：</p>
 <ol>
@@ -253,51 +594,140 @@ body {
 <li><strong>场景自适应</strong>：根据使用场景（编码/研究/写作/运维）切换行为</li>
 <li><strong>反馈驱动进化</strong>：根据用户反馈信号（显式纠正 + 隐式接受/拒绝）优化</li>
 </ol>
-
 <h3>5.2 LLM Wiki 的工程化价值</h3>
 <p><strong>优势贡献：</strong></p>
 <table>
-<tr><th>能力</th><th>价值</th></tr>
-<tr><td><strong>结构化知识复利</strong></td><td>Wiki 页面的交叉引用网络让知识随时间增值，而非线性堆积</td></tr>
-<tr><td><strong>人机分工范式</strong></td><td>人类策展 + LLM 维护的分工模式天然适合"用户偏好"场景——用户行为是 raw source，LLM 维护偏好 wiki</td></tr>
-<tr><td><strong>Schema 即契约</strong></td><td>AGENTS.md 作为维护契约，可定义偏好页面的结构（如"用户偏好"页必须包含：技术栈、工作时段、沟通风格、禁忌事项）</td></tr>
-<tr><td><strong>矛盾显式标注</strong></td><td>多用户场景下不同用户偏好可能冲突，Wiki 的矛盾标注机制可直接复用</td></tr>
-<tr><td><strong>Lint 健康检查</strong></td><td>可定期检查偏好页面是否过时、是否有孤儿偏好（无人再使用）</td></tr>
-<tr><td><strong>Obsidian 兼容</strong></td><td>纯 markdown + wikilink，用户可直接在 Obsidian 中浏览和审阅 Agent 学到的偏好</td></tr>
+<tr>
+<th>能力</th>
+<th>价值</th>
+</tr>
+<tr>
+<td><strong>结构化知识复利</strong></td>
+<td>Wiki 页面的交叉引用网络让知识随时间增值，而非线性堆积</td>
+</tr>
+<tr>
+<td><strong>人机分工范式</strong></td>
+<td>人类策展 + LLM 维护的分工模式天然适合"用户偏好"场景——用户行为是 raw source，LLM 维护偏好 wiki</td>
+</tr>
+<tr>
+<td><strong>Schema 即契约</strong></td>
+<td>AGENTS.md 作为维护契约，可定义偏好页面的结构</td>
+</tr>
+<tr>
+<td><strong>矛盾显式标注</strong></td>
+<td>多用户场景下不同用户偏好可能冲突，Wiki 的矛盾标注机制可直接复用</td>
+</tr>
+<tr>
+<td><strong>Lint 健康检查</strong></td>
+<td>可定期检查偏好页面是否过时、是否有孤儿偏好</td>
+</tr>
+<tr>
+<td><strong>Obsidian 兼容</strong></td>
+<td>纯 markdown + wikilink，用户可直接浏览和审阅 Agent 学到的偏好</td>
+</tr>
 </table>
 <p><strong>不足：</strong></p>
 <table>
-<tr><th>局限</th><th>影响</th></tr>
-<tr><td><strong>无实时进化</strong></td><td>ingest 是人工触发的，无法自动从交互中提取偏好</td></tr>
-<tr><td><strong>无压缩/修剪</strong></td><td>偏好积累到一定量后，上下文膨胀</td></tr>
-<tr><td><strong>无多用户隔离</strong></td><td>单一 wiki，无用户维度隔离</td></tr>
-<tr><td><strong>无怀疑式检索</strong></td><td>信任 wiki 内容，可能导致过时偏好被错误应用</td></tr>
-<tr><td><strong>无后台整理</strong></td><td>依赖人工 lint，无法自动消解矛盾偏好</td></tr>
+<tr>
+<th>局限</th>
+<th>影响</th>
+</tr>
+<tr>
+<td><strong>无实时进化</strong></td>
+<td>ingest 是人工触发的，无法自动从交互中提取偏好</td>
+</tr>
+<tr>
+<td><strong>无压缩/修剪</strong></td>
+<td>偏好积累到一定量后，上下文膨胀</td>
+</tr>
+<tr>
+<td><strong>无多用户隔离</strong></td>
+<td>单一 wiki，无用户维度隔离</td>
+</tr>
+<tr>
+<td><strong>无怀疑式检索</strong></td>
+<td>信任 wiki 内容，可能导致过时偏好被错误应用</td>
+</tr>
+<tr>
+<td><strong>无后台整理</strong></td>
+<td>依赖人工 lint，无法自动消解矛盾偏好</td>
+</tr>
 </table>
-
-<h3>5.3 Claude Code 六层记忆的工程化价值</h3>
+<h3>5.3 Claude Code 记忆架构的工程化价值</h3>
 <p><strong>优势贡献：</strong></p>
 <table>
-<tr><th>能力</th><th>价值</th></tr>
-<tr><td><strong>autoDream 自动整理</strong></td><td>无需人工触发，Agent 在空闲时自动合并、去重、消矛盾——天然适合"动态记忆"需求</td></tr>
-<tr><td><strong>指针索引设计</strong></td><td><code>MEMORY.md</code> 只存指针，~150 字符/条——即使用户偏好有数百条，索引也极轻量</td></tr>
-<tr><td><strong>过时一等公民</strong></td><td>"if memory ≠ reality → wrong"——偏好过时后自动失效，不会误导 Agent</td></tr>
-<tr><td><strong>可推导不存储</strong></td><td>可从代码/配置推导的事实不存——避免冗余，偏好只存不可推导的</td></tr>
-<tr><td><strong>怀疑式检索</strong></td><td>记忆是提示而非真相——Agent 应用偏好前会验证，降低错误应用风险</td></tr>
-<tr><td><strong>隔离 fork 整理</strong></td><td>整理在子 agent 中运行——不影响主交互，安全</td></tr>
-<tr><td><strong>分级压缩</strong></td><td>Layer 4-5 的压缩管线——长期偏好可压缩为摘要，短期偏好可丢弃</td></tr>
-<tr><td><strong>CLAUDE.md 稳定层</strong></td><td>项目级稳定宪法——可存"团队/组织级共同偏好"，比个人偏好更稳定</td></tr>
+<tr>
+<th>能力</th>
+<th>价值</th>
+</tr>
+<tr>
+<td><strong>强制四类分类</strong></td>
+<td>user/feedback/project/reference 四类强制分类，避免"一锅炖"——偏好天然有分类归属</td>
+</tr>
+<tr>
+<td><strong>Why + How 结构</strong></td>
+<td>feedback 类型强制写原因和适用条件——Agent 在边界情况下能自己判断该不该破例</td>
+</tr>
+<tr>
+<td><strong>stopHook 自动写入</strong></td>
+<td>每轮结束自动提取记忆，无需人工触发——天然适合"动态记忆"需求</td>
+</tr>
+<tr>
+<td><strong>fork + prompt cache</strong></td>
+<td>写入时 fork 主对话复用缓存，不重新加载 system prompt——写入成本低</td>
+</tr>
+<tr>
+<td><strong>Sonnet 选 top-5</strong></td>
+<td>用强模型选记忆而非向量检索——避免"相似≠相关"问题，准确性高</td>
+</tr>
+<tr>
+<td><strong>老化警告</strong></td>
+<td>2 天后加 stale 警告——偏好过时后 Agent 会主动验证，不会盲目应用</td>
+</tr>
+<tr>
+<td><strong>可推导不存储</strong></td>
+<td>只记代码推不出来的东西——避免冗余，偏好只存不可推导的</td>
+</tr>
+<tr>
+<td><strong>autoDream 自愈</strong></td>
+<td>后台自动合并、去重、消矛盾、修剪——记忆持续编辑而非只追加</td>
+</tr>
+<tr>
+<td><strong>CLAUDE.md 六层体系</strong></td>
+<td>静态层六层叠加——天然支持"团队级共同偏好"（Team 层）和"个人偏好"（User 层）的分层</td>
+</tr>
+<tr>
+<td><strong>条件规则注入</strong></td>
+<td><code>.claude/rules/</code> 按文件路径匹配——场景自适应（编码/研究/写作切换行为）的现成机制</td>
+</tr>
 </table>
 <p><strong>不足：</strong></p>
 <table>
-<tr><th>局限</th><th>影响</th></tr>
-<tr><td><strong>单用户/单项目设计</strong></td><td>无用户维度隔离，多用户需要额外设计</td></tr>
-<tr><td><strong>无结构化交叉引用</strong></td><td>主题文件是扁平的，无 wiki 式 <code>[[wikilink]]</code> 网络</td></tr>
-<tr><td><strong>无语义检索</strong></td><td>纯指针，大规模时无法按语义查找偏好</td></tr>
-<tr><td><strong>无人工策展接口</strong></td><td>autoDream 是黑盒，用户难以审阅和纠正整理结果</td></tr>
-<tr><td><strong>无矛盾标注</strong></td><td>autoDream 直接消解矛盾，但消解过程不透明</td></tr>
+<tr>
+<th>局限</th>
+<th>影响</th>
+</tr>
+<tr>
+<td><strong>单用户/单项目设计</strong></td>
+<td>User 层是个人全局，但无多用户隔离和共性提取</td>
+</tr>
+<tr>
+<td><strong>无结构化交叉引用</strong></td>
+<td>记忆文件是扁平的，无 wiki 式 <code>[[wikilink]]</code> 网络</td>
+</tr>
+<tr>
+<td><strong>无语义检索</strong></td>
+<td>纯 LLM 标题选择，大规模时可能遗漏</td>
+</tr>
+<tr>
+<td><strong>autoDream 黑盒</strong></td>
+<td>用户难以审阅和纠正 autoDream 的整理结果</td>
+</tr>
+<tr>
+<td><strong>无矛盾标注</strong></td>
+<td>autoDream 直接消解矛盾，但消解过程不透明</td>
+</tr>
 </table>
-
 <h3>5.4 互补性分析</h3>
 <p>两个系统在设计空间上几乎正交：</p>
 <pre><code>                结构化知识网络
@@ -310,12 +740,11 @@ body {
                     +──────────────→ 自动化维护</code></pre>
 <ul>
 <li><strong>LLM Wiki</strong> 擅长：结构化、交叉引用、人机协作、可审计、矛盾标注</li>
-<li><strong>Claude Code</strong> 擅长：自动化、过时管理、压缩、隔离、怀疑式检索</li>
+<li><strong>Claude Code</strong> 擅长：自动写入、分类约束、老化管理、怀疑式检索、条件注入</li>
 </ul>
-<p><strong>融合方向</strong>：以 LLM Wiki 的三层架构为骨架，注入 Claude Code 的自动化维护机制。</p>
-
+<p><strong>融合方向</strong>：以 LLM Wiki 的三层架构为骨架，注入 Claude Code 的自动化维护机制和分类约束。</p>
+<hr/>
 <h2>6. 融合架构建议：动态偏好记忆系统</h2>
-
 <h3>6.1 整体架构</h3>
 <pre><code>用户交互层
     ↓ (行为日志 = raw source)
@@ -325,7 +754,7 @@ body {
 │  - feedback_signals/ (反馈信号)          │
 │  - behavior_logs/ (行为日志)             │
 └──────────────┬──────────────────────────┘
-               ↓ (ingest / auto-extract)
+               ↓ (stopHook auto-extract / ingest)
 ┌─────────────────────────────────────────┐
 │  Layer 1: Preference Wiki (LLM 维护)     │
 │  ├── users/                              │
@@ -350,12 +779,13 @@ body {
                ↓ (autoDream / lint)
 ┌─────────────────────────────────────────┐
 │  Layer 2: Schema (AGENTS.md)             │
-│  - 偏好页面结构定义                       │
+│  - 偏好页面结构定义 + 四类分类强制约束    │
+│  - feedback/project 强制 Why + How 结构  │
 │  - ingest/query/lint/autoDream 工作流    │
 │  - 矛盾处理规则                           │
 │  - 多用户隔离与聚合规则                    │
+│  - 条件规则 (scenarios/ 按需注入)         │
 └─────────────────────────────────────────┘</code></pre>
-
 <h3>6.2 从 LLM Wiki 借鉴</h3>
 <ol>
 <li><strong>三层架构</strong>：raw → wiki → schema，保持知识编译一次的复利效应</li>
@@ -365,56 +795,57 @@ body {
 <li><strong>人工策展接口</strong>：用户可在 Obsidian 中直接审阅和修改偏好页面</li>
 <li><strong>index.md + log.md</strong>：内容目录 + 操作日志，双重导航</li>
 </ol>
-
 <h3>6.3 从 Claude Code 借鉴</h3>
 <ol>
-<li><strong>MEMORY.md 指针索引</strong>：wiki 的 index.md 之外，增加纯指针的 MEMORY.md，每轮加载，~150 字符/条</li>
-<li><strong>autoDream 后台整理</strong>：空闲时自动合并、去重、消矛盾、修剪过时偏好</li>
-<li><strong>过时一等公民</strong>：偏好带 <code>last_verified</code> 时间戳，超时自动标记 <code>stale: true</code></li>
+<li><strong>强制四类分类</strong>：user/feedback/project/reference，每条偏好必须归属一类</li>
+<li><strong>Why + How 结构</strong>：feedback 类型强制写原因和适用条件，让 Agent 在边界情况自行判断</li>
+<li><strong>MEMORY.md 指针索引</strong>：纯指针，~150 字符/条，始终加载</li>
+<li><strong>stopHook 自动写入</strong>：每轮结束 fork 主对话自动提取偏好，复用 prompt cache</li>
+<li><strong>Sonnet 选 top-5</strong>：用强模型从标题清单选偏好，非向量检索</li>
+<li><strong>老化警告</strong>：偏好带 <code>last_verified</code> 时间戳，2 天后加 stale 警告</li>
 <li><strong>可推导不存储</strong>：可从代码/配置/环境推导的偏好不持久化</li>
-<li><strong>怀疑式检索</strong>：偏好应用前验证——"用户上次确认这个偏好是什么时候？"</li>
+<li><strong>autoDream 后台整理</strong>：空闲时自动合并、去重、消矛盾、修剪</li>
 <li><strong>隔离 fork 整理</strong>：autoDream 在子 agent 中运行，限制工具集</li>
-<li><strong>分级压缩</strong>：长期未使用的偏好压缩为摘要，高频使用偏好保持详细</li>
+<li><strong>条件规则注入</strong>：scenarios/ 按使用场景按需注入偏好规则</li>
+<li><strong>CLAUDE.md 六层体系</strong>：静态层分层——Managed（组织级）→ User（个人级）→ Project（项目级）→ Team（团队共性级）</li>
 </ol>
-
 <h3>6.4 多用户偏好聚合设计</h3>
-<p>这是两个原始系统都未覆盖的维度，需要新增设计：</p>
+<p>这是两个原始系统都未覆盖的维度。Claude Code 的 CLAUDE.md 六层体系中的 User 层和 Team 层提供了雏形，但缺乏自动共性提取。</p>
 <p><strong>三层偏好结构：</strong></p>
-<pre><code>个人偏好 (users/damon.md)
+<pre><code>个人偏好 (users/damon.md)     ← Claude Code User 层
     ↓ 提取共性
-团队偏好 (common/team-conventions.md)
+团队偏好 (common/team-conventions.md)  ← Claude Code Team 层
     ↓ 提取共性
 通用偏好 (concepts/work-style.md)</code></pre>
 <p><strong>聚合规则（Schema 中定义）：</strong></p>
 <ol>
 <li><strong>共性提取</strong>：当 2+ 用户的偏好页出现相同模式 → 自动创建/更新 common 页面</li>
 <li><strong>差异标注</strong>：个人偏好与共性偏离时，在个人页面标注 <code>deviates_from: [common-page]</code></li>
-<li><strong>置信度分级</strong>：
-  <ul>
-  <li>个人偏好：confidence: high（直接观察）</li>
-  <li>团队偏好：confidence: medium（聚合推断）</li>
-  <li>通用偏好：confidence: low（需要更多验证）</li>
-  </ul>
-</li>
-<li><strong>反馈信号驱动</strong>：
-  <ul>
-  <li>用户显式纠正 → 立即更新个人偏好，降低相关共性偏好置信度</li>
-  <li>用户隐式接受（连续 N 次未纠正）→ 提升置信度</li>
-  <li>用户隐式拒绝（连续 N 次纠正同一类行为）→ 标记为 <code>contested</code></li>
-  </ul>
-</li>
+<li><strong>置信度分级</strong>：</li>
 </ol>
-
+<ul>
+<li>个人偏好：confidence: high（直接观察）</li>
+<li>团队偏好：confidence: medium（聚合推断）</li>
+<li>通用偏好：confidence: low（需要更多验证）</li>
+</ul>
+<ol>
+<li><strong>反馈信号驱动</strong>：</li>
+</ol>
+<ul>
+<li>用户显式纠正 → 立即更新个人偏好，降低相关共性偏好置信度</li>
+<li>用户隐式接受（连续 N 次未纠正）→ 提升置信度</li>
+<li>用户隐式拒绝（连续 N 次纠正同一类行为）→ 标记为 <code>contested</code></li>
+</ul>
 <h3>6.5 反馈驱动进化闭环</h3>
 <pre><code>用户交互
     ↓
 行为日志 (raw/)
-    ↓ auto-extract (session end)
-偏好页面更新 (wiki/)
+    ↓ stopHook auto-extract (session end)
+偏好页面更新 (wiki/) — 四类分类 + Why/How 结构
     ↓ autoDream (idle, ~24h)
-合并/去重/消矛盾/修剪
+合并/去重/消矛盾/修剪 — 隔离 fork
     ↓ lint (weekly)
-健康检查 + 矛盾标注 + 孤儿检测
+健康检查 + 矛盾标注 + 孤儿检测 + 过时检测
     ↓ 用户审阅 (Obsidian)
 人工纠正
     ↓
@@ -423,32 +854,55 @@ body {
 进化后的偏好系统</code></pre>
 <p><strong>关键反馈信号：</strong></p>
 <table>
-<tr><th>信号类型</th><th>来源</th><th>处理</th></tr>
-<tr><td>显式纠正</td><td>"不对，我不喜欢这样"</td><td>立即更新，降低相关共性置信度</td></tr>
-<tr><td>显式确认</td><td>"对，就这样"</td><td>提升置信度</td></tr>
-<tr><td>隐式接受</td><td>连续 N 次未纠正 Agent 基于偏好的行为</td><td>提升置信度</td></tr>
-<tr><td>隐式拒绝</td><td>连续 N 次纠正同类行为</td><td>标记 contested，触发重新学习</td></tr>
-<tr><td>沮丧检测</td><td>情绪信号（参考 Claude Code 的 frustration regex）</td><td>降级为保守模式，暂停偏好应用</td></tr>
+<tr>
+<th>信号类型</th>
+<th>来源</th>
+<th>处理</th>
+</tr>
+<tr>
+<td>显式纠正</td>
+<td>"不对，我不喜欢这样"</td>
+<td>立即更新，降低相关共性置信度</td>
+</tr>
+<tr>
+<td>显式确认</td>
+<td>"对，就这样"</td>
+<td>提升置信度</td>
+</tr>
+<tr>
+<td>隐式接受</td>
+<td>连续 N 次未纠正 Agent 基于偏好的行为</td>
+<td>提升置信度</td>
+</tr>
+<tr>
+<td>隐式拒绝</td>
+<td>连续 N 次纠正同类行为</td>
+<td>标记 contested，触发重新学习</td>
+</tr>
+<tr>
+<td>沮丧检测</td>
+<td>情绪信号（参考 Claude Code 的 frustration regex）</td>
+<td>降级为保守模式，暂停偏好应用</td>
+</tr>
 </table>
-
+<hr/>
 <h2>7. 工程化实现路径建议</h2>
-
-<h3>阶段一：基础架构（LLM Wiki 骨架）</h3>
+<h3>阶段一：基础架构（LLM Wiki 骨架 + Claude Code 分类约束）</h3>
 <ul>
 <li>搭建 raw/ → wiki/ → schema 三层目录</li>
-<li>定义偏好页面 frontmatter 模板</li>
+<li>定义偏好页面 frontmatter 模板 + 四类分类强制约束 + Why/How 结构</li>
 <li>实现 ingest（从会话记录提取偏好）+ query + lint</li>
 <li>单用户验证</li>
 </ul>
-
 <h3>阶段二：自动化注入（Claude Code 机制）</h3>
 <ul>
 <li>增加 MEMORY.md 指针索引</li>
+<li>实现 stopHook 自动写入（fork + prompt cache）</li>
+<li>实现 Sonnet 选 top-5 检索</li>
+<li>实现老化警告（last_verified + stale 警告）</li>
 <li>实现 autoDream 后台整理（cron 触发或空闲触发）</li>
-<li>实现过时检测（last_verified 时间戳）</li>
-<li>实现怀疑式检索（应用前验证）</li>
+<li>实现条件规则注入（scenarios/ 按需注入）</li>
 </ul>
-
 <h3>阶段三：多用户聚合</h3>
 <ul>
 <li>实现用户维度隔离（users/ 目录）</li>
@@ -456,7 +910,6 @@ body {
 <li>实现置信度分级</li>
 <li>实现差异标注</li>
 </ul>
-
 <h3>阶段四：反馈驱动进化</h3>
 <ul>
 <li>实现反馈信号采集（显式 + 隐式）</li>
@@ -464,30 +917,73 @@ body {
 <li>实现沮丧检测和保守模式</li>
 <li>闭环验证</li>
 </ul>
-
+<hr/>
 <h2>8. 总结</h2>
 <table>
-<tr><th></th><th>Karpathy LLM Wiki</th><th>Claude Code 六层记忆</th><th>融合架构</th></tr>
-<tr><td><strong>核心优势</strong></td><td>知识复利、结构化、人机协作</td><td>自动维护、上下文卫生、过时管理</td><td>两者兼具</td></tr>
-<tr><td><strong>记忆哲学</strong></td><td>编译一次，持续维护</td><td>持续编辑，激进修剪</td><td>编译 + 修剪</td></tr>
-<tr><td><strong>多用户</strong></td><td>❌</td><td>❌</td><td>✅ 三层聚合</td></tr>
-<tr><td><strong>反馈进化</strong></td><td>人工 lint</td><td>autoDream 自动</td><td>信号驱动闭环</td></tr>
-<tr><td><strong>透明性</strong></td><td>✅ Obsidian 可读</td><td>✅ 文件可读</td><td>✅ 人工策展接口</td></tr>
-<tr><td><strong>工程成熟度</strong></td><td>范式级（概念验证）</td><td>生产级（512K 行验证）</td><td>需要新工程</td></tr>
+<tr>
+<th><strong>核心优势</strong></th>
+<th>知识复利、结构化、人机协作</th>
+<th>自动维护、分类约束、老化管理</th>
+<th>两者兼具</th>
+</tr>
+<tr>
+<td><strong>记忆哲学</strong></td>
+<td>编译一次，持续维护</td>
+<td>只记代码推不出来的；持续编辑</td>
+<td>编译 + 修剪</td>
+</tr>
+<tr>
+<td><strong>分类约束</strong></td>
+<td>页面类型（松散）</td>
+<td>四类强制 + Why/How（严格）</td>
+<td>四类 + Wiki 结构</td>
+</tr>
+<tr>
+<td><strong>检索方式</strong></td>
+<td>index 导航</td>
+<td>Sonnet 选 top-5（非向量）</td>
+<td>Sonnet + Wiki 交叉引用</td>
+</tr>
+<tr>
+<td><strong>多用户</strong></td>
+<td>❌</td>
+<td>❌（Team 层有雏形）</td>
+<td>✅ 三层聚合</td>
+</tr>
+<tr>
+<td><strong>反馈进化</strong></td>
+<td>人工 lint</td>
+<td>stopHook + autoDream 自动</td>
+<td>信号驱动闭环</td>
+</tr>
+<tr>
+<td><strong>透明性</strong></td>
+<td>✅ Obsidian 可读</td>
+<td>✅ 文件可读</td>
+<td>✅ 人工策展接口</td>
+</tr>
+<tr>
+<td><strong>工程成熟度</strong></td>
+<td>范式级（概念验证）</td>
+<td>生产级（512K 行验证）</td>
+<td>需要新工程</td>
+</tr>
 </table>
 <p><strong>核心洞察：</strong></p>
 <ol>
 <li><strong>LLM Wiki 提供了"记忆应该长什么样"的结构答案</strong>——交叉引用、实体/概念/对比页、矛盾标注、schema 契约。</li>
-<li><strong>Claude Code 提供了"记忆如何保持健康"的工程答案</strong>——指针索引、autoDream、过时一等公民、怀疑式检索、隔离整理。</li>
-<li><strong>两者在"多用户偏好聚合"上都是空白</strong>——这是融合架构需要新增的维度，通过三层偏好结构（个人→团队→通用）+ 共性提取 + 置信度分级来解决。</li>
+<li><strong>Claude Code 提供了"记忆如何保持健康"的工程答案</strong>——强制四类分类、Why/How 结构、stopHook 自动写入、Sonnet 选 top-5、老化警告、autoDream 自愈、可推导不存储。</li>
+<li><strong>Claude Code 明确否定了向量检索路线</strong>——用 Sonnet 从标题清单选 top-5 而非 embedding 相似度，因为"相似≠相关"，且人脑读不懂 768 维浮点数。</li>
+<li><strong>两者在"多用户偏好聚合"上都是空白</strong>——Claude Code 的 Team 层有雏形但无自动共性提取，需要通过三层偏好结构（个人→团队→通用）+ 共性提取 + 置信度分级来解决。</li>
 <li><strong>反馈驱动进化是闭环关键</strong>——显式纠正/确认 + 隐式接受/拒绝 + 沮丧检测，构成偏好系统的"梯度信号"。</li>
 </ol>
 <blockquote class="koujue">最终目标不是一个"记住更多"的 Agent，而是一个"记住对的、忘掉错的、在多用户间学到共性"的 Agent。LLM Wiki 给了它骨架和血肉，Claude Code 给了它免疫系统和新陈代谢。</blockquote>
-
+<hr/>
 <h2>参考来源</h2>
 <ul>
 <li><a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">Karpathy LLM Wiki Gist</a> — 原始设计（2026-04-04）</li>
 <li><a href="https://aaif.io/blog/karpathys-llm-wiki-as-agent-memory">Karpathy's LLM Wiki as Agent Memory — AAIF</a> — 记忆类型映射分析</li>
+<li><a href="https://mp.weixin.qq.com/s/CLIuogpYSPng2brQph7AHg">Claude Code 记忆机制深度解析 — 微信公众号</a> — 四种方案硬伤分析、两层架构、CLAUDE.md 六层体系、四种记忆类型、stopHook 写入、Sonnet 选 top-5、老化机制（本文主要参考）</li>
 <li><a href="https://www.mindstudio.ai/blog/claude-code-source-leak-memory-architecture">Claude Code Source Leak: Three-Layer Memory Architecture — MindStudio</a> — 三层记忆架构分析</li>
 <li><a href="https://www.linkedin.com/pulse/how-claude-codes-memory-actually-works-lessons-from-leak-makarevych-ntcqf">How Claude Code's Memory Actually Works — Makarevych, LinkedIn Pulse</a> — 六层记忆层级详解</li>
 <li><a href="https://blakecrosley.com/blog/claude-code-source-leak">What the Claude Code Source Leak Reveals — Blake Crosley</a> — 泄露源码技术分析</li>
