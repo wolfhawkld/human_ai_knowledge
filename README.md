@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [kimi-k3-architecture-deep-dive.md](kimi-k3-architecture-deep-dive.md) | Damon + Metis | 2026-07-18 | 🧠 Kimi K3 架构三大技术点解析：Stable LatentMoE（Quantile Balancing）、Kimi Delta Attention（通道级门控线性注意力）、Attention Residuals（深度方向注意力）+ 与 HC/mHC 残差谱系关系 |
 | [llm-wiki-vs-claude-code-memory-architecture.md](llm-wiki-vs-claude-code-memory-architecture.md) | Nemesis | 2026-07-01 | 🧠 Karpathy LLM Wiki vs Claude Code 记忆架构对比：三层 vs 两层（静态六层+动态闭环）、四种主流方案硬伤、强制四类分类+Why/How、Sonnet 选 top-5 非向量检索、autoDream 自愈、老化警告，融合架构建议（多用户偏好聚合 + 反馈驱动进化闭环） |
 | [rocm-vs-cuda-local-inference.md](rocm-vs-cuda-local-inference.md) | Damon + Metis | 2026-06-21 | ⚙️ ROCm vs CUDA 本地推理全维度对比：库栈映射、安装流程、代码差异、推理框架/量化/Attention 支持、9070 XT 实战、决策树 |
 | [reranker-models-comparison.md](reranker-models-comparison.md) | Damon + Metis | 2026-06-21 | 🎯 Reranker 模型对比：MS-MARCO Cross-Encoder → bge-reranker-v2-m3 → bge-reranker-v2-gemma，三代范式演进 + BEIR/MIRACL benchmark + 论文级引用 |
