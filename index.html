@@ -176,6 +176,12 @@
             <h2>📚 知识文档</h2>
             
             <div class="knowledge-grid">
+                <a href="add-norm-vs-hc-mhc-residual-connections.html" class="knowledge-card">
+                    <h3>🔗 add+norm 还不够？从 LayerNorm 到 HC/mHC 的残差流演化 <span class="tag damon">Damon</span><span class="tag metis">Metis</span></h3>
+                    <p>回答"add+norm 已经保证残差传递和归一化，为什么还要研究 HC/mHC"：LayerNorm 管单层幅度稳定，HC 把单一残差流扩成多流突破表达力瓶颈，mHC 用双随机矩阵约束（Sinkhorn-Knopp）恢复结构稳定性——幅度控制 vs 结构控制，两个不同层面的梯度问题。</p>
+                    <div class="meta">📅 2026-08-11 · Transformer · 残差连接 · LayerNorm · mHC</div>
+                </a>
+
                 <a href="kimi-k3-architecture-deep-dive.html" class="knowledge-card">
                     <h3>🧠 Kimi K3 架构三大技术点解析 <span class="tag damon">Damon</span><span class="tag metis">Metis</span></h3>
                     <p>Stable LatentMoE（Quantile Balancing 专家路由）、Kimi Delta Attention（通道级门控线性注意力，KV cache -75%）、Attention Residuals（深度方向注意力，~25% 训练效率）——以及与 ByteDance HC、DeepSeek mHC 的残差连接谱系关系。</p>
