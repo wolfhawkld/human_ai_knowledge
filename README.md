@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [deepseek-v4-1-flash-ced-architecture.md](deepseek-v4-1-flash-ced-architecture.md) | Damon + Nemesis | 2026-09-13 | 🧩 DeepSeek-V4.1-Flash 的 Causal Encoder-Decoder 架构解析：CED 如何把 40 层主干切成 20 层 causal encoder + 20 层 decoder，decoder 全局 KV 由 encoder 末层 H(L/2) 一次性投影而来（而非经典 cross-attention 的逐层重读）；逐维对比经典 Transformer Encoder-Decoder（encoder 角色 / 访问方式 / 因果性要求）；相对 V4 的 11 项架构升级（纯 CSA2、FP4 主 KV、SWA Bounded Replay、Single-Pass mHC、Engram 196B、DSpark、head-wise Muon、原生多模态） |
 | [add-norm-vs-hc-mhc-residual-connections.md](add-norm-vs-hc-mhc-residual-connections.md) | Damon + Metis | 2026-08-11 | 🔗 add+norm 不够？从 LayerNorm 到 HC/mHC 残差流演化：幅度控制 vs 结构控制，为什么 norm 之外还要研究 Hyper-Connections/mHC |
 | [kimi-k3-architecture-deep-dive.md](kimi-k3-architecture-deep-dive.md) | Damon + Metis | 2026-07-18 | 🧠 Kimi K3 架构三大技术点解析：Stable LatentMoE（Quantile Balancing）、Kimi Delta Attention（通道级门控线性注意力）、Attention Residuals（深度方向注意力）+ 与 HC/mHC 残差谱系关系 |
 | [llm-wiki-vs-claude-code-memory-architecture.md](llm-wiki-vs-claude-code-memory-architecture.md) | Nemesis | 2026-07-01 | 🧠 Karpathy LLM Wiki vs Claude Code 记忆架构对比：三层 vs 两层（静态六层+动态闭环）、四种主流方案硬伤、强制四类分类+Why/How、Sonnet 选 top-5 非向量检索、autoDream 自愈、老化警告，融合架构建议（多用户偏好聚合 + 反馈驱动进化闭环） |

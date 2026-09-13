@@ -176,6 +176,12 @@
             <h2>📚 知识文档</h2>
             
             <div class="knowledge-grid">
+                <a href="deepseek-v4-1-flash-ced-architecture.html" class="knowledge-card">
+                    <h3>🧩 DeepSeek-V4.1-Flash 的 CED 架构解析 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
+                    <p>CED（Causal Encoder-Decoder）如何把 40 层主干切成 20+20：decoder 的全局 KV 由 encoder 末层隐状态 H(L/2) 一次性<b>投影</b>而来，而不是经典 cross-attention 的逐层重读——这才是 prefill 计算量减半的机制。逐维对比经典 Transformer Encoder-Decoder（encoder 角色、访问方式、因果性要求），并梳理相对 V4 的 11 项架构升级：纯 CSA2、FP4 主 KV、SWA Bounded Replay、Single-Pass mHC、Engram 196B、DSpark、原生多模态。</p>
+                    <div class="meta">📅 2026-09-13 · DeepSeek · CED · Encoder-Decoder · CSA2 · KV Cache</div>
+                </a>
+
                 <a href="add-norm-vs-hc-mhc-residual-connections.html" class="knowledge-card">
                     <h3>🔗 add+norm 还不够？从 LayerNorm 到 HC/mHC 的残差流演化 <span class="tag damon">Damon</span><span class="tag metis">Metis</span></h3>
                     <p>回答"add+norm 已经保证残差传递和归一化，为什么还要研究 HC/mHC"：LayerNorm 管单层幅度稳定，HC 把单一残差流扩成多流突破表达力瓶颈，mHC 用双随机矩阵约束（Sinkhorn-Knopp）恢复结构稳定性——幅度控制 vs 结构控制，两个不同层面的梯度问题。</p>
@@ -440,15 +446,9 @@
                     <div class="meta">📅 2026-03-10</div>
                 </a>
 
-                <a href="knowledge-trigger-mechanism.html" class="knowledge-card">
-                    <h3>知识触发机制 <span class="tag outis">Outis</span></h3>
-                    <p>如何触发 AI 生成知识文档的机制说明</p>
-                    <div class="meta">📅 2026-03-09</div>
-                </a>
-
-                <a href="knowledge-rules.html" class="knowledge-card">
-                    <h3>人机知识库规则 <span class="tag outis">Outis</span></h3>
-                    <p>知识文档的生成规则、格式规范、命名约定</p>
+                <a href="a2a-local-network-setup.html" class="knowledge-card">
+                    <h3>局域网 A2A 方案分析 <span class="tag nemo">Nemo</span></h3>
+                    <p>两个 OpenClaw 实例在局域网内通过 A2A 协议互访的完整方案</p>
                     <div class="meta">📅 2026-03-09</div>
                 </a>
 
@@ -462,12 +462,6 @@
                     <h3>人机知识库规则 <span class="tag outis">Outis</span></h3>
                     <p>知识文档的生成规则、格式规范、命名约定，以及索引同步更新要求</p>
                     <div class="meta">📅 2026-03-09 · 更新于 2026-03-13</div>
-                </a>
-
-                <a href="a2a-local-network-setup.html" class="knowledge-card">
-                    <h3>局域网 A2A 方案分析 <span class="tag nemo">Nemo</span></h3>
-                    <p>两个 OpenClaw 实例在局域网内通过 A2A 协议互访的完整方案</p>
-                    <div class="meta">📅 2026-03-09</div>
                 </a>
 
                 <a href="openclaw-features.html" class="knowledge-card">

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeek-V4.1-Flash 的 Causal Encoder-Decoder 架构解析 — 人机知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0f172a 0%, #312e81 100%); min-height: 100vh; padding: 40px 20px; }
+.container { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+.header h1 { font-size: 1.85em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.08em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
+.content h1 { display: none; }
+.content h2 { color: #1e1b4b; border-bottom: 3px solid #6d28d9; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.45em; }
+.content h3 { color: #3730a3; margin: 22px 0 10px; font-size: 1.2em; }
+.content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.9em; }
+.content th, .content td { border: 1px solid #e2e8f0; padding: 9px 12px; text-align: left; vertical-align: top; }
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.content code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+.content pre { background: #1e1b4b; color: #e0e7ff; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 14px 0; font-size: 0.86em; line-height: 1.55; }
+.content pre code { background: transparent; color: inherit; padding: 0; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content blockquote { border-left: 4px solid #6d28d9; background: #f5f3ff; padding: 10px 18px; margin: 14px 0; color: #4c1d95; }
+.content a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+.content a:hover { text-decoration: underline; }
+.content hr { border: none; border-top: 1px dashed #c7d2fe; margin: 26px 0; }
+.content .formula { background: #f5f3ff; border-left: 4px solid #6d28d9; padding: 14px 20px; margin: 16px 0; border-radius: 8px; font-family: 'JetBrains Mono', 'Cambria Math', monospace; font-size: 0.95em; color: #3730a3; overflow-x: auto; text-align: center; }
+.content .tex { font-family: 'JetBrains Mono', 'Cambria Math', monospace; color: #3730a3; background: #eef2ff; padding: 1px 5px; border-radius: 4px; font-size: 0.93em; }
+.content figure { margin: 20px 0; text-align: center; }
+.content figure img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; }
+.content figcaption { font-size: 0.86em; color: #64748b; margin-top: 8px; }
+.footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) { body { padding: 20px 10px; } .header, .content, .footer { padding-left: 20px; padding-right: 20px; } .header h1 { font-size: 1.3em; } .content table { font-size: 0.76em; } .content th, .content td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>DeepSeek-V4.1-Flash 的 Causal Encoder-Decoder 架构解析</h1>
+    <p class="subtitle">与 Transformer Encoder-Decoder 的区别，以及相对 DeepSeek-V4 的架构升级</p>
+    <div class="meta">
+      <span class="meta-item agent">🤖 Damon + Nemesis</span>
+      <span class="meta-item">📅 2026-09-13</span>
+      <span class="meta-item">🔖 DeepSeek · CED · Encoder-Decoder · CSA2 · KV Cache</span>
+    </div>
+  </div>
+  <div class="content">
+<blockquote><p>2026-09-13 · Damon + Nemesis · 分类：LLM 架构 · 标签：DeepSeek, CED, Encoder-Decoder, CSA2, KV Cache, MoE, 稀疏注意力</p></blockquote>
+<hr />
+<h2>一、背景：V4.1-Flash 要解决的是什么问题</h2>
+<p>DeepSeek-V4.1-Flash（2026-09-10 发布）的整篇技术报告，副标题就是一句话：<strong>Pushing the Limits of KV Cache Compression</strong>（把 KV cache 压缩推到极限）。</p>
+<p>它的出发点不是"模型不够聪明"，而是<strong>成本结构变了</strong>：</p>
+<ul><li>长程 agent 应用普及后，模型负载变成 <strong>input-heavy</strong>——agent 反复调用工具、反复把文件/日志/历史轮次塞回上下文，请求里绝大多数 token 是"输入"而不是"输出"。</li><li>V4 已经通过稀疏注意力（CSA/HCA）大幅降低了长序列的<strong>计算</strong>成本，于是瓶颈转移到了：<strong>prefill 计算</strong> 和 <strong>KV cache 的存储 / 持久化 / 传输</strong>（HBM 容量、SSD 容量、I/O 带宽）。</li><li>每次 KV cache miss 都要重新 prefill 整段输入，这在 agent 场景下是常态而非例外。</li></ul>
+<p>所以 V4.1-Flash 的两条主线是：</p>
+<ol><li><strong>CED（Causal Encoder-Decoder）</strong> → 砍 prefill 计算（近一半）</li><li><strong>CSA2 + FP4 KV + SWA Bounded Replay</strong> → 砍 KV cache 的存储与持久化开销</li></ol>
+<hr />
+<h2>二、模型规格</h2>
+<table><thead><tr><th>项目</th><th>DeepSeek-V4-Flash</th><th>DeepSeek-V4.1-Flash</th></tr></thead><tbody><tr><td>架构</td><td>Mixture-of-Experts decoder</td><td><strong>Causal Encoder-Decoder (CED)</strong></td></tr><tr><td>语言主干层数</td><td>——</td><td>40 层（20 encoder + 20 decoder）</td></tr><tr><td>Backbone 参数</td><td>284B</td><td><strong>552B</strong></td></tr><tr><td>条件记忆参数</td><td>无</td><td><strong>Engram 196B</strong>（独立于 backbone）</td></tr><tr><td>每 token 激活参数</td><td>13B</td><td><strong>prefill 8B / decode 16B</strong></td></tr><tr><td>注意力</td><td>CSA + HCA 混合</td><td><strong>纯 CSA2</strong>（+ 层次化稀疏 indexer）</td></tr><tr><td>主 KV 精度</td><td>FP8</td><td><strong>FP4</strong>（SWA KV 仍为 FP8）</td></tr><tr><td>全局 KV cache</td><td>基准</td><td><strong>890 字节/token ≈ 1/4</strong></td></tr><tr><td>持久化 KV cache</td><td>基准</td><td><strong>≈ 1/8</strong></td></tr><tr><td>上下文长度</td><td>1M</td><td>1M</td></tr><tr><td>多模态</td><td>独立实验模型</td><td><strong>原生</strong>（预训练起就纳入）</td></tr><tr><td>预训练语料</td><td>32T+ tokens</td><td><strong>45T tokens</strong>（多模态语料）</td></tr></tbody></table>
+<p>模型结构的关键数字：<strong>40 层 Transformer，从中间劈成两半——下 20 层是 causal encoder，上 20 层是 decoder</strong>。每层都同时含全局注意力和滑动窗口注意力（SWA），只有最前面两层例外（纯 SWA）。</p>
+<figure><img src="figures/ced-architecture.svg" alt="DeepSeek-V4.1-Flash 的 CED 分层结构" /><figcaption>DeepSeek-V4.1-Flash 的 CED 分层结构</figcaption></figure>
+<hr />
+<h2>三、CED 机制详解</h2>
+<h3>3.1 一句话概括</h3>
+<blockquote><p>把 decoder-only 的深层堆叠从中间切开：前半段只负责"生成一份 KV 笔记"，后半段拿着这份笔记开始写作——而不需要把原文再逐层读一遍。</p></blockquote>
+<h3>3.2 层的划分</h3>
+<p>设总层数 <span class="tex">L = 40</span>：</p>
+<ul><li><strong>下 <span class="tex">L/2</span> 层（第 1–20 层）= causal encoder</strong></li><li><strong>上 <span class="tex">L/2</span> 层（第 21–40 层）= decoder</strong></li></ul>
+<p>这个划分只作用于<strong>全局注意力</strong>路径，SWA 路径另有安排（见 3.4）。</p>
+<h3>3.3 核心：全局注意力的 KV 由 encoder 末层投影而来</h3>
+<p>这是 CED 与一切传统架构的分水岭。</p>
+<p>对于 decoder 的任意一层 <span class="tex">l &gt; L/2</span>，它的全局 KV 条目<strong>不再由自己的隐状态 <span class="tex">H<sub>l</sub></span> 产生</strong>，而是<strong>直接从第 <span class="tex">L/2</span> 层（即 encoder 最后一层）的隐状态 <span class="tex">H<sub>L/2</sub></span> 投影得到</strong>：</p>
+<div class="formula">C<sub>l</sub> = H<sub>L/2</sub> &thinsp; W<sup>KV</sup><sub>l</sub>, &nbsp;&nbsp;&nbsp;&nbsp; Z<sub>l</sub> = H<sub>L/2</sub> &thinsp; W<sup>Z</sup><sub>l</sub>, &nbsp;&nbsp;&nbsp;&nbsp; l > L/2</div>
+<p>其中：</p>
+<ul><li><span class="tex">C<sub>l</sub></span> 是该层的 KV 条目，<span class="tex">Z<sub>l</sub></span> 是对应的压缩权重（与 MLA 的 latent 结构呼应）；</li><li><span class="tex">W<sup>KV</sup><sub>l</sub></span>、<span class="tex">W<sup>Z</sup><sub>l</sub></span> 是<strong>逐层独立</strong>的可学投影权重——这是关键细节：虽然所有 decoder 层拿的是<strong>同一个</strong> <span class="tex">H<sub>L/2</sub></span>，但每一层有自己的投影矩阵，因此得到的 KV 各不相同，层间仍然保留差异化表达。</li></ul>
+<p><strong>直接后果</strong>：prefill 阶段只需要跑前 <span class="tex">L/2</span> 层，就能以极小的额外代价拿到整个 decoder 的全局 KV cache。这就是 prefill 计算量近乎减半的来源。</p>
+<h3>3.4 SWA 是刻意保留的"例外"</h3>
+<p>CED 并没有把所有注意力都替换成投影。<strong>滑动窗口注意力（SWA）仍然保持逐层的常规计算</strong>——任意一层 <span class="tex">l</span> 的局部 K/V 都由该层自己的隐状态 <span class="tex">H<sub>l</sub></span> 得到。</p>
+<p>这样做的目的是<strong>保住 local KV 的计算深度</strong>：局部依赖是逐层精细化提炼的，不能被一次投影草率替代。</p>
+<p>但代价随之而来：既然 decoder 的 SWA KV 必须由各层自己算，prefill 时就需要<strong>把 decoder 的局部窗口"重放"一遍</strong>，代价是额外的 <span class="tex">n<sub>win</sub> × L/2</span> 个 token。</p>
+<p>解决方案是 <strong>Decoder SWA Bounded Replay</strong>：只对 prompt 的<strong>最后 <span class="tex">n<sub>win</sub></span> 个 token</strong> 做 SWA prefill。依据是已有工作（Chen et al., 2025）发现 SWA 的<strong>实际有效感受野远小于理论值</strong> <span class="tex">n<sub>win</sub> × L/2</span>。论文报告这样做只有可忽略的性能损失。</p>
+<p>这个取舍的意义在于：它建立了一个<strong>新的存储–计算折中</strong>——不再把 SWA KV 持久化到 SSD，而是在需要时用少量重算近似恢复。同一套思路也用在 encoder 侧的 SWA 状态重建上（host memory 中只保留长期存活的 global KV，短时 SWA 状态用 bounded replay 重建）。</p>
+<h3>3.5 复杂度</h3>
+<p>对序列长度 <span class="tex">N ≫ n<sub>win</sub></span>：</p>
+<div class="formula">O(NL) \;⟶\; O(NL/2 + n<sub>win</sub>L/2) ≈ O(NL/2)</div>
+<p>也就是 <strong>prefill 总计算量减少约一半</strong>。</p>
+<h3>3.6 与 CSA2 的协同</h3>
+<p>CED 和 CSA2 解决的是<strong>互补</strong>的两类成本：CED 管 prefill 计算，CSA2 管 KV 存储。</p>
+<p>两者结合时的细节：decoder 中第一个被分配为 <strong>Full Mode</strong> 的 CSA2 层，它的全局 KV <strong>就是</strong>从第 <span class="tex">L/2</span> 层的隐状态投影来的；Reindex / Reuse 两种模式不受 CED 影响。</p>
+<p>此外，<strong>层次化稀疏 indexer（Hierarchical Sparse Indexer）只在 CED 的 decoder 里启用</strong>：第一个 Full Mode 层照常扫描全部因果可见位置并选出自己的 Top-K，同时做<strong>块级候选筛选</strong>（每个块取块内最大 index 分数，选最高分的若干块，例如 2048 块 × 8 位置 = 16,384 个候选位置）→ 构成一个<strong>共享候选池</strong>。后续 Reindex 层只在这个池子里打分。</p>
+<p>效果：对固定候选池大小，<strong>深层 indexer 每 query 的打分成本从"随上下文长度线性增长"变成常数</strong>。只有第一个 Full Mode 层仍需全范围扫描。</p>
+<h3>3.7 非对称激活意味着什么</h3>
+<table><thead><tr><th>阶段</th><th>跑的层</th><th>激活参数</th><th>角色</th></tr></thead><tbody><tr><td>Prefill</td><td>前 20 层</td><td><strong>8B</strong></td><td>"读"——把输入压缩成 KV 笔记</td></tr><tr><td>Decode</td><td>后 20 层</td><td><strong>16B</strong></td><td>"写"——真正生成输出</td></tr></tbody></table>
+<p>decode 侧激活更多参数，是因为<strong>生成对能力的要求高于读取</strong>：读只需要把信息整理成可用的 KV 表示，写则要调用完整能力去做推理和产出。</p>
+<p>这个非对称设计精准命中了 agent 负载的特征——<strong>读远多于写</strong>，所以把便宜留给读、把能力留给写。</p>
+<hr />
+<h2>四、与经典 Transformer Encoder-Decoder 的区别</h2>
+<p>这是本文最需要说清的部分。CED 名字里带 "Encoder-Decoder"，很容易让人直接套用 Vaswani et al. (2017) 的经典结构——<strong>但两者几乎在每个关键维度上都不同</strong>。</p>
+<h3>4.1 逐维对比</h3>
+<table><thead><tr><th>维度</th><th>经典 Transformer Encoder-Decoder</th><th>DeepSeek CED</th></tr></thead><tbody><tr><td><strong>Encoder 注意力方向</strong></td><td>双向（无 causal mask），作用是"理解源序列"</td><td><strong>因果 / 单向</strong>（causal encoder）——因为它本质是自回归 LM 的前半段</td></tr><tr><td><strong>Decoder 如何取用 encoder 输出</strong></td><td><strong>Cross-Attention</strong>：decoder 每一层、每一步都重新读取 encoder 的全部输出</td><td><strong>不是 cross-attention</strong>：把 encoder 末层 <span class="tex">H<sub>L/2</sub></span> 一次性<strong>投影</strong>成 decoder 的 global KV cache（式 1）</td></tr><tr><td><strong>参数量/激活的对称性</strong></td><td>通常对称（encoder / decoder 规模相当）</td><td><strong>非对称</strong>：prefill 8B / decode 16B</td></tr><tr><td><strong>层结构</strong></td><td>encoder 独立栈 + decoder 独立栈，两套权重</td><td><strong>同一套 40 层 backbone 切成 20 + 20</strong></td></tr><tr><td><strong>训练目标</strong></td><td>Seq2seq（teacher forcing，源序列 → 目标序列）</td><td><strong>纯自回归 next-token prediction</strong></td></tr><tr><td><strong>设计动机</strong></td><td>跨序列条件生成（翻译、摘要）：源与目标分布不同</td><td><strong>省 prefill 计算 + 压 KV cache</strong>，与"跨序列对齐"无关</td></tr><tr><td><strong>SWA / 局部注意力</strong></td><td>无（经典结构不含 SWA）</td><td>有，且<strong>刻意不走投影捷径</strong>，逐层计算 local KV</td></tr></tbody></table>
+<h3>4.2 三个本质差异</h3>
+<p><strong>差异一：encoder 的角色完全不同。</strong></p>
+<p>经典 E-D 里，encoder 是<strong>理解器</strong>——它把源语言句子编码成一组供 cross-attention 调用的上下文表示。<br />CED 里，encoder 是 <strong>KV 生成器</strong>——它存在的意义是产出一份可被投影的、供 decoder 使用的全局 KV 缓存。它不"理解"什么，它"准备"什么。</p>
+<p><strong>差异二：decoder 访问 encoder 信息的方式完全不同，这是性能差异的根源。</strong></p>
+<ul><li>经典 E-D：decoder 的<strong>每一层</strong>都带一个 cross-attention 子层，<strong>每一步解码</strong>都要 attend 一遍 encoder 的完整输出 memory。encoder 的输出被反复读取 <span class="tex">L/2</span> 次。</li><li>CED：decoder 只在<strong>第 <span class="tex">L/2</span> 层</strong>（encoder 末层）拿到一次 <span class="tex">H<sub>L/2</sub></span>，用逐层投影权重把它<strong>一次性映射</strong>成各层自己的 global KV，之后 decoder 各层就基于这份共享 KV 工作，<strong>不再回读 encoder</strong>。</li></ul>
+<p>正因为 CED 把"逐层重读"换成了"一次投影"，prefill 才能只跑一半的层——<strong>这才是计算量减半的机制</strong>，而不是简单地减少层数。</p>
+<p><strong>差异三：因果性要求不同。</strong></p>
+<p>经典 E-D 只有 decoder 需要因果性；encoder 是双向的，这恰恰是它"理解源序列"的能力来源。</p>
+<p>CED 则<strong>必须让 encoder 也保持因果</strong>。原因很直接：decoder 的 global KV 直接来自 encoder 输出 <span class="tex">H<sub>L/2</sub></span>。如果 encoder 用了双向注意力，<span class="tex">H<sub>L/2</sub></span> 就会包含<strong>当前位置之后</strong>的 token 信息；这些信息被投影成 decoder 的 KV 后，等于让 decoder 在预测第 <span class="tex">t</span> 个 token 时"看见"了未来——<strong>直接破坏自回归训练目标</strong>。</p>
+<p>所以 encoder 必须是 causal 的。这也正是它叫 <strong>Causal</strong> Encoder-Decoder 而不是 Encoder-Decoder 的原因——这个名字里的 "Causal" 就是与经典结构的分野标志。</p>
+<h3>4.3 一句话总括</h3>
+<blockquote><p>经典 E-D 是"两个序列之间的翻译器"：encoder 双向理解源句，decoder 用 cross-attention 反复查阅源句，逐词生成目标句。</p></blockquote>
+<p>&gt;</p>
+<blockquote><p>CED 是"单个自回归模型的省算力切法"：前一半层把输入榨成一份 KV 笔记，后一半层拿着笔记直接开始写——没有源/目标之分，没有 cross-attention，只有一次投影和一份共享缓存。</p></blockquote>
+<hr />
+<h2>五、相对 DeepSeek-V4 的架构升级</h2>
+<p>V4.1-Flash 相对 V4-Flash 不是简单放大（参数从 284B 涨到 552B），而是<strong>在每个维度上都有结构改动</strong>。</p>
+<h3>5.1 升级清单</h3>
+<table><thead><tr><th>维度</th><th>DeepSeek-V4</th><th>DeepSeek-V4.1-Flash</th><th>目的</th></tr></thead><tbody><tr><td>架构范式</td><td>Decoder-only</td><td><strong>CED</strong>（20 encoder + 20 decoder，非对称 8B/16B）</td><td>砍 prefill 计算</td></tr><tr><td>注意力</td><td>CSA + HCA <strong>混合</strong></td><td><strong>纯 CSA2</strong></td><td>简化 + 统一复用策略</td></tr><tr><td>跨层复用</td><td>无</td><td><strong>CSA2 跨层 KV / index 复用</strong>（Full / Reindex / Reuse 三模式）</td><td>砍 KV 存储</td></tr><tr><td>Indexer</td><td>全范围打分</td><td><strong>层次化稀疏 indexer</strong>（候选池）</td><td>深层 indexer 成本降为常数</td></tr><tr><td>主 KV 精度</td><td>FP8</td><td><strong>FP4</strong>（MXFP4 E2M1，SWA KV 保留 FP8）</td><td>KV 存储近半</td></tr><tr><td>部署</td><td>混合 SWA 缓存策略</td><td><strong>SWA Bounded Replay</strong></td><td>持久化 KV 降到 1/8</td></tr><tr><td>残差</td><td>mHC（多 kernel）</td><td><strong>Single-Pass mHC + Mega-mHC kernel</strong></td><td>activation 访存减半</td></tr><tr><td>条件记忆</td><td>无</td><td><strong>Engram 196B</strong></td><td>记忆与计算解耦</td></tr><tr><td>投机解码</td><td>MTP（与 backbone 联合训练）</td><td><strong>DSpark</strong>（独立训练阶段）</td><td>提升解码吞吐</td></tr><tr><td>优化器</td><td>Muon</td><td><strong>head-wise Muon</strong> + Engram 用 momentum/Sinkhorn</td><td>逐头 preconditioner</td></tr><tr><td>多模态</td><td>无</td><td><strong>原生</strong>（DeepSeek-ViT + MLP projector）</td><td>视觉理解内置</td></tr><tr><td>预训练</td><td>dense warmup 后再引入稀疏</td><td><strong>稀疏注意力从 64K 直接从头训</strong></td><td>去掉 warmup 阶段</td></tr><tr><td>语料</td><td>32T+ tokens</td><td><strong>45T tokens（多模态）</strong></td><td>数据质量与覆盖</td></tr></tbody></table>
+<h3>5.2 逐项说明</h3>
+<p><strong>① CSA2：从"混合"到"纯复用"</strong></p>
+<p>V4 用 CSA（压缩 + 稀疏选择）+ HCA（重压缩 + dense）交错。V4.1 改成<strong>纯 CSA2</strong>，并把复用做到了三个可乘的维度上：</p>
+<ul><li><strong>entry 维度</strong>：GQA 减少 KV head 数，MLA 让多个 head 共享一个小的 latent；</li><li><strong>序列维度</strong>：每 <span class="tex">m</span> 个 token 压成一个 entry；</li><li><strong>层维度</strong>：跨层复用 KV 与 Top-K 索引。</li></ul>
+<p>三种静态分配的模式：</p>
+<table><thead><tr><th>模式</th><th>自己算什么</th><th>复用别人的什么</th></tr></thead><tbody><tr><td><strong>Full</strong></td><td>main KV、indexer Q，并从 main KV 投影出 indexer K，跑 indexer 得到新 Top-K</td><td>——</td></tr><tr><td><strong>Reindex</strong></td><td>indexer Q（重新打分）</td><td>复用前一层的 main KV + indexer K，但选新的 Top-K</td></tr><tr><td><strong>Reuse</strong></td><td>只算 main Q 和 SWA KV</td><td>复用前一层 main KV <strong>和</strong> Top-K 索引，不跑 indexer</td></tr></tbody></table>
+<p>三者<strong>都</strong>自己计算 main Q 和 SWA KV。关键在于<strong>缓存共享与索引复用被解耦</strong>：Reindex 模式让存储共享的同时，稀疏选择仍可逐层变化。</p>
+<p>相对 V4 的 CSA，CSA2 还简化了 compressor：去掉相邻压缩条目的<strong>重叠</strong>、去掉压缩时的<strong>绝对位置编码</strong>，并且 indexer K 直接由 main KV 投影得到（不再是独立压缩路径）。</p>
+<p><strong>② 层次化稀疏 indexer</strong></p>
+<p>跨层索引复用减少了 indexer 的<strong>次数</strong>，但剩下的 indexer 仍要扫全上下文。层次化设计让第一个 Full Mode 层建立候选池，后续层只在池内打分 → <strong>每 query 成本从线性变成常数</strong>。这个机制是<strong>训练感知</strong>的（训练和推理用同一限制域），在 post-training 阶段引入。</p>
+<p><strong>③ FP4 主 KV cache</strong></p>
+<p>V4 已经对 <strong>indexer 的 QK</strong> 做了 FP4 QAT。V4.1 把 QAT 扩展到 <strong>main KV cache</strong>：</p>
+<ul><li>用 OCP 标准 <strong>MXFP4</strong> 格式（为硬件兼容性，宁可牺牲一点精度）；</li><li>选 E2M1 + 每 16 通道一个 E4M3 scale（跟随 NVFP4，但<strong>去掉二级全局 scale</strong>以简化布局）；</li><li>论文论证省略全局 scale 是安全的：RMSNorm 后 512 通道 KV latent 的 L2 范数上界约 <span class="tex">√(512) ≈ 22.6</span>，而该格式能表示的幅值上限是 <span class="tex">448 × 6 = 2688</span>，留有充裕动态范围；</li><li>量化在 <strong>RoPE 之后</strong>做（RoPE 前量化仅有边际提升，却增加解码开销）；</li><li><strong>SWA KV 保留 FP8</strong>（对量化更敏感）。</li></ul>
+<p>相对 V4 的 FP8 主 KV，<strong>存储足迹在 HBM 和 SSD 上都近乎减半</strong>。</p>
+<p><strong>④ SWA Bounded Replay</strong></p>
+<p>V4 对持久化 SWA KV 用混合策略（Full Caching / Periodic Checkpointing / Zero SWA Caching）在存储与重算间取舍。V4.1 的做法是<strong>不持久化 SWA KV</strong>，需要时只重放最近 <span class="tex">n<sub>win</sub></span> 个 token 重建 → <strong>持久化 KV 降到约 1/8</strong>。</p>
+<p><strong>⑤ Single-Pass mHC + Mega-mHC</strong></p>
+<p>V4 的 mHC 在相邻 block 间维护 <span class="tex">n</span> 条残差流，部署时用三个 kernel 顺序执行（残差更新 → 系数预测 → 输入混合），activation 访存是理想下界 <span class="tex">(2n+2)d</span> 的<strong>两倍</strong>（<span class="tex">(4n+4)d</span>）。</p>
+<p>Single-Pass mHC 把<strong>输入混合系数错开一个 block</strong>（每个 block 用上一个 block 产生的系数）：</p>
+<div class="formula">X<sub>l+1</sub> = B<sub>l</sub> X<sub>l</sub> + C<sub>l</sub> F<sub>l</sub>(A<sub>l-1</sub> X<sub>l</sub>), &nbsp;&nbsp;&nbsp;&nbsp; (A<sub>l</sub>, B<sub>l</sub>, C<sub>l</sub>) = H(X<sub>l</sub>)</div>
+<p>这样输入混合不再依赖本 block 当场算出的 <span class="tex">A<sub>l</sub></span>，消除了数据依赖 → 可以融合成单个 <strong>Mega-mHC</strong> kernel，达到 <span class="tex">(2n+2)d</span> 的理想访存，<strong>activation memory traffic 减半</strong>。论文报告这个错位只带来可忽略的性能损失。</p>
+<p><strong>⑥ Engram：把"记忆"从"计算"里拆出来</strong></p>
+<p>196B 参数的条件记忆模块，均分到两个模块，放在<strong>第 1 层和第 14 层</strong>（平衡训练流水线各 stage 的显存）。配置：N-gram 阶数 {2, 3, 4}、8 个 hash head、每阶 embedding 维度 2048、每个 head 索引约 16M 条目（表大小取不同素数）。embedding 表与 key/value 投影都用 FP8。</p>
+<p>相对原始 Engram 的两处改动：去掉短因果卷积（收益不足以抵消推理栈复杂度）；embedding 用 <strong>momentum 更新 + Sinkhorn 平衡</strong>优化。</p>
+<p>推理时<strong>确定性寻址</strong>让 embedding 可以从 host memory 通过后台 RDMA 预取，第一个模块的预取与第一个 Transformer block 的计算重叠。</p>
+<p><strong>⑦ DSpark：替换 MTP 的投机解码</strong></p>
+<p>Drafter 是 3 个 Transformer block（SWA 窗口 128）。一次前向并行算出 5 个 draft 位置的 base logits，另有一个轻量 Markov head 建模 draft token 间的依赖；confidence head 预测每个位置的<strong>条件接受概率</strong>，进而估计前缀存活概率；scheduler 结合引擎吞吐曲线<strong>动态选择验证长度</strong>，最大化系统级吞吐。</p>
+<p>关键差别：V3 的 MTP 是<strong>与 backbone 联合训练</strong>贯穿预训练；DSpark <strong>在预训练之后单独训练</strong>（backbone 冻结），post-training 阶段一起训但<strong>不回传梯度到 backbone</strong>。V4.1 的 backbone 预训练<strong>直接去掉了 MTP 模块</strong>。</p>
+<p><strong>⑧ 优化器：head-wise Muon</strong></p>
+<p>把 Query 权重<strong>按 head 切开</strong>再施加 Muon 更新。把 Muon 看作预条件梯度下降后，原版 Muon 对所有 head 用同一个 preconditioner，head-wise 版本让不同 head 有各自的 preconditioner，能更好地处理<strong>注意力头之间的异质性</strong>。</p>
+<p>另外，给 Engram 参数用 Adam 会大幅推高优化器状态显存，因此 Engram embedding 表、token embedding 和 prediction head 改用 <strong>momentum 更新 + Sinkhorn 平衡</strong>。</p>
+<p><strong>⑨ 原生多模态</strong></p>
+<p>输入通路 = 视觉编码器 + MLP projector。</p>
+<ul><li><strong>DeepSeek-ViT</strong>：基于 ViT 从头训练，支持任意分辨率——用 <strong>2D-RoPE</strong> 替代绝对位置编码；为兼容 Muon 优化器，把 patch embedding 的<strong>卷积换成线性投影</strong>；用 RMSNorm + SwiGLU。</li><li><strong>3×3 pixel-unshuffle</strong>：把视觉 token 数<strong>减少到 1/9</strong>，从而支持约 1344×1344 的输入分辨率。</li><li><strong>模态特定的无辅助损失负载均衡</strong>：图像和文本 token 的表示分布不同、专家路由偏好也不同。V4.1 为两种模态<strong>分别维护一套专家偏置</strong>，各自独立更新——避免用聚合负载掩盖模态内的不均衡。</li></ul>
+<p><strong>⑩ 训练与后训练</strong></p>
+<ul><li>预训练 <strong>45T tokens 多模态语料</strong>；稀疏注意力<strong>从 64K 序列长度直接从头训</strong>，没有任何 dense attention warmup 阶段。</li><li>后训练<strong>没有算法创新</strong>：就是标准 SFT → RL → OPD 三段式，改动全在数据管线（大规模自动化数据合成、环境构建，逐步扩大 RL 的数据/任务/rollout 规模）。</li></ul>
+<hr />
+<h2>六、效果验证</h2>
+<h3>6.1 KV cache 与计算量</h3>
+<table><thead><tr><th>指标</th><th>结果</th></tr></thead><tbody><tr><td>全局 KV cache（常驻 HBM）</td><td><strong>890 字节/token</strong>，约为 V4-Flash 的 <strong>1/4</strong></td></tr><tr><td>持久化 KV cache（SSD / host memory）</td><td>约为 V4-Flash 的 <strong>1/8</strong></td></tr><tr><td>相对初代 DeepSeek-V1</td><td>每 token 全局 KV <strong>缩小约 437 倍</strong></td></tr><tr><td>Decode FLOPs vs 上下文长度</td><td>上下文从 4K 扩到 1M（256 倍），<strong>Decode FLOPs 只增加 1/4</strong></td></tr><tr><td>HBM / SSD 需求</td><td>分别降至 <strong>1/4</strong> 和 <strong>1/8</strong></td></tr></tbody></table>
+<p>论文 Figure 2 显示：V4.1-Flash 的<strong>单 token Decode FLOPs 随上下文长度几乎保持恒定</strong>——这是 CED + CSA2 组合的直接结果。</p>
+<h3>6.2 Base 模型对比（论文 Table 1）</h3>
+<table><thead><tr><th>Benchmark</th><th>V4-Flash-Base</th><th>V4-Pro-Base</th><th><strong>V4.1-Flash-Base</strong></th></tr></thead><tbody><tr><td>激活参数</td><td>13B</td><td>49B</td><td><strong>8B / 16B</strong></td></tr><tr><td>Backbone 参数</td><td>284B</td><td>1.6T</td><td><strong>552B</strong></td></tr><tr><td>AGIEval</td><td>83.9</td><td>84.4</td><td>83.4</td></tr><tr><td>MMLU-Pro</td><td>68.3</td><td>73.5</td><td><strong>74.1</strong></td></tr><tr><td>C-Eval</td><td>92.1</td><td>93.1</td><td>92.1</td></tr><tr><td>MultiLoKo</td><td>42.6</td><td>50.9</td><td>45.5</td></tr><tr><td>SimpleQA-Verified</td><td>30.1</td><td><strong>55.2</strong></td><td>42.3</td></tr><tr><td>SuperGPQA</td><td>46.5</td><td>53.9</td><td>53.1</td></tr><tr><td>BBH</td><td>86.9</td><td>87.5</td><td>86.1</td></tr><tr><td>DROP (F1)</td><td>88.6</td><td>88.7</td><td>87.9</td></tr><tr><td>HumanEval</td><td>69.5</td><td>76.8</td><td><strong>79.4</strong></td></tr><tr><td>GSM8K</td><td>90.8</td><td>92.6</td><td><strong>93.0</strong></td></tr><tr><td>MATH</td><td>57.4</td><td>64.5</td><td>61.1</td></tr><tr><td>MGSM</td><td>85.7</td><td>84.4</td><td>80.2</td></tr><tr><td>LongBench-V2</td><td>44.7</td><td>51.5</td><td>45.2</td></tr><tr><td>MMMU-Pro</td><td>——</td><td>——</td><td><strong>56.5</strong></td></tr><tr><td>DocVQA</td><td>——</td><td>——</td><td><strong>95.6</strong></td></tr></tbody></table>
+<p>论文的说法是：V4.1-Flash-Base 的世界知识、推理、编码能力<strong>与 V4-Pro-Base 相当</strong>，在 held-out 评测上提升 5%–10%，<strong>只用了 1/3 的总参数和 1/4 的激活参数</strong>。</p>
+<p>但要注意一个<strong>诚实的数据点</strong>：SimpleQA-Verified 上 V4.1（42.3）明显低于 V4-Pro（55.2），MultiLoKo（45.5 vs 50.9）、MGSM（80.2 vs 84.4）也落后。<strong>参数体量的差距在纯知识类任务上依然存在</strong>。</p>
+<h3>6.3 与前沿模型对比（论文 Table 3，节选）</h3>
+<table><thead><tr><th>Benchmark</th><th>Opus-5</th><th>GPT-5.6 Sol</th><th>K3</th><th>GLM-5.3</th><th>DS-V4-Pro</th><th>DS-V4-Flash</th><th><strong>DS-V4.1-Flash</strong></th></tr></thead><tbody><tr><td>GPQA Diamond</td><td>93.4</td><td><strong>94.1</strong></td><td>92.9</td><td>88.1</td><td>92.4</td><td>89.9</td><td>90.9</td></tr><tr><td>Codeforces (Rating)</td><td>——</td><td>——</td><td>3348</td><td>3289</td><td>3348</td><td>3289</td><td><strong>3471</strong></td></tr><tr><td>MathArena Apex</td><td>——</td><td>——</td><td><strong>65.6</strong></td><td>65.3</td><td>65.3</td><td>58.6</td><td><strong>65.6</strong></td></tr><tr><td>Terminal-Bench 2.1</td><td>89.1</td><td>88.8</td><td>88.3</td><td>88.2</td><td>87.9</td><td>82.7</td><td><strong>90.6</strong></td></tr><tr><td>Terminal-Bench 3.0</td><td><strong>43.3</strong></td><td>34.4</td><td>17.7</td><td>28.3</td><td>11.8</td><td>7.6</td><td>30.0</td></tr><tr><td>Terminal-Bench 4.0</td><td><strong>51.8</strong></td><td>39.9</td><td>12.6</td><td>37.9</td><td>12.4</td><td>7.0</td><td>31.2</td></tr><tr><td>DeepSWE v1.1</td><td>74.0</td><td>73.0</td><td>67.5</td><td>66.9</td><td>62.7</td><td>54.4</td><td><strong>74.2</strong></td></tr><tr><td>Automation-Bench</td><td>50.3</td><td>45.8</td><td>46.7</td><td>48.8</td><td>43.2</td><td>37.7</td><td><strong>54.8</strong></td></tr><tr><td>Agents' Last Exam</td><td>28.6</td><td>26.7</td><td>27.6</td><td>28.5</td><td>25.7</td><td>25.2</td><td><strong>31.8</strong></td></tr><tr><td>CyberGym</td><td>——</td><td>84.5</td><td>80.0</td><td>84.5</td><td>83.3</td><td>76.7</td><td><strong>88.1</strong></td></tr></tbody></table>
+<p>能力画像很清晰：</p>
+<ul><li><strong>Agentic 任务上很强</strong>：Terminal-Bench 2.1（90.6）、DeepSWE v1.1（74.2）、Automation-Bench（54.8）、Agents' Last Exam（31.8）<strong>全面第一</strong>，超过 Opus-5 和 GPT-5.6 Sol。</li><li><strong>推理任务上持平</strong>：Codeforces 3471 超过 V4-Pro（3348）和 V4-Flash（3289）；MathArena Apex 65.6 追平 Kimi-K3。</li><li><strong>硬科学 agentic 任务仍有差距</strong>：Terminal-Bench 4.0 只有 31.2，远低于 Opus-5 的 51.8——论文自己承认"<strong>在需要专家级领域知识的科学类 agentic 任务上，与巨型模型的差距依然存在</strong>"。</li></ul>
+<hr />
+<h2>七、局限与遗留问题</h2>
+<p>论文在 Conclusion 里主动列了几点：</p>
+<ol><li><strong>新架构带来了尚未充分刻画的鲁棒性边界。</strong> CSA2 的<strong>选择误差</strong>与 SWA Bounded Replay 的<strong>近似状态重建</strong>，都可能在未覆盖的极端输入/部署条件下造成能力退化。论文表示会持续压力测试，重点关注<strong>长上下文稀疏检索</strong>和 <strong>cache 恢复边界处的 SWA 状态重建</strong>。</li><li><strong>基准已接近饱和。</strong> 模型在多数日常任务上表现已接近顶级模型，但在<strong>最困难的推理和边界情况</strong>上仍有差距——"分数接近不等于前沿能力等价"。</li><li><strong>参数体量的硬约束仍在。</strong> 如 6.2/6.3 所示，纯知识任务（SimpleQA-Verified 等）和专家级科学 agentic 任务上，无捷径可走。</li></ol>
+<p>另外几个<strong>设计上就能看出的取舍</strong>：</p>
+<ul><li><strong>encoder 的信息瓶颈</strong>：decoder 的全局 KV 全部来自单一层 <span class="tex">H<sub>L/2</sub></span>，中间没有更多的交互层。相比经典 E-D 的逐层 cross-attention，这是一种<strong>有意的信息压缩</strong>——用表达力换 prefill 成本。</li><li><strong>SWA 依赖近似重建</strong>：Bounded Replay 依据的是"有效感受野远小于理论值"这一经验观察，属于<strong>近似</strong>而非精确重建。</li><li><strong>后训练零创新</strong>：论文明确说 post-training "refrain from introducing novel algorithms"——能力提升主要来自数据管线与规模，而非算法。</li></ul>
+<hr />
+<h2>八、关键启发</h2>
+<ol><li><strong>"Encoder-Decoder"这个词已经被重新定义了。</strong> CED 里的 encoder 不是"理解源序列"，而是"生成可投影的 KV 表示"。同一个术语在不同时代指向完全不同的机制——读论文时不能被名字带着走。</li><li><strong>省算力的方向从"注意力"转向了"prefill"。</strong> V3/V4 时代的主线是压注意力复杂度和 KV 长度；V4.1 指出当稀疏注意力把计算压下去之后，<strong>prefill 计算和 KV 的存储/传输</strong>才是新的主战场。</li><li><strong>"一次投影"取代"逐层重读"是核心手法。</strong> 经典 cross-attention 是 <span class="tex">L/2</span> 次重复读取；CED 是一次投影。这个替换同时带来了计算减半和缓存共享——<strong>架构上的"去重复"往往比"加加速器"更有效</strong>。</li><li><strong>对 SWA 网开一面是成熟的设计判断。</strong> CED 没有为了漂亮把一切都统一成投影，而是明确保留 SWA 的逐层计算以维持局部表达力，再用 Bounded Replay 把代价压回去。<strong>关键路径走捷径、局部路径保精度</strong>，是一个可迁移的取舍范式。</li><li><strong>非对称设计是负载感知的产物。</strong> 8B 读 / 16B 写不是审美选择，而是对"agent 读多写少"这一负载特征的直接回应。<strong>架构应该跟着负载成本结构调整，而不是跟着参数量攀比。</strong></li><li><strong>与我们的 RAG / 长上下文研究相关</strong>：V4.1 的层次化稀疏 indexer（先粗选块、再在候选池内精排）与我们讨论过的<strong>两阶段检索</strong>（召回 → 精排）在结构上同源。压缩 + 候选池 + 池内重排，既能用在注意力里，也能用在检索里。</li><li><strong>与流形约束主线的连接</strong>：Single-Pass mHC 通过<strong>错开一个 block 的系数</strong>来消除数据依赖，从而把三个 kernel 融成一个——和 mHC 用 Sinkhorn 投影把自由矩阵约束到双随机流形，都是"<strong>为了让系统可融合、可稳定，宁可牺牲一点点理论最优</strong>"。工程约束反过来塑造了架构形式。</li></ol>
+<hr />
+<h2>参考来源</h2>
+<ul><li>论文原文：<strong>DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression</strong>，DeepSeek-AI，2026-09-10</li><li>官方 PDF：https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf</li><li>模型权重：https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash</li><li>官方发布公告：https://www.deepseek.com/zh/news/deepseek-v4-1-flash</li><li>相关前置工作：DeepSeek-V4 技术报告（本库另有 <code>deepseek-v4-technical-report-summary.md</code>）</li><li>CED 的灵感来源：YoCo (Sun et al., 2024) —— 上层直接共享下层产生的 KV cache</li><li>SWA 有效感受野观察：(Chen et al., 2025)</li></ul>
+<hr />
+<h2>元信息</h2>
+<ul><li>生成者：Damon + Nemesis</li><li>日期：2026-09-13</li><li>来源文件：DeepSeek-V4.1-Flash 技术报告（HuggingFace 官方 PDF）</li><li>配图：<code>figures/ced-architecture.svg</code>（程序化生成）</li></ul>
+  </div>
+  <div class="footer">
+    <p>人机知识库 · 由 Damon + Nemesis 生成 · <a href="index.html">返回索引</a></p>
+  </div>
+</div>
+</body>
+</html>
