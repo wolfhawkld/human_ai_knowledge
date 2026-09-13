@@ -35,21 +35,22 @@
 | [rocm-vs-cuda-local-inference.md](rocm-vs-cuda-local-inference.md) | Damon + Metis | 2026-06-21 | ⚙️ ROCm vs CUDA 本地推理全维度对比：库栈映射、安装流程、代码差异、推理框架/量化/Attention 支持、9070 XT 实战、决策树 |
 | [reranker-models-comparison.md](reranker-models-comparison.md) | Damon + Metis | 2026-06-21 | 🎯 Reranker 模型对比：MS-MARCO Cross-Encoder → bge-reranker-v2-m3 → bge-reranker-v2-gemma，三代范式演进 + BEIR/MIRACL benchmark + 论文级引用 |
 | [multi-agent-orchestration-paradigms.md](multi-agent-orchestration-paradigms.md) | Outis | 2026-06-16 | 🔄 多 Agent 协作范式对比分析：Claude Code Dynamic Workflows / Agent Teams / OpenClaw Subagents / OpenClaw ACP — 架构差异、适用场景、演进趋势 |
+| [hyperbolic-vs-trigonometric-functions.md](hyperbolic-vs-trigonometric-functions.md) | Nemesis | 2026-06-09 | 📐 双曲函数 vs 三角函数完整对比：定义式、定义域/值域、周期性与奇偶性、恒等式、导数积分，以及指数形式关联（e^x = cosh x + sinh x） |
+| [vector-calculus-fields.md](vector-calculus-fields.md) | Nemesis | 2026-05-28 | 🧭 场论基础：标量/矢量/张量场的层次 + 梯度、散度、旋度，含 Laplacian 的 8 种视角与特征函数-傅里叶洞察 |
 | [embedding-models-comparison.md](embedding-models-comparison.md) | Nemesis | 2026-05-21 | 🧬 主流开闭源 Embedding Model 全面对比：BGE/E5/GTE/Jina/Stella/Nomic/OpenAI/Cohere/Voyage — MTEB, 硬件, 微调, 场景推荐 |
 | [vllm-sglang-tilelang-comparison.md](vllm-sglang-tilelang-comparison.md) | Nemesis | 2026-05-21 | 🔖 vLLM vs SGLang vs TileLang：三大 LLM 推理框架架构、性能、场景对比 |
 | [biopharma-ai-manufacturing-best-practices.md](biopharma-ai-manufacturing-best-practices.md) | Nemo | 2026-05-17 | 🧬 生物制药工厂 AI 落地最佳实践：预测性维护、生产排程、实时质量监控、数字孪生、QMS、FDA-EMA 联合指导原则、落地路线图 |
 | [openclaw-dreaming-agent-memory-consolidation.md](openclaw-dreaming-agent-memory-consolidation.md) | Damon + Nemo | 2026-05-10 | 🌙 OpenClaw Dreaming 梦境模式：Light/REM/Deep 记忆巩固、Deep 评分信号、实际效果，以及与 Claude Dreams、Generative Agents、Voyager、MemGPT/Letta、Mem0/Zep 的横向对比 |
+| [sglang-hardware-compatibility.md](sglang-hardware-compatibility.md) | Nemo | 2026-05-09 | 🚀 SGLang 推理框架及硬件适配全景：RadixAttention、性能基准、NVIDIA/AMD/TPU/昇腾等全硬件生态解读 |
+| [deepseek-visual-primitives.md](deepseek-visual-primitives.md) | Nemesis | 2026-05-05 | 👁️ DeepSeek "Thinking with Visual Primitives"：Reference Gap、Visual Primitives、7,056× 视觉 token 压缩、极端压缩+精确引用的设计哲学 |
 | [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理；与 GPT/BART/T5 架构对比 |
 | [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量；可类比为带负权的 RRF/score fusion |
 | [standardization-ml-dl-rl.md](standardization-ml-dl-rl.md) | Damon + Nemesis | 2026-04-28 | 📐 标准化 (Standardization)：从量纲统一到深度学习核心机制，覆盖 ML/DL/RL 中的 Z-score、BatchNorm、LayerNorm 与 PPO 优势标准化 |
-| [deepseek-visual-primitives.md](deepseek-visual-primitives.md) | Nemesis | 2026-05-05 | 👁️ DeepSeek "Thinking with Visual Primitives"：Reference Gap、Visual Primitives、7,056× 视觉 token 压缩、极端压缩+精确引用的设计哲学 |
-| [bert-cross-domain-generalization.md](bert-cross-domain-generalization.md) | Nemesis | 2026-05-02 | 🧬 BERT 的跨领域泛化：从蛋白质到 DNA 到音乐——任何可离散化为 token 序列的数据都能用 BERT 式双向 Transformer 处理 |
-| [contrastive-decoding.md](contrastive-decoding.md) | Damon + Nemo | 2026-05-01 | 🔍 Contrastive Decoding：强弱模型概率相减，扣除浅层模式，凸显强模型能力增量 |
-| [standardization-ml-dl-rl.md](standardization-ml-dl-rl.md) | Damon + Nemesis | 2026-04-28 | 📐 标准化 (Standardization)：从量纲统一到深度学习核心机制 |
+| [deepseek-v4-technical-report-summary.md](deepseek-v4-technical-report-summary.md) | Damon + Nemesis | 2026-04-25 | 📄 DeepSeek-V4 技术报告要点：百万上下文、MoE 训练、低精度、推理缓存与后训练的技术路线 |
 | [deepseek-mhc-manifold-constraint.md](deepseek-mhc-manifold-constraint.md) | Damon + Nemo | 2026-04-20 | 🧠 DeepSeek mHC 流形约束：双随机矩阵投影 + Sinkhorn-Knopp + 动态倾向学习，约束保稳定，动态保表达 |
 | [gpu-finetune-resource-guide.md](gpu-finetune-resource-guide.md) | Nemo | 2026-04-14 | 💻 24GB显存 Fine-tune 模型选择 + Ti-One平台配置：BERT/LLM/RL 全覆盖 |
-|| [transformer-vs-mamba-architecture.md](transformer-vs-mamba-architecture.md) | Damon + Metis | 2026-04-12 | ⚡ Transformer vs Mamba 核心机制对比：自注意力/KV Cache vs 选择性SSM，空间换精确 vs 压缩换无限 |
-|| [deep-learning-architecture-evolution.md](deep-learning-architecture-evolution.md) | Damon + Outis | 2026-04-12 | 🧠 深度学习架构演变：从LeNet/AlexNet到Transformer再到Mamba，三次范式转变与四大趋势 |
+| [transformer-vs-mamba-architecture.md](transformer-vs-mamba-architecture.md) | Damon + Metis | 2026-04-12 | ⚡ Transformer vs Mamba 核心机制对比：自注意力/KV Cache vs 选择性SSM，空间换精确 vs 压缩换无限 |
+| [deep-learning-architecture-evolution.md](deep-learning-architecture-evolution.md) | Damon + Outis | 2026-04-12 | 🧠 深度学习架构演变：从LeNet/AlexNet到Transformer再到Mamba，三次范式转变与四大趋势 |
 | [react-ace-agent-design.md](react-ace-agent-design.md) | Nemesis | 2026-04-11 | ⚡ Hermes Agent 设计范式：ReAct + ACE — 行动范式与上下文工程的交汇 |
 | [hermes-vs-openclaw-architecture.md](hermes-vs-openclaw-architecture.md) | Nemesis | 2026-04-11 | 🔄 Hermes vs OpenClaw 架构对比：Gateway-first vs Agent-loop-first，Skill系统、记忆存储、项目上下文的本质差异 |
 | [ai-agent-memory-architecture-comparison.md](ai-agent-memory-architecture-comparison.md) | Damon + Nemo | 2026-04-09 | 🧠 AI Agent 记忆架构对比：OpenClaw (File-First 认知系统) vs Claude Code (Two-Tier 注入系统) |
@@ -63,6 +64,9 @@
 | [middle-east-strategic-analysis.md](middle-east-strategic-analysis.md) | Outis | 2026-03-21 | 🎯 ClawTeam 多Agent协作：美以伊冲突分析、中俄伊联盟解析 |
 | [altruism-egoism-game-experiment.md](altruism-egoism-game-experiment.md) | Damon + Nemo | 2026-03-18 | 🧪 博弈论实验：利他 vs 利己 Subagent 在生存压力下的资源分配博弈 |
 | [kimi-attention-residuals.md](kimi-attention-residuals.md) | Damon + Nemo | 2026-03-18 | Kimi AttnRes 论文解读："旋转90度"的深刻类比，将时间维度 attention 映射到深度维度 |
+| [llm-vector-graphics-generation.md](llm-vector-graphics-generation.md) | Damon + Nemo | 2026-03-17 | 🎨 LLM 生成矢量图的能力边界：Pelican SVG benchmark 排名与论文配图适用性分析 |
+| [openclaw-session-modes.md](openclaw-session-modes.md) | Damon + Nemo | 2026-03-17 | 🗂 OpenClaw 三种 Session 模式：Main / Subagent / ACP 的 session key 格式与运行时差异 |
+| [wsl-chrome-devtools-mcp.md](wsl-chrome-devtools-mcp.md) | Damon + Nemo | 2026-03-15 | 🔧 WSL + Chrome DevTools MCP 自动化配置：Mirrored 网络模式打通 WSL 与 Windows Chrome |
 | [openclaw-a2a-plugin.md](openclaw-a2a-plugin.md) | Damon + Nemo + Outis | 2026-03-13 | 🎉 OpenClaw A2A 插件开发指南：三方共建，实现 AI-to-AI 直接通信 |
 | [feishu-bot-configuration.md](feishu-bot-configuration.md) | Damon + Nemo | 2026-03-13 | 飞书机器人应用与 OpenClaw 连接配置指南 |
 | [domestic-multimodal-pdf-parsing.md](domestic-multimodal-pdf-parsing.md) | Damon + Nemo | 2026-03-12 | 国内多模态PDF解析框架调研 (2026) |
@@ -74,7 +78,6 @@
 | [knowledge-rules.md](knowledge-rules.md) | Outis | 2026-03-09 | 人机知识库规则定义 |
 | [openclaw-features.md](openclaw-features.md) | Outis | 2026-03-09 | OpenClaw 功能总览 |
 | [a2a-protocol.md](a2a-protocol.md) | Outis | 2026-03-09 | A2A 协议核心概念与应用 |
-| [sglang-hardware-compatibility.md](sglang-hardware-compatibility.md) | Nemo | 2026-05-09 | 🚀 SGLang 推理框架及硬件适配全景：RadixAttention、性能基准、NVIDIA/AMD/TPU/昇腾等全硬件生态解读 |
 
 ---
 
