@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',sans-serif">
+<rect width="1000" height="700" fill="#ffffff"/>
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#64748b"/></marker></defs>
+<text x="500.0" y="34" text-anchor="middle" font-size="19" font-weight="700" fill="#1e1b4b">记忆的分类：三存储流水线 与 长期记忆谱系</text>
+<text x="500.0" y="56" text-anchor="middle" font-size="12.5" fill="#64748b">A. 按加工阶段（Atkinson–Shiffrin 三存储模型）</text>
+<rect x="90" y="76" width="240" height="112" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="210.0" y="106" text-anchor="middle" font-size="15.5" font-weight="700" fill="#7c3aed">感觉记忆</text>
+<text x="210.0" y="132" text-anchor="middle" font-size="12.5" fill="#334155">毫秒级：视觉约 250 ms</text>
+<text x="210.0" y="156" text-anchor="middle" font-size="12.5" fill="#334155">容量大：视觉约 12 项</text>
+<rect x="380" y="76" width="240" height="112" rx="12" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.8"/>
+<text x="500.0" y="106" text-anchor="middle" font-size="15.5" font-weight="700" fill="#4f46e5">短期记忆</text>
+<text x="500.0" y="132" text-anchor="middle" font-size="12.5" fill="#334155">秒级：十几 ~ 三十秒</text>
+<text x="500.0" y="156" text-anchor="middle" font-size="12.5" fill="#334155">容量小：3–5 项</text>
+<rect x="670" y="76" width="240" height="112" rx="12" fill="#ecfeff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="790.0" y="106" text-anchor="middle" font-size="15.5" font-weight="700" fill="#0891b2">长期记忆</text>
+<text x="790.0" y="132" text-anchor="middle" font-size="12.5" fill="#334155">长期：定义上不限期</text>
+<text x="790.0" y="156" text-anchor="middle" font-size="12.5" fill="#334155">容量近乎无限</text>
+<line x1="332" y1="132.0" x2="378" y2="132.0" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="622" y1="132.0" x2="668" y2="132.0" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="60" y1="216" x2="940" y2="216" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="60" y="244" font-size="12.5" fill="#64748b">B. 按内容与意识（长期记忆内部）</text>
+<rect x="420" y="262" width="160" height="60" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="500.0" y="297.0" text-anchor="middle" font-size="15" font-weight="700" fill="#0891b2">长期记忆</text>
+<rect x="118" y="352" width="200" height="68" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.8"/>
+<text x="218.0" y="383.0" text-anchor="middle" font-size="14" font-weight="700" fill="#4f46e5">陈述性（外显）</text>
+<text x="218.0" y="403.0" text-anchor="middle" font-size="11.5" fill="#475569">可被有意识陈述</text>
+<rect x="588" y="352" width="200" height="68" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="688.0" y="383.0" text-anchor="middle" font-size="14" font-weight="700" fill="#7c3aed">非陈述性（内隐）</text>
+<text x="688.0" y="403.0" text-anchor="middle" font-size="11.5" fill="#475569">通常无法陈述</text>
+<path d="M 500 322 C 500 352, 218 322, 218 352" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+<path d="M 500 322 C 500 352, 688 322, 688 352" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+<rect x="40" y="470" width="168" height="68" rx="10" fill="#f0f9ff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="124.0" y="501.0" text-anchor="middle" font-size="13" font-weight="700" fill="#0891b2">情景记忆</text>
+<text x="124.0" y="521.0" text-anchor="middle" font-size="11.5" fill="#475569">个人经历+时空背景</text>
+<path d="M 218 420 C 218 444, 124.0 444, 124.0 470" fill="none" stroke="#cbd5e1" stroke-width="1.7"/>
+<rect x="228" y="470" width="168" height="68" rx="10" fill="#f0f9ff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="312.0" y="501.0" text-anchor="middle" font-size="13" font-weight="700" fill="#0891b2">语义记忆</text>
+<text x="312.0" y="521.0" text-anchor="middle" font-size="11.5" fill="#475569">事实/概念，不依赖场合</text>
+<path d="M 218 420 C 218 444, 312.0 444, 312.0 470" fill="none" stroke="#cbd5e1" stroke-width="1.7"/>
+<rect x="416" y="470" width="168" height="68" rx="10" fill="#f0f9ff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="500.0" y="501.0" text-anchor="middle" font-size="13" font-weight="700" fill="#0891b2">程序性记忆</text>
+<text x="500.0" y="521.0" text-anchor="middle" font-size="11.5" fill="#475569">技能与习惯</text>
+<path d="M 688 420 C 688 444, 500.0 444, 500.0 470" fill="none" stroke="#cbd5e1" stroke-width="1.7"/>
+<rect x="604" y="470" width="168" height="68" rx="10" fill="#f0f9ff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="688.0" y="501.0" text-anchor="middle" font-size="13" font-weight="700" fill="#0891b2">启动效应</text>
+<text x="688.0" y="521.0" text-anchor="middle" font-size="11.5" fill="#475569">无意识的影响</text>
+<path d="M 688 420 C 688 444, 688.0 444, 688.0 470" fill="none" stroke="#cbd5e1" stroke-width="1.7"/>
+<rect x="792" y="470" width="168" height="68" rx="10" fill="#f0f9ff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="876.0" y="501.0" text-anchor="middle" font-size="13" font-weight="700" fill="#0891b2">条件反射类</text>
+<text x="876.0" y="521.0" text-anchor="middle" font-size="11.5" fill="#475569">如情绪性条件作用</text>
+<path d="M 688 420 C 688 444, 876.0 444, 876.0 470" fill="none" stroke="#cbd5e1" stroke-width="1.7"/>
+</svg>

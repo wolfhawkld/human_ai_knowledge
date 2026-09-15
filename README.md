@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [memory-classification-and-forgetting.md](memory-classification-and-forgetting.md) | Damon + Nemesis | 2026-09-15 | 🧠 记忆的分类与遗忘的科学说明：按加工阶段（感觉记忆 ~250ms / 短期记忆 3–5 项 / 长期记忆）与按内容意识（陈述性=情景+语义，非陈述性=程序性+启动+条件反射）两条正交线索分类；遗忘拆成六类机制（编码失败、痕迹衰退、前摄/倒摄干扰、提取失败、动机性遗忘、巩固中断）并给出失败点时间轴；含遗忘曲线定位、记忆重构性与错误信息效应、8 条常见误读纠偏、学习实践启示。来源 20 条 Wikipedia 条目 |
 | [deepseek-v4-1-flash-ced-architecture.md](deepseek-v4-1-flash-ced-architecture.md) | Damon + Nemesis | 2026-09-13 | 🧩 DeepSeek-V4.1-Flash 的 Causal Encoder-Decoder 架构解析：CED 如何把 40 层主干切成 20 层 causal encoder + 20 层 decoder，decoder 全局 KV 由 encoder 末层 H(L/2) 一次性投影而来（而非经典 cross-attention 的逐层重读）；逐维对比经典 Transformer Encoder-Decoder（encoder 角色 / 访问方式 / 因果性要求）；相对 V4 的 11 项架构升级（纯 CSA2、FP4 主 KV、SWA Bounded Replay、Single-Pass mHC、Engram 196B、DSpark、head-wise Muon、原生多模态） |
 | [add-norm-vs-hc-mhc-residual-connections.md](add-norm-vs-hc-mhc-residual-connections.md) | Damon + Metis | 2026-08-11 | 🔗 add+norm 不够？从 LayerNorm 到 HC/mHC 残差流演化：幅度控制 vs 结构控制，为什么 norm 之外还要研究 Hyper-Connections/mHC |
 | [kimi-k3-architecture-deep-dive.md](kimi-k3-architecture-deep-dive.md) | Damon + Metis | 2026-07-18 | 🧠 Kimi K3 架构三大技术点解析：Stable LatentMoE（Quantile Balancing）、Kimi Delta Attention（通道级门控线性注意力）、Attention Residuals（深度方向注意力）+ 与 HC/mHC 残差谱系关系 |
