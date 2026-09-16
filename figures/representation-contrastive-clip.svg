@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 680" width="1080" height="680" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',sans-serif">
+<rect width="1080" height="680" fill="#ffffff"/>
+<text x="540.0" y="34" text-anchor="middle" font-size="19" font-weight="700" fill="#1e1b4b">表征学习 / 对比学习 / CLIP：三个抽象层级 与 演进谱系</text>
+<text x="60" y="62" font-size="12.5" fill="#64748b">A. 抽象层级：不是并列关系，而是层层包含</text>
+<rect x="60" y="76" width="880" height="216" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="76" y="100" font-size="14" font-weight="700" fill="#7c3aed">表征学习 · 问题层</text>
+<text x="76" y="120" font-size="12" fill="#334155">要学什么？什么叫「好表示」？—— 研究纲领，不是具体算法</text>
+<rect x="130" y="136" width="740" height="136" rx="12" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.8"/>
+<text x="146" y="160" font-size="14" font-weight="700" fill="#4f46e5">对比学习 · 方法层</text>
+<text x="146" y="180" font-size="12" fill="#334155">训练信号来自正负样本的相似度关系，不依赖人工标签</text>
+<rect x="210" y="196" width="580" height="56" rx="12" fill="#ecfeff" stroke="#0891b2" stroke-width="1.8"/>
+<text x="226" y="220" font-size="14" font-weight="700" fill="#0891b2">CLIP · 系统层</text>
+<text x="226" y="240" font-size="12" fill="#334155">用对比学习对齐图像与文本，支持零样本迁移</text>
+<line x1="60" y1="360" x2="1020" y2="360" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="60" y="392" font-size="12.5" fill="#64748b">B. 演进谱系：从损失函数到多模态系统</text>
+<line x1="80" y1="470" x2="1000" y2="470" stroke="#94a3b8" stroke-width="2.5"/>
+<circle cx="120" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="120" y="424" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2012</text>
+<text x="120" y="444" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">Bengio 综述</text>
+<text x="120" y="460" text-anchor="middle" font-size="11" fill="#475569">确立「学表示」为独立问题</text>
+<circle cx="288" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="288" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2018</text>
+<text x="288" y="520" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">CPC / InfoNCE</text>
+<text x="288" y="536" text-anchor="middle" font-size="11" fill="#475569">给出可用的对比损失</text>
+<circle cx="456" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="456" y="424" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2020</text>
+<text x="456" y="444" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">SimCLR</text>
+<text x="456" y="460" text-anchor="middle" font-size="11" fill="#475569">简化：无需记忆库</text>
+<circle cx="624" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="624" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2021</text>
+<text x="624" y="520" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">CLIP</text>
+<text x="624" y="536" text-anchor="middle" font-size="11" fill="#475569">扩展到跨模态图文</text>
+<circle cx="792" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="792" y="424" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2023</text>
+<text x="792" y="444" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">SigLIP</text>
+<text x="792" y="460" text-anchor="middle" font-size="11" fill="#475569">sigmoid 损失，解耦 batch</text>
+<circle cx="960" cy="470" r="7" fill="#4f46e5" stroke="#fff" stroke-width="2"/>
+<text x="960" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="#4338ca">2026</text>
+<text x="960" y="520" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e1b4b">LLM2CLIP</text>
+<text x="960" y="536" text-anchor="middle" font-size="11" fill="#475569">用 LLM 重塑文本侧</text>
+<text x="60" y="600" font-size="12" fill="#334155">CLIP → SigLIP 改的不是架构而是损失形式（softmax → pairwise sigmoid），并因此解耦了 batch size：大 batch 仍可扩、小 batch 下反而更好。</text>
+<text x="60" y="622" font-size="12" fill="#334155">实验还显示：batch 推到 100 万后，继续增大的收益迅速衰减——「更大批次总是更好」并不成立。</text>
+</svg>
