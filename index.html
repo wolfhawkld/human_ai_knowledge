@@ -176,6 +176,12 @@
             <h2>📚 知识文档</h2>
             
             <div class="knowledge-grid">
+                <a href="jev-vs-bert.html" class="knowledge-card">
+                    <h3>⚖️ Jev 与 BERT：实现原理对比 + 硬件类比边界 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
+                    <p>TypeSafe 昨日发布的 Jev 不生成文本、单次并行前向返回<b>类型化决策</b>。与 BERT 相比：两者<b>都没有自回归解码</b>（这点上比 BERT vs GPT 更接近），分野在<b>输出端</b>——BERT 输出可复用表示，Jev 输出绑 schema 的有界决策。另逐条评估「Jev:BERT ≈ ASIC/PLA:FPGA/CPU」：经济结构成立，但有三处硬伤（层错位、可配置性方向讲反、PLA 归错阵营）。</p>
+                    <div class="meta">📅 2026-09-16 · Jev · TypeSafe · BERT · Encoder · RLCD · 校准</div>
+                </a>
+
                 <a href="representation-contrastive-clip.html" class="knowledge-card">
                     <h3>🧩 表征学习 / 对比学习 / CLIP 的异同 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
                     <p>核心结论：三者<b>不在同一个抽象层</b>——表征学习是问题层（要学什么）、对比学习是方法层（训练信号来自正负样本关系）、CLIP 是系统层（用对比学习对齐图文）。含逐维对比表、三个「同」与三个「异」（含一条易错点：CLIP 严格说属弱监督而非自监督）、从 InfoNCE → SimCLR → CLIP → SigLIP → LLM2CLIP 的演进谱系，以及 6 条常见混淆纠偏。</p>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 640" width="1080" height="640" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',sans-serif">
+<rect width="1080" height="640" fill="#ffffff"/>
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#94a3b8"/></marker></defs>
+<text x="540.0" y="34" text-anchor="middle" font-size="18.5" font-weight="700" fill="#1e1b4b">BERT 与 Jev 的流程对比：都无自回归解码，分野在输出端</text>
+<text x="34" y="74" font-size="12.5" fill="#64748b">A. BERT（encoder-only Transformer）</text>
+<rect x="34" y="90" width="185" height="72" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="126.5" y="120.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4f46e5">输入文本</text>
+<text x="126.5" y="139.0" text-anchor="middle" font-size="11" fill="#475569">词 + 位置 + 段嵌入</text>
+<rect x="241" y="90" width="185" height="72" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="333.5" y="120.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4f46e5">双向自注意力</text>
+<text x="333.5" y="139.0" text-anchor="middle" font-size="11" fill="#475569">编码器 ×12/24</text>
+<rect x="448" y="90" width="185" height="72" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="540.5" y="120.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4f46e5">上下文表示</text>
+<text x="540.5" y="139.0" text-anchor="middle" font-size="11" fill="#475569">向量序列</text>
+<rect x="655" y="90" width="185" height="72" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="747.5" y="120.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4f46e5">下游任务头</text>
+<text x="747.5" y="139.0" text-anchor="middle" font-size="11" fill="#475569">需微调</text>
+<rect x="862" y="90" width="185" height="72" rx="10" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="954.5" y="120.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4f46e5">分类 / 标注</text>
+<text x="954.5" y="139.0" text-anchor="middle" font-size="11" fill="#475569">任务输出</text>
+<line x1="221" y1="126.0" x2="238" y2="126.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="428" y1="126.0" x2="445" y2="126.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="635" y1="126.0" x2="652" y2="126.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="842" y1="126.0" x2="859" y2="126.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<text x="540.0" y="196" text-anchor="middle" font-size="12.5" font-weight="700" fill="#be123c">两者都【没有自回归解码循环】—— 这是与 GPT 系列的根本分野</text>
+<line x1="34" y1="216" x2="1046" y2="216" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="34" y="258" font-size="12.5" fill="#64748b">B. Jev（System One Model · 内部架构未公开，以下为接口层）</text>
+<rect x="35" y="316" width="230" height="72" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.7"/>
+<text x="150.0" y="346.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">程序状态 state</text>
+<text x="150.0" y="365.0" text-anchor="middle" font-size="11" fill="#475569">＋ 类型化问题 schema</text>
+<rect x="295" y="316" width="230" height="72" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.7"/>
+<text x="410.0" y="346.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">单次并行前向</text>
+<text x="410.0" y="365.0" text-anchor="middle" font-size="11" fill="#475569">无逐 token 解码</text>
+<rect x="555" y="316" width="230" height="72" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.7"/>
+<text x="670.0" y="346.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">三种输出原语</text>
+<text x="670.0" y="365.0" text-anchor="middle" font-size="11" fill="#475569">Choice ≤255 / Score / Noul</text>
+<rect x="815" y="316" width="230" height="72" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.7"/>
+<text x="930.0" y="346.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">校准概率</text>
+<text x="930.0" y="365.0" text-anchor="middle" font-size="11" fill="#475569">随每次输出返回</text>
+<line x1="267" y1="352.0" x2="292" y2="352.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="527" y1="352.0" x2="552" y2="352.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="787" y1="352.0" x2="812" y2="352.0" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#a1)"/>
+<text x="34" y="436" font-size="12.5" fill="#64748b">C. 真正的差别：输出空间是否有界</text>
+<rect x="34" y="452" width="1012" height="40" rx="9" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.7"/>
+<text x="50" y="478" font-size="13" font-weight="700" fill="#4f46e5">BERT</text>
+<text x="150" y="478" font-size="12.5" fill="#334155">开放 / 无界 —— 词表分布、表示向量；必须逐 token 解码</text>
+<rect x="34" y="506" width="1012" height="40" rx="9" fill="#ecfeff" stroke="#0891b2" stroke-width="1.7"/>
+<text x="50" y="532" font-size="13" font-weight="700" fill="#0891b2">Jev</text>
+<text x="150" y="532" font-size="12.5" fill="#334155">预先枚举 / 有界 —— ≤255 选项；可一次穷举打分</text>
+<text x="34" y="586" font-size="12" fill="#334155">机制后果：Jev 快、便宜、不会类型出错，但【结构性不能】生成开放文本 —— 让它快的机制同时就是它的边界。</text>
+</svg>
