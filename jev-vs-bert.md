@@ -1,6 +1,6 @@
 # Jev 与 BERT：实现原理对比，以及一个硬件类比的成立边界
 
-> 2026-09-16 · Damon + Nemesis · 分类：LLM 架构 / 模型对比 · 标签：Jev, TypeSafe, System One, BERT, Encoder, RLCD, 校准, 类比
+> 2026-09-19 · Damon + Nemesis · 分类：LLM 架构 / 模型对比 · 标签：Jev, TypeSafe, System One, BERT, Encoder, RLCD, 校准, 类比
 
 ---
 
@@ -240,8 +240,8 @@ LLM 的输出 → 再用 Jev 做校验/守卫
 ## 元信息
 
 - 生成者：Damon + Nemesis
-- 日期：2026-09-16
-- 说明：Jev 于 **2026-09-15** 发布，距本文撰写仅 1 天；材料以官方发布 + 当日第三方解读为准，**架构部分尚无一手论文**
+- 日期：2026-09-19
+- 说明：Jev 于 **2026-09-15** 发布，距本文撰写已 4 天；材料以官方发布 + 发布后数日的第三方解读为准，**架构部分尚无一手论文**
 - 来源：5 条（TypeSafe 官方 / explainx 机制解读 / DataCamp 汇总 / HN 讨论 / Maio 批评）+ BERT 原始论文，全部实测 HTTP 200
 - 配图：`figures/jev-vs-bert.svg`（程序化生成）
 - 关联：progressive-kg 的「Transformer架构」「因果掩码」「注意力机制」等节点

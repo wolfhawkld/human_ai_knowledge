@@ -29,7 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
-| [jev-vs-bert.md](jev-vs-bert.md) | Damon + Nemesis | 2026-09-16 | ⚖️ Jev 与 BERT 的实现原理对比 + 硬件类比边界：先划分「官方确认 / 官方未公开 / 第三方推测」三层事实边界；BERT 基线（双向 encoder-only、MLM+NSP、输出表示）；Jev（三种输出原语、单次并行前向、RLCD 校准）；逐维对比表；关键洞见「两者都无自回归解码，分歧在输出空间是否有界」；逐条评估 ASIC/PLA:FPGA/CPU 类比并给出三处硬伤与四个更贴切的替代类比；8 条常见误读纠偏 |
+| [jev-vs-bert.md](jev-vs-bert.md) | Damon + Nemesis | 2026-09-19 | ⚖️ Jev 与 BERT 的实现原理对比 + 硬件类比边界：先划分「官方确认 / 官方未公开 / 第三方推测」三层事实边界；BERT 基线（双向 encoder-only、MLM+NSP、输出表示）；Jev（三种输出原语、单次并行前向、RLCD 校准）；逐维对比表；关键洞见「两者都无自回归解码，分歧在输出空间是否有界」；逐条评估 ASIC/PLA:FPGA/CPU 类比并给出三处硬伤与四个更贴切的替代类比；8 条常见误读纠偏 |
 | [representation-contrastive-clip.md](representation-contrastive-clip.md) | Damon + Nemesis | 2026-09-16 | 🧩 表征学习 / 对比学习 / CLIP 的异同：三者不在同一抽象层（问题层 → 方法层 → 系统层，嵌套关系图），逐维对比表 + 三个「同」（都源于人工标签瓶颈、都用线性探针评测、都关心不变性代价）+ 三个「异」（层级错位、CLIP 属弱监督而非自监督、单模态 vs 跨模态）；含 InfoNCE → SimCLR → CLIP → SigLIP → LLM2CLIP 演进谱系与 6 条常见混淆纠偏。6 条一手来源 |
 | [memory-classification-and-forgetting.md](memory-classification-and-forgetting.md) | Damon + Nemesis | 2026-09-15 | 🧠 记忆的分类与遗忘的科学说明：按加工阶段（感觉记忆 ~250ms / 短期记忆 3–5 项 / 长期记忆）与按内容意识（陈述性=情景+语义，非陈述性=程序性+启动+条件反射）两条正交线索分类；遗忘拆成六类机制（编码失败、痕迹衰退、前摄/倒摄干扰、提取失败、动机性遗忘、巩固中断）并给出失败点时间轴；含遗忘曲线定位、记忆重构性与错误信息效应、8 条常见误读纠偏、学习实践启示。来源 20 条 Wikipedia 条目 |
 | [deepseek-v4-1-flash-ced-architecture.md](deepseek-v4-1-flash-ced-architecture.md) | Damon + Nemesis | 2026-09-13 | 🧩 DeepSeek-V4.1-Flash 的 Causal Encoder-Decoder 架构解析：CED 如何把 40 层主干切成 20 层 causal encoder + 20 层 decoder，decoder 全局 KV 由 encoder 末层 H(L/2) 一次性投影而来（而非经典 cross-attention 的逐层重读）；逐维对比经典 Transformer Encoder-Decoder（encoder 角色 / 访问方式 / 因果性要求）；相对 V4 的 11 项架构升级（纯 CSA2、FP4 主 KV、SWA Bounded Replay、Single-Pass mHC、Engram 196B、DSpark、head-wise Muon、原生多模态） |
