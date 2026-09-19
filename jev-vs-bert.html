@@ -97,21 +97,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC
 <hr />
 <h2>五、硬件类比：ASIC/PLA 与 FPGA/CPU，成立到哪里</h2>
 <p>你的类比是：<strong>Jev : BERT ≈ ASIC/PLA : FPGA/CPU</strong>。</p>
-<p>结论：<strong>作为经济结构的第一直觉是好的，但作为架构类比有三处硬伤，其中一处方向讲反了。</strong></p>
+<p>结论：<strong>作为一个形容，它是对的——而且抓住的正是两者最大的差异。它的适用范围到「经济结构」这一层为止</strong>；跨层外推会出现偏差，其中一条会把方向讲反。</p>
 <figure><img src="figures/jev-vs-bert.svg" alt="BERT 与 Jev 的流程对比：都无自回归解码，分野在输出端" /><figcaption>BERT 与 Jev 的流程对比：都无自回归解码，分野在输出端</figcaption></figure>
 <h3>5.1 类比成立的三点</h3>
 <ol><li><strong>专用换效率的经济结构</strong>：固定功能换取数量级的效率/成本优势。Jev 用"放弃字符串生成"换来两个数量级的提速与降本，这与 ASIC 用"放弃通用性"换 ppa 是同一种交易结构。</li><li><strong>约束是结构性的，不是调参能绕过的</strong>：ASIC 跑不了任意程序；Jev 生成不了开放文本。两者都是"由构造决定的不可能"，而不是"性能不够好"。</li><li><strong>边际成本结构</strong>：ASIC 固定成本极高、单位成本近零；对应地，Jev 的输出 token <strong>免费</strong>——单次前向之后没有可计费单元。而 CPU（通用 LLM）按 token 计费，边际成本随输出长度线性增长。</li></ol>
-<h3>5.2 类比失效的三点</h3>
-<p><strong>① 层错位：这是软件层差异，不是硅片差异</strong></p>
-<p>ASIC 与 FPGA 是<strong>不同的芯片</strong>。Jev 与 BERT 很可能跑在<strong>同一块 GPU</strong> 上——它们的差异在<strong>输出接口、训练目标与读出结构</strong>，不在制造工艺。把软件层的接口差异套进"专用芯片 vs 通用芯片"的框架，会让人误以为 Jev 有什么特殊的硬件。</p>
-<p><strong>② 可配置性的方向被讲反了（最重要的一条）</strong></p>
-<p>FPGA 的"可编程"指的是<strong>制造之后改连线</strong>。而在这个对比里：</p>
-<ul><li><strong>Jev 允许每次调用更换 schema</strong>——同一个模型，运行时给不同的类型化问题；</li><li><strong>BERT 换任务需要重新微调</strong>——要改变模型参数。</li></ul>
-<p>按"运行时可否重配置"这个轴看，<strong>Jev 反而更靠 FPGA/可编程一侧，BERT 更靠"烧进去就不动"一侧</strong>。原类比把 Jev 放在 ASIC（最不灵活）那一端，方向是反的。</p>
-<p>更准确的说法是：<strong>两者的"专用性"作用在不同的维度上</strong>——</p>
-<table><thead><tr><th></th><th>专用在哪个维度</th><th>通用在哪个维度</th></tr></thead><tbody><tr><td><strong>ASIC</strong></td><td>任务（只能做一件事）</td><td>——</td></tr><tr><td><strong>Jev</strong></td><td><strong>输出</strong>（答案必须落在有界集合内）</td><td><strong>任务</strong>（任意 schema，无需重训）</td></tr><tr><td><strong>BERT</strong></td><td>表示（固定的预训练表示，靠任务头适配）</td><td>任务（微调后可做多种任务）</td></tr></tbody></table>
-<p><strong>③ PLA 放错了阵营</strong></p>
-<p>PLA / PAL（可编程逻辑阵列 / 可编程阵列逻辑）在历史上属于<strong>可编程逻辑器件</strong>一族，与 FPGA 同侧；真正不可编程的那一侧才是 ASIC。把 "ASIC/PLA" 并列成"专用侧"，是把两个不同阵营的东西并到了一起。如果一定要保留这个对比，应该是 <strong>ASIC ↔ (PLA/PAL/FPGA) ↔ CPU</strong> 的"可编程度递增"序列。</p>
+<h3>5.2 类比的适用层级：它成立在「经济结构」层，不是「实现」层</h3>
+<p>一句话定位：</p>
+<blockquote><p><strong>它成立在"经济结构"层（专用换效率、约束是结构性的、边际成本近零），不成立在"实现"层——尤其在"谁更可灵活改"这个方向上会反。</strong></p></blockquote>
+<p>这是一个<strong>沟通用的抓手</strong>，不是一个可以外推的映射。下面第一条是本层之外真正会产生错误预测的地方，后两条只是跨层使用时的提示。</p>
+<p><strong>① 会把方向讲反的一点：两根不同的轴被压成了一根</strong></p>
+<p>ASIC 框架容易把人引向一个推论——"专用 = 更不灵活、烧死了改不动"。但在这个对比里：</p>
+<ul><li><strong>Jev 允许每次调用更换 schema</strong>——同一个模型，运行时给不同的类型化问题，无需重训；</li><li><strong>BERT 换任务需要重新微调</strong>——要改变模型参数。</li></ul>
+<p>按"运行时可否重配置"这个轴看，<strong>Jev 反而更靠可编程一侧</strong>。根因是这个类比把两根独立的轴压成了一根：</p>
+<table><thead><tr><th>轴</th><th>两端</th><th>Jev</th><th>BERT</th></tr></thead><tbody><tr><td><strong>A 输出空间</strong></td><td>有界 ←→ 无界</td><td>有界（偏"专用"）</td><td>无界（偏"通用"）</td></tr><tr><td><strong>B 任务适配</strong></td><td>改 schema ←→ 要微调</td><td>改 schema（偏"通用"）</td><td>要微调（偏"专用"）</td></tr></tbody></table>
+<p>在芯片领域，这两根轴的方向是<strong>同向</strong>的（ASIC 在两边都最不灵活）；在 Jev / BERT 这里是<strong>反向</strong>的。所以这个形容用在"为什么值得拿灵活性换效率"上完全准确，用在<strong>推断"谁更灵活"上会反</strong>。</p>
+<p><strong>② 跨层提示：这是软件层差异，不是硅片差异</strong></p>
+<p>Jev 与 BERT 很可能跑在<strong>同一块 GPU</strong> 上——差异在输出接口、训练目标与读出结构，不在制造工艺。只有当类比被外推成"所以 Jev 需要专用硬件"时，才会出问题。</p>
+<p><strong>③ 跨层提示：PLA 在芯片领域本身位于"可编程"一侧</strong></p>
+<p>PLA / PAL（可编程逻辑阵列 / 可编程阵列逻辑）历史上属于<strong>可编程逻辑器件</strong>，与 FPGA 同侧，而非 ASIC 侧。这一点只在使用类比的<strong>字面</strong>时才需要注意；借意象时无妨。</p>
 <h3>5.3 更贴切的替代类比</h3>
 <p>按准确度从高到低：</p>
 <p><strong>① "学习到的语义分支指令"</strong>（最推荐）</p>
