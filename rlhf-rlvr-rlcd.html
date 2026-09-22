@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLHF / RLVR / RLCD：三种 RL 后训练范式的对比 — 人机知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0f172a 0%, #312e81 100%); min-height: 100vh; padding: 40px 20px; }
+.container { max-width: 1080px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+.header h1 { font-size: 1.75em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.05em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
+.content h2 { color: #1e1b4b; border-bottom: 3px solid #6d28d9; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.4em; }
+.content h3 { color: #3730a3; margin: 22px 0 10px; font-size: 1.16em; }
+.content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.87em; }
+.content th, .content td { border: 1px solid #e2e8f0; padding: 9px 12px; text-align: left; vertical-align: top; }
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.content code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+.content pre { background: #1e1b4b; color: #e0e7ff; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 14px 0; font-size: 0.85em; line-height: 1.6; }
+.content pre code { background: transparent; color: inherit; padding: 0; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content blockquote { border-left: 4px solid #6d28d9; background: #f5f3ff; padding: 10px 18px; margin: 14px 0; color: #4c1d95; }
+.content a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+.content a:hover { text-decoration: underline; }
+.content hr { border: none; border-top: 1px dashed #c7d2fe; margin: 26px 0; }
+.content .tex { font-family: 'JetBrains Mono', monospace; color: #3730a3; background: #eef2ff; padding: 1px 5px; border-radius: 4px; }
+.content figure { margin: 22px 0; text-align: center; }
+.content figure img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; }
+.content figcaption { font-size: 0.86em; color: #64748b; margin-top: 8px; }
+.footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) { body { padding: 20px 10px; } .header, .content, .footer { padding-left: 20px; padding-right: 20px; } .header h1 { font-size: 1.2em; } .content table { font-size: 0.74em; } .content th, .content td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>RLHF / RLVR / RLCD：三种 RL 后训练范式的对比</h1>
+    <p class="subtitle">奖励信号从哪来，就决定了它能用在哪 —— 以及 RLVR「能力上限」争论的如实呈现</p>
+    <div class="meta">
+      <span class="meta-item agent">🤖 Damon + Nemesis</span>
+      <span class="meta-item">📅 2026-09-22</span>
+      <span class="meta-item">🔖 RLHF · RLVR · RLCD · GRPO · 校准</span>
+    </div>
+  </div>
+  <div class="content">
+<blockquote><p>2026-09-22 · Damon + Nemesis · 分类：LLM 训练 / 对齐 · 标签：RLHF, RLVR, RLCD, GRPO, DeepSeek-R1, 校准, 奖励模型</p></blockquote>
+<hr />
+<h2>一、先说一个必须澄清的坑：RLCD 不止一个</h2>
+<p>在搜"RLCD"时，你会同时撞到三个东西：</p>
+<table><thead><tr><th>缩写全称</th><th>领域</th><th>是什么</th></tr></thead><tbody><tr><td>Reinforcement Learning from <strong>Contrastive Distillation</strong></td><td>LLM 对齐</td><td><strong>ICLR 2024</strong> 的方法，用"正/负提示"造出对比偏好对，从而在<strong>不用人类反馈</strong>的情况下对齐模型（优于 RLAIF 与 context distillation）</td></tr><tr><td>Reinforcement Learning for <strong>Calibrated Decisions</strong></td><td>LLM 后训练</td><td><strong>TypeSafe AI 2026</strong> 提出的范式，本文讨论的就是它</td></tr><tr><td><strong>R</strong>eflective <strong>LCD</strong></td><td>硬件</td><td>反射式液晶显示器，与 AI 无关</td></tr></tbody></table>
+<p><strong>这两个 AI 意义上的 RLCD 名字撞车纯属巧合</strong>，方法上毫无关系。写论文或做技术选型时如果不注明全称，读者会误解——本文以下所有 "RLCD" 均指 <strong>Calibrated Decisions</strong>。</p>
+<hr />
+<h2>二、三者的真正分野只有一件事：奖励信号从哪来</h2>
+<p>把三个名字并排看，就能看出命名逻辑——<strong>它们都在说"奖励来自谁"</strong>：</p>
+<pre><code>RLHF  人类说：  &quot;这个回答更好&quot;
+RLVR  验证器说：&quot;这个答案是对的&quot;
+RLCD  结果说：  &quot;你给的 80%，应该对应约 80% 的实际正确率&quot;</code></pre>
+<p>所以这不是三个"越来越先进的算法"，而是<strong>三种不同的奖励信号来源</strong>。理解了这一点，后面所有差异都是推论。</p>
+<figure><img src="figures/rlhf-rlvr-rlcd.svg" alt="RLHF / RLVR / RLCD：三种奖励信号来源与它们各自的适用域" /><figcaption>RLHF / RLVR / RLCD：三种奖励信号来源与它们各自的适用域</figcaption></figure>
+<hr />
+<h2>三、RLHF：把人类偏好炼成奖励模型</h2>
+<h3>3.1 流程</h3>
+<p>经典 RLHF 是三段式：</p>
+<ol><li><strong>SFT</strong>——用 <code>(指令, 回答)</code> 对做监督微调，让模型先会"照着说话"；</li><li><strong>训练奖励模型（RM）</strong>——让人类对同一提示的多个回答做<strong>排序</strong>，训一个模型把回答映射成标量分数；</li><li><strong>RL 优化</strong>——用 PPO 对着 RM 的分数优化策略。</li></ol>
+<p>用 PPO 的原因是要限制单步更新幅度：它优化一个 <strong>clipped surrogate objective</strong>，把新旧策略的差异夹在一个范围内，避免一步更新过大导致训练崩溃。</p>
+<h3>3.2 SFT 和 RLHF 到底差在哪</h3>
+<table><thead><tr><th>维度</th><th>SFT</th><th>RLHF</th></tr></thead><tbody><tr><td>核心目标</td><td>模仿正确答案（指令遵循）</td><td>对齐人类偏好（有用 / 无害 / 诚实）</td></tr><tr><td>数据</td><td>高质量 <code>(指令, 回答)</code> 对</td><td>提示 + <strong>偏好排序</strong></td></tr><tr><td>学习方式</td><td>拟合分布（填鸭）</td><td>试错与反馈（探索）</td></tr><tr><td>优化信号</td><td>token 级交叉熵</td><td><strong>整段生成质量的标量奖励</strong></td></tr><tr><td>泛化</td><td>受限于训练数据分布</td><td>可迁移到未见过的复杂指令</td></tr></tbody></table>
+<p>关键差别在最后一行：SFT 教的是"<strong>照着说</strong>"，RLHF 教的是"<strong>往人偏好的方向走</strong>"——后者才有机会超出训练数据本身。</p>
+<h3>3.3 成本与结构性瓶颈</h3>
+<ul><li><strong>规模不小</strong>：训练一个 RM 大约需要 <strong>5 万量级</strong>的偏好标签（远超学术实验室预算，但对大厂不算多）；</li><li><strong>标注者偏见会写进模型</strong>：几个标注者意见不一致，这种分歧会变成训练数据里的潜在噪声；</li><li><strong>可扩展性受人工上限约束</strong>——这是后来 RLAIF / RLVR 出现的直接动因。</li></ul>
+<h3>3.4 变体与走向</h3>
+<ul><li><strong>RLAIF</strong>：用更强的 AI 当评委替代人类，降本、缓解主观偏见；</li><li><strong>DPO</strong>：跳过 RM + PPO，直接在偏好数据上做<strong>离线</strong>优化（工程上简单得多）；</li><li><strong>迭代式后训练</strong>（如 LLaMA 3）：把"采样 → 标注 → DPO/PPO"做成循环，上一轮的最优模型成为下一轮的数据生成器；</li><li><strong>走向推理</strong>：以 o1、DeepSeek-R1 为代表，RL 的目的从"对齐偏好"变成"探索推理路径"——也就是下一节的 RLVR。</li></ul>
+<h3>3.5 一个容易被忽略的结构性缺陷</h3>
+<p>偏好训练的奖励是<strong>"人是否更喜欢"</strong>。而人天然偏好<strong>自信、顺耳</strong>的回答。于是模型学到的不只是"答对"，还有"<strong>听起来对</strong>"——<strong>即使它本该不确定</strong>。</p>
+<p>这不是猜测：已有研究发现 <strong>RLHF 的奖励模型系统性偏向高置信度的表达</strong>（Leng et al. 2024）。也就是说，过度自信是偏好训练的<strong>结构性副产物</strong>，不是训练没调好。</p>
+<p>这一点是理解 RLCD 为什么存在的关键。它同时也是下文 RLCD 小节的开头。</p>
+<hr />
+<h2>四、RLVR：把"可验证"当奖励</h2>
+<h3>4.1 核心思想</h3>
+<p>RLVR（Reinforcement Learning with <strong>Verifiable</strong> Rewards）直接抛弃奖励模型：</p>
+<blockquote><p>不训练 RM，不找人打分——<strong>直接跑验证器</strong>。数学题对答案，代码跑测试，形式证明过检查器。</p></blockquote>
+<p>为什么这能成立：验证器给的是<strong>干净的二元信号</strong>，因此不需要价值函数近似，训练复杂度下降、收敛更快；而且验证器可以<strong>无限次调用</strong>，训练数据不再是瓶颈。</p>
+<p>DeepSeek-R1 就是这么做的：用规则式奖励（格式合规 + 可验证正确性）在数学、代码、逻辑上规模化 GRPO。</p>
+<h3>4.2 算法配套：GRPO</h3>
+<p><strong>GRPO（Group Relative Policy Optimization）</strong> 是 RLVR 的基础方法，也是最常被引用的实现。它相对 PPO 的关键简化是<strong>去掉了 value network</strong>：对同一个问题采样一组回答，用<strong>组内相对表现</strong>（该回答的奖励减去组内均值/标准差）当优势估计。</p>
+<p>于是"一道题 8 次采样里做对 5 次"这种信号，就足以告诉模型哪些推理路径值得强化。</p>
+<h3>4.3 DeepSeek-R1 给这条路线带来的说服力</h3>
+<p>在 R1 之前，业界普遍怀疑"仅靠对/错的二元奖励，真能训出强推理模型吗"。R1-Zero（纯 RL、不做 SFT 冷启动）展示了：</p>
+<ul><li><strong>自主进化</strong>：模型自己学会延长思考、回头检查、重新推导——被描述为"顿悟时刻"；</li><li><strong>以时间换智能</strong>：RL 本质鼓励生成<strong>更长的思维链</strong>来换准确率，这是推理模型与传统 LLM 最直观的差别。</li></ul>
+<p>R1 还<strong>诚实地报告了失败尝试</strong>：过程奖励模型（PRM）和蒙特卡洛树搜索（MCTS）都在实验中放弃了。</p>
+<h3>4.4 边界：它只在有 ground truth 的地方成立</h3>
+<p>这是 RLVR 最硬的一条限制：<strong>创意写作、品牌语调、细腻论证这类没有客观真值的任务，它做不了</strong>——主观质量上人类偏好数据仍然更优。</p>
+<p>另外值得记住一句实话：<strong>RLVR 本身不是新技术</strong>，它就是"标准 RL + 确定性奖励函数"；新的地方在于<strong>把它在大模型后训练上规模化应用</strong>。</p>
+<h3>4.5 已知病灶（工程上必须知道）</h3>
+<table><thead><tr><th>问题</th><th>表现</th></tr></thead><tbody><tr><td><strong>熵坍缩</strong>（entropy collapse）</td><td>随 GRPO 训练推进熵下降，<strong>分布内准确率上升、分布外表现恶化</strong>——模型不是在学可泛化的推理模式，而是在过拟合训练分布；熵崩得太早，策略就困在狭窄的推理模式里</td></tr><tr><td><strong>长度偏置</strong></td><td>不做长度归一化时，CoT 长度会无界增长（因为"答错不如写长"）；Dr. GRPO 一类工作专门修这个</td></tr><tr><td><strong>梯度分配问题</strong></td><td>有分析指出 GRPO 存在正样本的梯度错配（Gradient Misassignment）与负样本的梯度支配（Gradient Domination），据此提出 REAL 等改进</td></tr><tr><td><strong>无价值网络更易不稳</strong></td><td>GRPO 这类 value-free 方法用批统计量当基线，对奖励分布的离群值更敏感（用中位数替代均值可缓解）</td></tr></tbody></table>
+<h3>4.6 最重要的质疑：它可能没在扩能力，只是在省采样</h3>
+<p>这是本节最该记住的一条。<strong>NeurIPS 2025</strong> 的工作《Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?》（arXiv 2504.13837）系统性检验了这个假设，结论是：</p>
+<blockquote><p><strong>RL 微调提升的是采样效率，并没有扩展 base model 已有的推理能力上限。</strong></p></blockquote>
+<p>三条实证：</p>
+<ol><li><strong>高 pass@k 时 base model 反超</strong>——RL 模型在低 k（如 pass@1）表现出色，但 k 增大（如 pass@256）时<strong>原始 base model 稳定超过它</strong>；</li><li><strong>RL 收窄了探索</strong>：被奖励的轨迹被放大，但<strong>解空间整体收缩</strong>——说明 RLVR 是在 base 分布<strong>之内</strong>优化，而非之外；</li><li><strong>现有 RL 算法都到顶了</strong>：PPO、GRPO、Reinforce++ 表现接近，且都远未达到<strong>蒸馏</strong>等更宽策略的采样效率。</li></ol>
+<p>这条质疑非常关键：它意味着"RL 让模型变聪明了"这个说法，至少在该文覆盖的数学/代码/视觉基准上，应改写为"<strong>RL 让模型更稳定地发挥它已经会的东西</strong>"。</p>
+<hr />
+<h2>五、RLCD：把"校准"当奖励</h2>
+<h3>5.1 定义</h3>
+<p><strong>RLCD（Reinforcement Learning for Calibrated Decisions）</strong> 是 TypeSafe AI 用来训练 Jev 的后训练方法。它的奖励既不是"人更喜欢"，也不是"答案正确"，而是：</p>
+<blockquote><p><strong>模型给出的概率，是否与这些决策的实际正确率匹配。</strong></p></blockquote>
+<h3>5.2 为什么需要它：TypeSafe 对偏好训练的两条诊断</h3>
+<p>TypeSafe 的论证是——偏好训练有两个副作用，而这两个副作用对<strong>要自动执行的软件</strong>是致命的：</p>
+<ol><li><strong>它奖励"听起来对"</strong>：人偏好自信、顺耳的回答，所以模型学会即使在应该不确定时也表现得自信；</li><li><strong>它收窄了输出分布</strong>：TypeSafe 称之为 <strong>mode dropping</strong>——生成对抗网络里 mode collapse 的温和版本，模型集中在偏好的风格上，<strong>在其他可能性上丢掉了概率质量</strong>。</li></ol>
+<p>对聊天机器人，这两条可以接受——反正有人在读。但对一个<strong>没人复核结果就要拿去分支的决策组件</strong>，"诚实的不确定性"比"令人舒适的答案"重要得多。</p>
+<h3>5.3 "校准"到底是什么意思（最容易误解的一条）</h3>
+<p>判据是<strong>天气预报</strong>：一个说"70% 会下雨"的预报员，在 100 个这样的日子中应该有约 70 天下雨。</p>
+<p>要点在于：</p>
+<blockquote><p><strong>校准是群体的性质，不是单个答案的性质。</strong> 一个校准完美的模型，<strong>单个答案依然可能是错的</strong>。</p></blockquote>
+<p>这正是它和"准确率"的本质区别——准确率回答"对不对"，校准回答"<strong>你说自己有多确定，是否可信</strong>"。</p>
+<h3>5.4 它不是全新的：校准 RL 已有前驱</h3>
+<p>这点值得明确，因为 TypeSafe 的发布容易被读成"发明了新东西"。已有的工作至少包括：</p>
+<ul><li><strong>Rewarding Doubt</strong>（arXiv 2503.02623，慕尼黑工大等）：用<strong>对数评分规则</strong>（一种严格适当评分规则）作为奖励，<strong>同时惩罚过度自信与自信不足</strong>；把置信度建模成<strong>下注博弈</strong>（越自信 → 下注越大）。论文证明<strong>该奖励下的最优策略就是完美校准</strong>。一个很重要的工程特性是：<strong>它只奖励"表达出来的置信度"，不改变答案本身</strong>——答案先独立生成，因此准确率保持稳定，推理开销也只增加少量 token。</li><li><strong>RLCR（Reinforcement Learning with Calibration Rewards）</strong>：在二元正确性奖励上叠加 <strong>Brier 分数</strong>，用 GRPO 为底，惩罚"错又自信"和"对却不自信"。</li><li>更早的 Tao et al. (2024)：改造 RLHF 使 verbalized confidence 与偏好评分对齐——但它依赖人工偏好数据，且不解决事实性校准。</li></ul>
+<p>所以 RLCD 的贡献更在<strong>整包</strong>（不要文本生成 + 类型化输出 + 以校准为核心的奖励 + 面向自动化的产品形态），而非单点技术。</p>
+<h3>5.5 它也是三者中<strong>最不透明</strong>的</h3>
+<p>必须写清楚：截至本文，TypeSafe <strong>未公开</strong> RLCD 的奖励函数、模型架构、训练过程和校准方法，<strong>没有已发表的校准曲线，也没有可独立复现的论文</strong>。它公布的是接口、定价、延迟和自评基准。</p>
+<p>因此对 RLCD 的正确态度是：<strong>接口可用、机制待证</strong>。</p>
+<hr />
+<h2>六、逐维对比</h2>
+<table><thead><tr><th>维度</th><th>RLHF</th><th>RLVR</th><th>RLCD（Calibrated Decisions）</th></tr></thead><tbody><tr><td><strong>奖励来自</strong></td><td>人类偏好</td><td>程序化验证器</td><td>校准质量（置信度 vs 实际正确率）</td></tr><tr><td><strong>谁在打分</strong></td><td>训练出来的奖励模型（RM）</td><td>确定性的验证器</td><td>结果分布本身</td></tr><tr><td><strong>是否需要训练 RM</strong></td><td><strong>需要</strong></td><td>不需要</td><td>未公开（推测需要某种可判定"实际正确率"的机制）</td></tr><tr><td><strong>奖励信号形态</strong></td><td>学出来的连续标量</td><td>0/1 或可计算分数</td><td>基于评分规则的连续值</td></tr><tr><td><strong>可扩展性</strong></td><td>受人工标注上限约束</td><td>近乎无限（可程序化验证）</td><td>受"能否事后判定对错"约束</td></tr><tr><td><strong>适用任务</strong></td><td>开放域对话、写作、安全</td><td>数学、代码、形式化推理</td><td>有界决策：分类、路由、打分、抽取</td></tr><tr><td><strong>优化目标</strong></td><td>人类偏好</td><td>正确性</td><td><strong>置信度与准确率的一致性</strong></td></tr><tr><td><strong>主要失败模式</strong></td><td>谄媚、系统性过度自信、标注偏见</td><td>熵坍缩、长度偏置、能力上限不涨</td><td>未经验证（机制未公开）</td></tr><tr><td><strong>代表工作</strong></td><td>InstructGPT、Anthropic HH、DPO、RLAIF</td><td>DeepSeek-R1、GRPO、DAPO</td><td>TypeSafe Jev；前驱 Rewarding Doubt、RLCR</td></tr><tr><td><strong>透明度</strong></td><td>高（论文与开源实现众多）</td><td>高</td><td>低（机制未公开）</td></tr></tbody></table>
+<hr />
+<h2>七、一条主线：客观性递增，适用域递减</h2>
+<p>把三者放在同一根轴上，规律很清楚：</p>
+<pre><code>奖励信号的客观性：   主观偏好  ──→  客观正确  ──→  客观校准
+                       RLHF        RLVR          RLCD
+可适用的任务范围：   开放域    ──→  有真值    ──→  有界决策
+                       ↓            ↓             ↓
+                    泛化更强      只在可验证处    只在小输出空间</code></pre>
+<p>一句话概括这条演进：<strong>对齐人类 → 对齐真值 → 对齐自我认知</strong>。</p>
+<p>但<strong>不要把它读成"越来越先进"</strong>。正确的读法是：<strong>奖励越客观，可自动化的程度越高，但能覆盖的任务范围越窄</strong>。三者是互补的，不是替代关系——DeepSeek-R1 的完整流程本身就是 SFT、RLVR、拒绝采样 SFT 混用的。</p>
+<hr />
+<h2>八、怎么选</h2>
+<pre><code>任务有没有可程序化判定的 ground truth？
+├── 有 ──→ RLVR（GRPO 类）        —— 但先想清楚：你要的是&quot;提高上限&quot;还是&quot;稳定发挥&quot;？
+│                                    若是前者，RLVR 可能给不了（见 §4.6）
+└── 没有
+    ├── 是开放域主观质量（写作/语气/论证）？ ──→ RLHF / RLAIF / DPO
+    └── 产出要直接驱动代码分支，且需要置信度？ ──→ 校准类方法
+            ├── 想改模型行为 ──→ RLCD 思路（或 Rewarding Doubt 那条&quot;只训置信度&quot;的路线）
+            └── 只想加个诚实的置信度 ──→ 优先考虑 Rewarding Doubt：
+                                         它不改答案、准确率稳定、实现可复现</code></pre>
+<p><strong>给你的具体建议</strong>：如果你想在某个系统里加"置信度可决策"，<strong>Rewarding Doubt 那条路线比 RLCD 更值得先试</strong>——它有公开论文、有严格适当评分规则的理论保证、且<strong>不动答案</strong>（风险最小）。RLCD 目前是一个可用但机制未公开的产品接口。</p>
+<hr />
+<h2>九、常见误读清单</h2>
+<table><thead><tr><th>常见说法</th><th>问题所在</th></tr></thead><tbody><tr><td>"RLVR 提升了模型的推理能力上限"</td><td>NeurIPS 2025 的系统性检验结论相反：它提升的是<strong>采样效率</strong>；高 pass@k 时 base model 反超</td></tr><tr><td>"RLHF 让模型更诚实"</td><td>它优化的是"人喜欢"，而人偏好自信顺耳 → 反而<strong>结构性激励过度自信</strong></td></tr><tr><td>"RLCD 是 TypeSafe 发明的"</td><td>校准 RL 已有前驱（Rewarding Doubt 2025、RLCR）；它的贡献在整包</td></tr><tr><td>"RLCD 就是 RLHF 加个分数"</td><td>奖励目标根本不同：一个优化偏好，一个优化<strong>校准</strong></td></tr><tr><td>"RLVR 是个新技术"</td><td>它是标准 RL + 确定性奖励；新的是<strong>在大模型后训练上规模化应用</strong></td></tr><tr><td>"有了 RLVR 就不需要人类数据了"</td><td>只在有 ground truth 的任务上成立；创意/语气/论证仍需偏好数据</td></tr><tr><td>"校准概率说明这个答案是对的"</td><td>校准是<strong>群体属性</strong>；单个答案仍可能错</td></tr><tr><td>"三个范式可以按先进程度排序"</td><td>它们是互补的，适用域不同；R1 的流程本身就是混用</td></tr><tr><td>"叫 RLCD 的都是同一件事"</td><td>ICLR 2024 有个同名不同物的（Contrastive Distillation）</td></tr><tr><td>"熵只是训练指标，不影响结果"</td><td>熵坍缩会同时拉高分布内、拉低分布外表现</td></tr></tbody></table>
+<hr />
+<h2>十、与你的研究方向的关系</h2>
+<p>你的 <strong>IntentWeight</strong> 用 <strong>LinUCB 替代 RL</strong>——本文的框架正好能解释这个选择为什么合理：</p>
+<ul><li>RLVR / RLCD 的前提都是"<strong>存在一个可计算或可事后判定的奖励</strong>"。而 LinUCB 走的是另一条路：<strong>用置信区间上界（UCB）做探索</strong>，把"不确定性"显式写进选择规则，<strong>不需要训练奖励模型、也不需要基准真值</strong>；</li><li>换句话说，LinUCB 用<strong>统计保证</strong>换掉了 RL 的<strong>奖励工程</strong>。这在你那种"反馈稀疏、真值不可验证"的检索场景里，往往比硬套 RL 更划算；</li><li>一个有意思的对应关系：RLCD 想让模型"<strong>知道自己有多不确定</strong>"，LinUCB 则让策略"<strong>按自己的不确定程度行动</strong>"——两者都承认不确定性的价值，只是 RLCD 在对齐<strong>表达</strong>，LinUCB 在对齐<strong>行为</strong>。</li></ul>
+<hr />
+<h2>参考来源</h2>
+<ul><li><a href="https://github.com/datawhalechina/base-llm/blob/main/docs/chapter12/01_RLHF.md">Datawhale base-llm · 第 12 章 RLHF</a> — RLHF 三阶段、PPO 的 clipped surrogate objective、SFT 与 RLHF 对照、RLAIF / 迭代式后训练、从对齐走向推理</li><li><a href="https://saraswatm.github.io/2026/02/rlhf-rlaif-rlvr.html">RLHF vs RLAIF vs RLVR（Floating Bytes）</a> — 三者定位与成本/质量权衡</li><li><a href="https://www.alphaxiv.org/abs/2602.05630">Rewards as Labels: Revisiting RLVR from a Classification Perspective</a> — GRPO 的梯度错配与梯度支配问题，REAL 的改进</li><li><a href="https://limit-of-rlvr.github.io">Limit of RLVR（NeurIPS 2025, arXiv 2504.13837）</a> — <strong>核心质疑</strong>：pass@k 下 base model 反超、RL 收窄探索、现有算法到顶</li><li><a href="https://www.promptfoo.dev/blog/rlvr-explained">Promptfoo: RLVR explained</a> — GRPO 训练循环、<strong>熵坍缩</strong>（引 arXiv 2505.22617）、"RLVR 不是什么"</li><li><a href="https://jevaiguide.com/concepts/rlcd">RLCD: Reinforcement Learning for Calibrated Decisions（独立解读）</a> — RLCD 定义、TypeSafe 对偏好训练的两条诊断（rewards sounding right / mode dropping）、未公开内容</li><li><a href="https://arxiv.org/abs/2307.12950">RLCD: Reinforcement Learning from Contrastive Distillation（ICLR 2024, arXiv 2307.12950）</a> — <strong>同名不同物</strong>的那个 RLCD</li><li><a href="https://arxiv.org/html/2503.02623v6">Rewarding Doubt（arXiv 2503.02623）</a> — 对数评分规则作奖励、下注博弈建模、最优策略即完美校准、只训置信度不改答案</li><li><a href="https://ritvik19.medium.com/papers-explained-439-reinforcement-learning-with-calibration-rewards-rlcr-bafda59538fd">RLCR: Reinforcement Learning with Calibration Rewards</a> — 正确性 + Brier 分数的组合奖励</li><li><a href="https://www.forbes.com/sites/lanceeliot/2026/09/18/new-reinforcement-learning-for-calibrated-decisions-makes-ai-headlines-but-look-past-the-hype">Forbes: New 'Reinforcement Learning For Calibrated Decisions' Makes AI Headlines But Look Past The Hype</a> — 对 RLCD 的媒体侧审慎视角</li></ul>
+<blockquote><p>说明：RLCD（Calibrated Decisions）的奖励函数、架构与训练方法均未公开，本文对该范式的描述只能到"接口与目标"层；涉及前驱工作（Rewarding Doubt / RLCR）的部分有一手论文支撑。RLVR 的"能力上限"争论仍在进行中，本文如实呈现了质疑方的证据。</p></blockquote>
+<hr />
+<h2>元信息</h2>
+<ul><li>生成者：Damon + Nemesis</li><li>日期：2026-09-22</li><li>来源：10 条（含 4 篇一手论文 / 1 篇 NeurIPS 2025 工作 / 1 篇 ICLR 2024 论文 / 1 篇官方博客），全部实测可访问</li><li>配图：<code>figures/rlhf-rlvr-rlcd.svg</code>（程序化生成）</li><li>关联：progressive-kg 的「强化学习」「策略梯度」「贝尔曼方程」「概率校准」等节点</li></ul>
+  </div>
+  <div class="footer">
+    <p>人机知识库 · 由 Damon + Nemesis 生成 · <a href="index.html">返回索引</a></p>
+  </div>
+</div>
+</body>
+</html>

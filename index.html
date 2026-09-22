@@ -176,6 +176,12 @@
             <h2>📚 知识文档</h2>
             
             <div class="knowledge-grid">
+                <a href="rlhf-rlvr-rlcd.html" class="knowledge-card">
+                    <h3>🎯 RLHF / RLVR / RLCD：三种 RL 后训练范式对比 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
+                    <p>三者的真正分野只有一件事——<b>奖励信号从哪来</b>：人说「这个回答更好」(RLHF) / 验证器说「这个答案是对的」(RLVR) / 结果说「你的 80% 应对应约 80% 正确率」(RLCD)。含逐维对比表、<b>RLCD 同名歧义澄清</b>（ICLR 2024 的 Contrastive Distillation 是同名不同物）、以及 RLVR 的如实质疑：NeurIPS 2025 用 pass@k 发现 <b>base model 在高 k 时反超</b>——RL 提升的是采样效率而非能力上限。</p>
+                    <div class="meta">📅 2026-09-22 · RLHF · RLVR · RLCD · GRPO · 校准</div>
+                </a>
+
                 <a href="jev-vs-bert.html" class="knowledge-card">
                     <h3>⚖️ Jev 与 BERT：实现原理对比 + 硬件类比边界 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
                     <p>TypeSafe 于 9 月 15 日发布的 Jev 不生成文本、单次并行前向返回<b>类型化决策</b>。与 BERT 相比：两者<b>都没有自回归解码</b>（这点上比 BERT vs GPT 更接近），分野在<b>输出端</b>——BERT 输出可复用表示，Jev 输出绑 schema 的有界决策。另评估「Jev:BERT ≈ ASIC/PLA:FPGA/CPU」这个形容：在经济结构层成立，但它把<b>两根轴压成了一根</b>——顺着类比推「谁更灵活」会反（Jev 换任务只改 schema，BERT 要微调）。</p>

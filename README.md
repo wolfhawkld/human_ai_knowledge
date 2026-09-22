@@ -29,6 +29,7 @@
 
 | 文档 | 生成者 | 日期 | 说明 |
 |------|--------|------|------|
+| [rlhf-rlvr-rlcd.md](rlhf-rlvr-rlcd.md) | Damon + Nemesis | 2026-09-22 | 🎯 RLHF / RLVR / RLCD 三种 RL 后训练范式对比：核心主线是「奖励信号从哪来」决定适用域（主观偏好 → 客观正确 → 客观校准，客观性递增但适用域递减）；RLHF 三阶段与 PPO 对齐税、RLVR 的 GRPO/DeepSeek-R1 与已知病灶（熵坍缩、长度偏置、梯度分配）、RLCD 的校准语义与思想前驱（Rewarding Doubt 的对数评分规则、RLCR）；含 RLCD 同名歧义澄清、NeurIPS 2025「RL 只提升采样效率」的核心质疑、10 条常见误读、以及与你 IntentWeight 用 LinUCB 替代 RL 的关联分析 |
 | [jev-vs-bert.md](jev-vs-bert.md) | Damon + Nemesis | 2026-09-19 | ⚖️ Jev 与 BERT 的实现原理对比 + 硬件类比边界：先划分「官方确认 / 官方未公开 / 第三方推测」三层事实边界；BERT 基线（双向 encoder-only、MLM+NSP、输出表示）；Jev（三种输出原语、单次并行前向、RLCD 校准）；逐维对比表；关键洞见「两者都无自回归解码，分歧在输出空间是否有界」；评估 ASIC/PLA:FPGA/CPU 类比的适用层级（成立在「经济结构」层、不成立在「实现」层），指出「两根轴被压成一根」的方向陷阱，并给出四个更贴切的替代类比；8 条常见误读纠偏 |
 | [representation-contrastive-clip.md](representation-contrastive-clip.md) | Damon + Nemesis | 2026-09-16 | 🧩 表征学习 / 对比学习 / CLIP 的异同：三者不在同一抽象层（问题层 → 方法层 → 系统层，嵌套关系图），逐维对比表 + 三个「同」（都源于人工标签瓶颈、都用线性探针评测、都关心不变性代价）+ 三个「异」（层级错位、CLIP 属弱监督而非自监督、单模态 vs 跨模态）；含 InfoNCE → SimCLR → CLIP → SigLIP → LLM2CLIP 演进谱系与 6 条常见混淆纠偏。6 条一手来源 |
 | [memory-classification-and-forgetting.md](memory-classification-and-forgetting.md) | Damon + Nemesis | 2026-09-15 | 🧠 记忆的分类与遗忘的科学说明：按加工阶段（感觉记忆 ~250ms / 短期记忆 3–5 项 / 长期记忆）与按内容意识（陈述性=情景+语义，非陈述性=程序性+启动+条件反射）两条正交线索分类；遗忘拆成六类机制（编码失败、痕迹衰退、前摄/倒摄干扰、提取失败、动机性遗忘、巩固中断）并给出失败点时间轴；含遗忘曲线定位、记忆重构性与错误信息效应、8 条常见误读纠偏、学习实践启示。来源 20 条 Wikipedia 条目 |
