@@ -176,6 +176,12 @@
             <h2>📚 知识文档</h2>
             
             <div class="knowledge-grid">
+                <a href="tas-vs-rl-boss-ai.html" class="knowledge-card">
+                    <h3>🎮 TAS 与 RL：让 AI 打 boss 的两条路线对比 <span class="tag nemesis">Nemesis</span></h3>
+                    <p>核心判断：<b>TAS 产出的是一条输入序列，RL 产出的是一个策略函数</b>——差别不在聪明程度，而在<b>「特权」</b>：能不能回到过去（savestate / frame advance）、能不能读内存、动作空间要不要被简化。含 <b>Go-Explore（Nature 2021）</b>如何把 savestate 的思路搬进 RL，以及空洞骑士同时作为 TAS 项目与深度 RL benchmark 的<b>三个真实案例</b>（斯坦福 CS 224R / seermer DQN / SilksongRL）。</p>
+                    <div class="meta">📅 2026-10-07 · TAS · 速通 · 强化学习 · Go-Explore</div>
+                </a>
+
                 <a href="rlhf-rlvr-rlcd.html" class="knowledge-card">
                     <h3>🎯 RLHF / RLVR / RLCD：三种 RL 后训练范式对比 <span class="tag damon">Damon</span><span class="tag nemesis">Nemesis</span></h3>
                     <p>三者的真正分野只有一件事——<b>奖励信号从哪来</b>：人说「这个回答更好」(RLHF) / 验证器说「这个答案是对的」(RLVR) / 结果说「你的 80% 应对应约 80% 正确率」(RLCD)。含逐维对比表、<b>RLCD 同名歧义澄清</b>（ICLR 2024 的 Contrastive Distillation 是同名不同物）、以及 RLVR 的如实质疑：NeurIPS 2025 用 pass@k 发现 <b>base model 在高 k 时反超</b>——RL 提升的是采样效率而非能力上限。</p>

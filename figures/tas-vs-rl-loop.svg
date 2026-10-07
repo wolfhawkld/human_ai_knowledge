@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 600" width="1180" height="600" font-family="-apple-system,Segoe UI,Noto Sans SC,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6d28d9"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0891b2"/></marker></defs>
+<rect width="1180" height="600" fill="#ffffff"/>
+<text x="590.0" y="40" font-size="20" fill="#1e1b4b" text-anchor="middle" font-weight="700">TAS 与 RL：两条回路的关键差别在哪</text>
+<text x="590.0" y="64" font-size="13" fill="#64748b" text-anchor="middle">同样是「让程序按键打 boss」，一条可以回到过去，一条只能往前走</text>
+<rect x="40" y="92" width="540" height="300" rx="14" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="310.0" y="126" font-size="16" fill="#4c1d95" text-anchor="middle" font-weight="700">TAS —— 时间可逆的搜索</text>
+<text x="310.0" y="148" font-size="12.5" fill="#64748b" text-anchor="middle">产出：一条精确到帧的输入序列（movie file）</text>
+<rect x="250.0" y="172" width="120" height="34" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="310.0" y="194.5" font-size="15" fill="#1e1b4b" text-anchor="middle">人：提出假设并构造输入帧</text>
+<rect x="241.0" y="220" width="138" height="34" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="310.0" y="242.5" font-size="15" fill="#1e1b4b" text-anchor="middle">frame advance：逐帧推进观察</text>
+<rect x="232.0" y="268" width="156" height="34" rx="9" fill="#ddd6fe" stroke="#6d28d9" stroke-width="1.6"/>
+<text x="310.0" y="290.5" font-size="15" fill="#1e1b4b" text-anchor="middle">savestate：任意回退、改一帧重录</text>
+<rect x="252.0" y="316" width="116" height="34" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="310.0" y="338.5" font-size="15" fill="#1e1b4b" text-anchor="middle">确定性重放 → sync verification</text>
+<line x1="310.0" y1="207" x2="310.0" y2="218" stroke="#6d28d9" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="310.0" y1="255" x2="310.0" y2="266" stroke="#6d28d9" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="310.0" y1="303" x2="310.0" y2="314" stroke="#6d28d9" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="148.0" y1="237.0" x2="148.0" y2="287.0" stroke="#6d28d9" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+<path d="M148.0,285.0 C 72.4,285.0, 72.4,247.0, 148.0,243.0" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+<text x="244.0" y="279.0" font-size="12.5" fill="#6d28d9" text-anchor="middle">可回退 ↺</text>
+<text x="310.0" y="382" font-size="12.5" fill="#6d28d9" text-anchor="middle">特权：读内存 / 完整动作空间 / 操纵 RNG / 完整机制</text>
+<rect x="620" y="92" width="520" height="300" rx="14" fill="#ecfeff" stroke="#67e8f9" stroke-width="1.6"/>
+<text x="880.0" y="126" font-size="16" fill="#155e75" text-anchor="middle" font-weight="700">RL —— 单向推进的学习</text>
+<text x="880.0" y="148" font-size="12.5" fill="#64748b" text-anchor="middle">产出：一个策略函数 π(观测) → 动作</text>
+<rect x="820.0" y="172" width="120" height="30" rx="9" fill="#cffafe" stroke="#0891b2" stroke-width="1.6"/>
+<text x="880.0" y="192.5" font-size="15" fill="#1e1b4b" text-anchor="middle">策略 π 输出动作 a</text>
+<text x="880.0" y="238.5" font-size="15" fill="#0e7490" text-anchor="middle" font-weight="700">环境推进一帧（不可回退）</text>
+<text x="880.0" y="284.5" font-size="15" fill="#0e7490" text-anchor="middle">得到 (观测 o, 奖励 r)</text>
+<rect x="880.0" y="310" width="0" height="30" rx="9" fill="#cffafe" stroke="#0891b2" stroke-width="1.6"/>
+<text x="880.0" y="330.5" font-size="15" fill="#1e1b4b" text-anchor="middle">梯度更新权重</text>
+<line x1="880.0" y1="203" x2="880.0" y2="216" stroke="#0891b2" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="880.0" y1="249" x2="880.0" y2="262" stroke="#0891b2" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="880.0" y1="295" x2="880.0" y2="308" stroke="#0891b2" stroke-width="2" marker-end="url(#arb)"/>
+<path d="M1046.4,325.0 C 1150.4,325.0, 1150.4,187.0, 1046.4,184.0" fill="none" stroke="#0891b2" stroke-width="2" marker-end="url(#arb)"/>
+<text x="1086.4" y="270" font-size="12.5" fill="#0891b2" text-anchor="middle">循环 ✓</text>
+<text x="880.0" y="382" font-size="12.5" fill="#0e7490" text-anchor="middle">约束：常为像素观测 / 动作空间被简化 / 需改造游戏取状态</text>
+<rect x="40" y="418" width="1100" height="64" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.6"/>
+<text x="590" y="445" font-size="14.5" fill="#92400e" text-anchor="middle" font-weight="700">Go-Explore（Nature 2021）：「先返回，再探索」——把 savestate 的思路搬进 RL</text>
+<text x="590" y="466" font-size="13" fill="#92400e" text-anchor="middle">所以真正的分界不是「有没有回退」，而是「回退是默认特权，还是需要额外机制去争取」</text>
+<text x="590" y="528" font-size="13" fill="#475569" text-anchor="middle">同样一次「打过 boss」：TAS 的度量是帧数（越小越好），RL 的度量是胜率（越大越好）——不在同一尺度上</text>
+<text x="590" y="550" font-size="13" fill="#475569" text-anchor="middle">RL agent 打败某 boss ≠ 它比 TAS 快，也 ≠ 它比人类强</text>
+<text x="590.0" y="586" font-size="11.5" fill="#94a3b8" text-anchor="middle">配图由 Nemesis 生成 · 2026-10-07</text>
+</svg>
