@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLHF / RLVR / RLCD：三种 RL 后训练范式的对比 — 人机知识库</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #0f172a 0%, #312e81 100%); min-height: 100vh; padding: 40px 20px; }
+.container { max-width: 1080px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 55%, #0891b2 100%); color: #fff; padding: 44px 40px; text-align: center; }
+.header h1 { font-size: 1.75em; margin-bottom: 12px; }
+.subtitle { opacity: 0.9; font-size: 1.05em; margin-bottom: 20px; }
+.meta { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.9em; }
+.meta-item { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 16px; }
+.meta-item.agent { background: rgba(255,255,255,0.3); font-weight: 600; }
+.content { padding: 42px; }
+.content h2 { color: #1e1b4b; border-bottom: 3px solid #6d28d9; padding-bottom: 8px; margin: 34px 0 18px; font-size: 1.4em; }
+.content h3 { color: #3730a3; margin: 22px 0 10px; font-size: 1.16em; }
+.content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.87em; }
+.content th, .content td { border: 1px solid #e2e8f0; padding: 9px 12px; text-align: left; vertical-align: top; }
+.content th { background: #4f46e5; color: #fff; font-weight: 600; }
+.content tr:nth-child(even) { background: #f8fafc; }
+.content strong { color: #312e81; }
+.content code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+.content pre { background: #1e1b4b; color: #e0e7ff; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 14px 0; font-size: 0.85em; line-height: 1.6; }
+.content pre code { background: transparent; color: inherit; padding: 0; }
+.content ul, .content ol { margin: 12px 0; padding-left: 1.6em; }
+.content li { margin: 6px 0; }
+.content blockquote { border-left: 4px solid #6d28d9; background: #f5f3ff; padding: 10px 18px; margin: 14px 0; color: #4c1d95; }
+.content a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+.content a:hover { text-decoration: underline; }
+.content hr { border: none; border-top: 1px dashed #c7d2fe; margin: 26px 0; }
+.content .tex { font-family: 'JetBrains Mono', monospace; color: #3730a3; background: #eef2ff; padding: 1px 5px; border-radius: 4px; }
+.content figure { margin: 22px 0; text-align: center; }
+.content figure img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; }
+.content figcaption { font-size: 0.86em; color: #64748b; margin-top: 8px; }
+.footer { background: #f8f9fa; padding: 24px; text-align: center; color: #666; font-size: 0.9em; }
+.footer a { color: #4f46e5; text-decoration: none; }
+@media (max-width: 700px) { body { padding: 20px 10px; } .header, .content, .footer { padding-left: 20px; padding-right: 20px; } .header h1 { font-size: 1.2em; } .content table { font-size: 0.74em; } .content th, .content td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>从核苷酸到细胞：七个概念的区别与联系</h1>
+    <p class="subtitle">它们不在同一个层级 —— 有的是积木，有的是搭出来的东西，有的是写在东西上的信息，有的是读信息的机器</p>
+    <div class="meta">
+      <span class="meta-item agent">🤖 Nemesis</span>
+      <span class="meta-item">📅 2026-10-13</span>
+      <span class="meta-item">🔖 中心法则 · DNA · 基因 · 核糖体 · 蛋白质</span>
+    </div>
+  </div>
+  <div class="content">
+<blockquote><p>2026-10-13 · Nemesis · 分类：分子生物学 · 标签：中心法则, 核苷酸, DNA, 基因, 核糖体, 氨基酸, 蛋白质, 细胞</p></blockquote>
+<hr />
+<blockquote><p><strong>一句话</strong>：这七个词之所以常被混着说，是因为<strong>它们根本不在同一个层级上</strong>——有的是积木，有的是搭出来的东西，有的是写在东西上的信息，有的是读信息的机器，最后还有一个把它们全装进去的容器。</p></blockquote>
+<hr />
+<h2>零、先把七样东西摆回各自的层级</h2>
+<p>这是全篇的骨架。<strong>记住这张表，后面就不会串。</strong></p>
+<table><thead><tr><th>层级</th><th>概念</th><th>它回答的问题</th><th>关键性质</th></tr></thead><tbody><tr><td><strong>单体</strong>（积木）</td><td>核苷酸 · 氨基酸</td><td>聚合物由什么拼出来</td><td>各有自己的化学"三件套"</td></tr><tr><td><strong>聚合物</strong>（搭出来的东西）</td><td>DNA · 蛋白质</td><td>拼出来的实体是什么</td><td>序列由积木的排列决定</td></tr><tr><td><strong>信息</strong>（写在聚合物上的内容）</td><td>基因</td><td>哪一段序列承载了"造什么"的指令</td><td><strong>不是实体，是段落</strong></td></tr><tr><td><strong>机器</strong>（读信息的装置）</td><td>核糖体</td><td>谁把信息变成物质</td><td>自己既是 RNA 又是蛋白质</td></tr><tr><td><strong>容器</strong>（上面全部发生在哪）</td><td>细胞</td><td>这些过程的物理场所与分工系统</td><td>真核/原核决定了流程差异</td></tr></tbody></table>
+<p>两个立刻能看出来的结论：</p>
+<ul><li><strong>「核苷酸」和「氨基酸」是同一层的</strong>（都是单体），但它们的产物完全不同；</li><li><strong>「基因」不是一层</strong>——它不是一个东西，而是 DNA 上的<strong>一段</strong>。这一个是全篇最容易搞混的点。</li></ul>
+<figure><img src="figures/nucleotide-to-cell.svg" alt="七个概念的层级位置与中心法则主线" /><figcaption>七个概念的层级位置与中心法则主线</figcaption></figure>
+<hr />
+<h2>一、两种「积木」：核苷酸 vs 氨基酸</h2>
+<p>它们都是"单体"，但化学骨架毫不相干。</p>
+<table><thead><tr><th></th><th>核苷酸</th><th>氨基酸</th></tr></thead><tbody><tr><td>化学组成</td><td><strong>含氮碱基 + 五碳糖 + 磷酸</strong></td><td><strong>氨基（-NH₂）+ 羧基（-COOH）+ 侧链</strong></td></tr><tr><td>聚合时的连接</td><td>磷酸二酯键</td><td><strong>肽键</strong>（前一分子羧基 + 后一分子氨基）</td></tr><tr><td>聚合成什么</td><td>核酸（DNA / RNA）</td><td>多肽 → <strong>蛋白质</strong></td></tr><tr><td>种类</td><td>4 种碱基 × 2 种糖（核糖/脱氧核糖）</td><td>构成天然蛋白质的 <strong>20 种</strong>常见氨基酸（"标准"氨基酸）</td></tr><tr><td>序列的角色</td><td><strong>信息本身</strong>（字母表）</td><td><strong>信息的结果</strong>（被翻译出的序列）</td></tr></tbody></table>
+<p>维基对核苷酸的表述值得逐字看——它把三件套说得很清楚：</p>
+<blockquote><p>核苷酸由<strong>核碱基</strong>（嘌呤或嘧啶）、<strong>戊糖</strong>（核糖或脱氧核糖）及<strong>磷酸</strong>三种物质构成。</p></blockquote>
+<p>而氨基酸一侧：</p>
+<blockquote><p>由<strong>胺基（-NH₂）</strong>和<strong>羧基（-COOH）</strong>两个官能团与一个<strong>侧链</strong>组成。</p></blockquote>
+<p><strong>最容易混的一点</strong>：变换五碳糖（核糖 ↔ 脱氧核糖），得到的是<strong>另一种核苷酸</strong>（RNA 用核糖，DNA 用脱氧核糖）；而变换侧链，得到的是<strong>另一种氨基酸</strong>。前者的差别决定了"信息存放在哪种核酸里"，后者的差别决定了"蛋白质折叠成什么形状"。</p>
+<p>还有一条不对称要记住：<strong>核苷酸的种类很少（4 种碱基），氨基酸的种类多得多（20 种）</strong>。这正是下面那个"3 个字母拼一个词"机制存在的原因。</p>
+<hr />
+<h2>二、两种「聚合物」：DNA vs 蛋白质</h2>
+<table><thead><tr><th></th><th>DNA</th><th>蛋白质</th></tr></thead><tbody><tr><td>由什么聚合</td><td>脱氧核糖核苷酸</td><td>α-氨基酸残基</td></tr><tr><td>连接方式</td><td>磷酸二酯键</td><td>肽键</td></tr><tr><td>序列的意义</td><td><strong>储存信息</strong>（维基把它比喻为"蓝图"或"配方"）</td><td><strong>执行功能</strong></td></tr><tr><td>空间结构</td><td>双股螺旋</td><td>由序列<strong>折叠</strong>成有功能的立体结构</td></tr><tr><td>谁决定它的序列</td><td>无（它是模板）</td><td><strong>由对应基因编码</strong></td></tr></tbody></table>
+<p>维基对蛋白质的表述一句话串起了三层关系：</p>
+<blockquote><p>α-氨基酸分子呈线性排列，相邻 α-氨基酸残基的<strong>羧基和氨基通过肽键连接</strong>在一起，最后经过<strong>折叠</strong>形成有功能的立体结构。<strong>蛋白质的 α-氨基酸序列是由对应基因所编码。</strong></p></blockquote>
+<p>注意"折叠"这一步：<strong>序列决定结构，结构决定功能</strong>——但序列 ≠ 结构。蛋白质不是"一串氨基酸"，而是"一串氨基酸折叠出来的东西"。（折叠本身是本库另一个节点。）</p>
+<h3>DNA 与 RNA：同为核酸，差在三处</h3>
+<table><thead><tr><th></th><th>DNA</th><th>RNA</th></tr></thead><tbody><tr><td>五碳糖</td><td><strong>脱氧</strong>核糖</td><td>核糖</td></tr><tr><td>碱基</td><td>A、<strong>T</strong>（胸腺嘧啶）、C、G</td><td>A、<strong>U</strong>（尿嘧啶）、C、G</td></tr><tr><td>链数</td><td>双链（双螺旋）</td><td>通常单链</td></tr><tr><td>核苷酸数</td><td>通常上百万</td><td>通常数百至数千个</td></tr></tbody></table>
+<p>维基还补了一句机制上的解释：<strong>"DNA 为胸腺嘧啶（5-甲基尿嘧啶），RNA 为尿嘧啶，使 RNA 更易被水解"</strong>——即这个碱基差异不是随意的，它让 RNA 更"短命"，适合做传递用的临时拷贝。</p>
+<p>（另有一条容易记反的：<strong>DNA 序列里是 T，RNA 里对应位置是 U</strong>。遗传密码条目专门提醒了这点。）</p>
+<hr />
+<h2>三、基因：不是「一层」，是 DNA 上的一段</h2>
+<p><strong>这是全篇最需要纠正的一个印象。</strong> 基因不是一个独立的物质实体，它是<strong>序列上的一段</strong>：</p>
+<blockquote><p>基因即指<strong>能够遗传且具功能性的一段 DNA 或 RNA 序列</strong>，详细来说，其为 DNA 或 RNA 大分子内一段<strong>编码基因产物（RNA 或蛋白质）的合成</strong>的<strong>核苷酸序列</strong>。</p></blockquote>
+<p>维基条目甚至专门设了三节来讲它的"牵连"关系，恰好就是一条层级链：</p>
+<pre><code>细胞  &gt;  细胞核  &gt;  染色体  &gt;  DNA  &gt;  基因
+                    （基因是这条链最里层的一段序列）</code></pre>
+<p>所以"基因"和"DNA"的关系不是两种东西的并列，而是<strong>"一段"与"整本"的关系</strong>——就像"章"和"书"。</p>
+<p><strong>一个由此而来的结论</strong>：说"基因是 DNA"不准确，说"基因在 DNA 上"才准确。同理，"基因突变"指的是<strong>那一段序列</strong>变了，不是整个 DNA 分子换掉了。</p>
+<hr />
+<h2>四、核糖体：把信息层接到物质层的机器</h2>
+<p>核糖体是唯一一个"自己就是两种东西拼起来的"概念——它是<strong>rRNA + 蛋白质</strong>，由两个亚基组成：</p>
+<blockquote><p>主要成分是相互缠绕的 <strong>RNA</strong>（核糖体RNA，rRNA）和<strong>蛋白质</strong>（核糖体蛋白质，RP）。</p></blockquote>
+<p>它的功能是一句很精确的话：</p>
+<blockquote><p>核糖体是细胞内<strong>蛋白质合成的场所</strong>，能读取<strong>信使RNA核苷酸序列</strong>所包含的遗传信息，并使之转化为<strong>蛋白质中氨基酸的序列信息</strong>以合成蛋白质。</p></blockquote>
+<p><strong>分工</strong>：</p>
+<table><thead><tr><th>亚基</th><th>负责</th></tr></thead><tbody><tr><td><strong>小亚基</strong></td><td>识别 mRNA 序列、定位起始密码子（"读"）</td></tr><tr><td><strong>大亚基</strong></td><td><strong>催化肽键形成</strong>（"焊"）</td></tr></tbody></table>
+<p><strong>一个反直觉的点</strong>：催化肽键的那个活性中心，<strong>是由 RNA 构成的，不是蛋白质</strong>。维基因此把核糖体归类为<strong>核酶（ribozyme）</strong>——一个由 RNA 催化的机器，披着一层蛋白质外衣。也就是说，"蛋白质合成机器"的关键零件本身不是蛋白质。</p>
+<p>工作过程按维基条目分三步：<strong>翻译起始 → 肽链延伸（进位 / 转肽 / 移位）→ 终止</strong>。</p>
+<hr />
+<h2>五、细胞：容器，同时是一个分工系统</h2>
+<p>细胞是那句最朴素的话——<strong>上面全部事情发生的场所</strong>。但它不只是个袋子，它决定了流程的顺序。</p>
+<p>真核细胞的关键特征是：</p>
+<blockquote><p>真核细胞最大的特点是其内部包含了<strong>以膜封围的细胞核</strong>来存储 DNA。</p></blockquote>
+<p>这个膜带来一个流程上的后果，维基在中心法则条目里说得最清楚：</p>
+<blockquote><p><strong>原核细胞没有细胞核，其转录和翻译可同时进行。</strong>而在真核细胞中，<strong>转录的场所和翻译的场所通常是分开的</strong>（前者在细胞核，后者在细胞质），所以 mRNA 必须从细胞核转移到细胞质，并在细胞质中与核糖体结合。</p></blockquote>
+<p>还有一处差异：<strong>剪接</strong>（把内含子剪除）"在原核细胞中是不存在的"——它是真核的预处理步骤。</p>
+<p><strong>所以「细胞」这一格的价值在于</strong>：它把"信息流"变成了"信息流 + 物流"。在真核细胞里，mRNA 必须<strong>被运出去</strong>，基因表达才有下一步。</p>
+<hr />
+<h2>六、连起来：中心法则</h2>
+<p>前面五格拼起来，就是<strong>中心法则</strong>。美国国家人类基因组研究所（NHGRI）的定义最短：</p>
+<blockquote><p>The central dogma of molecular biology is a theory stating that <strong>genetic information flows only in one direction, from DNA, to RNA, to protein</strong>, or RNA directly to protein.</p></blockquote>
+<p>该理论由 <strong>Francis Crick 于 1958 年</strong>提出；他当时的版本还包含一条否命题：<strong>信息不从蛋白质流向核酸</strong>。</p>
+<h3>三个"积木"与"字母"的换算关系</h3>
+<p>这是七个概念之间<strong>唯一一处定量连接</strong>，值得单独记住：</p>
+<pre><code>3 个核苷酸  =  1 个密码子（codon）  =  1 个氨基酸</code></pre>
+<p>维基的算法很直白：</p>
+<blockquote><p>因为密码子由三个核苷酸组成，故一共有 <strong>4³ = 64 种</strong>密码子。</p></blockquote>
+<ul><li>64 个密码子里，<strong>3 个是终止密码子</strong>（不编码氨基酸，只作"到此为止"的信号）；</li><li>其余编码<strong>20 种</strong>标准氨基酸；</li><li>因为 64 &gt; 20，多个密码子共用一个氨基酸——这个性质叫<strong>密码子简并性</strong>。维基的措辞很精准：遗传密码有<strong>冗余（redundancy）但没有歧义（ambiguity）</strong>——同一个氨基酸可以有多个密码子，但同一个密码子只对应一个氨基酸。</li></ul>
+<h3>中心法则的"例外"与"扩充"</h3>
+<p>严格说，这条单向箭头有已知的例外和补充（维基条目把它们分成两类列出）：</p>
+<ul><li><strong>特殊传递</strong>：逆转录（RNA → DNA）、RNA 复制、RNA 的催化功能；</li><li><strong>扩充/调控</strong>：转译后修饰（蛋白质合成后还要被改）、DNA 甲基化（表观遗传）、朊毒体等。</li></ul>
+<p><strong>这些例外不推翻主线</strong>，但值得知道——因为"中心法则"在科普里常被讲成一条不可违逆的铁律，而它其实是"主流路径 + 一组已知特例"。</p>
+<hr />
+<h2>七、总表：七个概念各自的一句话定位</h2>
+<table><thead><tr><th>概念</th><th>层级</th><th>一句话</th></tr></thead><tbody><tr><td><strong>核苷酸</strong></td><td>单体</td><td>核酸的积木：碱基 + 五碳糖 + 磷酸</td></tr><tr><td><strong>氨基酸</strong></td><td>单体</td><td>蛋白质的积木：氨基 + 羧基 + 侧链</td></tr><tr><td><strong>DNA</strong></td><td>聚合物</td><td>储存信息的双螺旋，由脱氧核苷酸聚合</td></tr><tr><td><strong>蛋白质</strong></td><td>聚合物</td><td>执行功能的折叠结构，由氨基酸聚合</td></tr><tr><td><strong>基因</strong></td><td>信息</td><td><strong>DNA 上的一段</strong>序列，不是独立实体</td></tr><tr><td><strong>核糖体</strong></td><td>机器</td><td>rRNA + 蛋白质；读 mRNA、催化肽键，本身是核酶</td></tr><tr><td><strong>细胞</strong></td><td>容器</td><td>场所 + 分工系统；真核的膜把转录与翻译隔开</td></tr></tbody></table>
+<p><strong>把它们串成一句话</strong>：</p>
+<blockquote><p>细胞里，<strong>基因</strong>（DNA 上的一段）先被转录成 RNA，<strong>核糖体</strong>读取这段 RNA，每 <strong>3 个核苷酸</strong>（密码子）取一个<strong>氨基酸</strong>，用<strong>肽键</strong>把它们连起来，折叠成<strong>蛋白质</strong>——七个概念，就是这一句话里的七种角色。</p></blockquote>
+<hr />
+<h2>八、五个最容易混的点</h2>
+<ol><li><strong>「基因是 DNA」不准确</strong>——基因是 DNA 上的<strong>一段序列</strong>，"章"与"书"的关系。</li><li><strong>DNA 里是 T，RNA 里是 U</strong>。DNA 用胸腺嘧啶，RNA 用尿嘧啶，且这让 RNA 更易被水解（适合当临时拷贝）。</li><li><strong>"蛋白质合成机器"的关键零件不是蛋白质</strong>。核糖体催化肽键的活性中心由 RNA 构成，所以它是核酶。</li><li><strong>序列 ≠ 结构</strong>。蛋白质由序列决定，但还要<strong>折叠</strong>才有功能；"一串氨基酸"不是"一个蛋白质"。</li><li><strong>中心法则不是绝对铁律</strong>。有逆转录、RNA 复制等已知例外，以及转译后修饰、甲基化等扩充——主线成立，但"绝对"不成立。</li></ol>
+<hr />
+<h2>参考资料</h2>
+<ul><li><a href="https://zh.wikipedia.org/zh-hans/%E4%B8%AD%E5%BF%83%E6%B3%95%E5%88%99">中心法则（中文维基）</a> — 转录/剪接/转译/DNA 复制；"原核细胞没有细胞核，其转录和翻译可同时进行"；特殊传递与扩充的完整列表</li><li><a href="https://www.genome.gov/genetics-glossary/Central-Dogma">Central Dogma（NHGRI / genome.gov）</a> — 权威定义："information flows only in one direction, from DNA, to RNA, to protein"；Crick 1958</li><li><a href="https://zh.wikipedia.org/zh-hans/%E9%81%97%E4%BC%A0%E5%AF%86%E7%A0%81">遗传密码（中文维基）</a> — 密码子定义（三个核苷酸一组）；"4³ = 64 种密码子"；DNA 序列以 T 代替 U</li><li><a href="https://en.wikipedia.org/wiki/Genetic_code">Genetic code（英文维基）</a> — "The three stop codons"；20 (+2) canonical amino acids；简并性："redundancy but no ambiguity"</li><li><a href="https://zh.wikipedia.org/zh-hans/%E6%A0%B8%E7%B3%96%E4%BD%93">核糖体（中文维基）</a> — 组成（rRNA + RP）；功能定义；活性区域由 RNA 构成故归为核酶；大小亚基分工；翻译起始/延伸/终止</li><li><a href="https://zh.wikipedia.org/zh-hans/%E6%A0%B8%E8%8B%B7%E9%85%B8">核苷酸（中文维基）</a> — 三件套（核碱基 + 戊糖 + 磷酸）；是核酸的基本组成单位</li><li><a href="https://zh.wikipedia.org/zh-hans/%E6%B0%A8%E5%9F%BA%E9%85%B8">氨基酸（中文维基）</a> — 氨基 + 羧基 + 侧链；构成天然蛋白质的 20 种常见氨基酸</li><li><a href="https://zh.wikipedia.org/zh-hans/%E8%9B%8B%E7%99%BD%E8%B4%A8">蛋白质（中文维基）</a> — 由 α-氨基酸残基经肽键连接并折叠；"氨基酸序列由对应基因所编码"</li><li><a href="https://zh.wikipedia.org/zh-hans/DNA">DNA（中文维基）</a> — DNA/RNA 对比（糖、碱基 T/U、链数、长度）；"DNA 为胸腺嘧啶，RNA 为尿嘧啶，使 RNA 更易被水解"；DNA 作为"蓝图"</li><li><a href="https://zh.wikipedia.org/zh-hans/%E5%9F%BA%E5%9B%A0">基因（中文维基）</a> — "能够遗传且具功能性的一段 DNA 或 RNA 序列"；与脱氧核苷酸/DNA/染色体的牵连</li><li><a href="https://zh.wikipedia.org/zh-hans/%E7%BB%86%E8%83%9E">细胞（中文维基）</a> — 真核细胞以膜封围的细胞核存储 DNA；原核/真核命名来源与特性对比</li></ul>
+<hr />
+<h2>元信息</h2>
+<ul><li>生成者：Nemesis</li><li>日期：2026-10-13</li><li>配图：<code>figures/nucleotide-to-cell.svg</code>（程序化生成）</li><li>来源：11 条，全部抓取正文核验（非仅验 URL 可达）</li><li>关联：progressive-kg 的「核苷酸」「氨基酸」「DNA」「蛋白质」「基因」「核糖体」「细胞」等节点（均在 <code>Cognition/Biology/</code>）</li></ul>
+  </div>
+  <div class="footer">
+    <p>人机知识库 · 由 Damon + Nemesis 生成 · <a href="index.html">返回索引</a></p>
+  </div>
+</div>
+</body>
+</html>
